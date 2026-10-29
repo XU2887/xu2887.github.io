@@ -1,20 +1,21 @@
 /**
  * 青年力量洲际队官网 (Youth Power Continental Team) - 终极版扩展插件 (custom-update.js)
  * 本次核心升级：
- * 1. 【丝滑实时拖拽排序 (Live DOM Swap) + ◀▶按钮双保险】：彻底解决图片拦截导致无法拖动队员档案、商城商品排序的问题
- * 2. 【队员个人详情页：多图相册系统】：支持管理员为每位队员批量上传多张照片，相册内照片同样支持拖拽排序与删除
- * 3. 【队员个人详情页：4种页面排版 + 相册列数自由切换】：支持“左图右文”、“杂志巨幕”、“右图左文”、“画廊优先”4种排版独立保存
- * 4. 【100%全站英/西精译词库 + 微软(Microsoft Edge/Bing)神经网络翻译】：队员介绍、赞助、骑游、商城全覆盖
+ * 1. 【个人独立主页：全方位可视化编辑】：支持在队员独立主页内直接编辑姓名、职务、年龄、高光、长篇传记、自定义附加模块及每张照片的图注，并同步回总列表
+ * 2. 【个人独立主页：大图作为背景功能】：支持一键将任意相册照片或上传新图设为“全屏沉浸式背景壁纸”，支持调节背景遮罩浓度与毛玻璃效果
+ * 3. 【个人独立主页：5种主体排版 + 4种多图相册布局】：新增“⑤ 全屏大图背景悬浮排版”，相册支持“网格平铺”、“首图巨幅焦点”、“电影感全宽巨幕”、“错落画报流”
+ * 4. 【全站丝滑拖拽排序 + 100%中/英/西精译词库与微软神经网络翻译兜底】
  */
 
 (function () {
     'use strict';
 
     window.__ypLang = 'zh';
+    let isRiderSubpageEditing = false;
 
-    // 注入全局拖拽增强样式（禁止图片原生拖拽干扰，高亮拖拽目标）
-    const dragStyle = document.createElement('style');
-    dragStyle.innerHTML = `
+    // 注入全局拖拽与个人主页编辑样式
+    const customStyle = document.createElement('style');
+    customStyle.innerHTML = `
         .yp-draggable-card {
             user-select: none;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -34,8 +35,21 @@
             outline: 3px solid #76c729 !important;
             transform: scale(1.02);
         }
+        .rider-editable-field[contenteditable="true"] {
+            outline: 2px dashed #76c729 !important;
+            outline-offset: 3px;
+            background-color: rgba(118, 199, 41, 0.15) !important;
+            border-radius: 6px;
+            padding: 2px 6px;
+            cursor: text;
+        }
+        .rider-editable-field[contenteditable="true"]:focus {
+            outline: 2px solid #1db954 !important;
+            background-color: rgba(17, 24, 39, 0.85) !important;
+            color: #ffffff !important;
+        }
     `;
-    document.head.appendChild(dragStyle);
+    document.head.appendChild(customStyle);
 
     // =========================================================================
     // 一、严格权限校验：仅允许管理员账户 (team_youthpower@outlook.com) 编辑
@@ -67,9 +81,8 @@
     }
 
     // =========================================================================
-    // 二、队员多图相册 & 详情页独立排版存储系统
+    // 二、队员多图相册 & 个人独立主页排版/背景大图配置存储系统
     // =========================================================================
-    // 获取某位队员的多张相册图片数组
     function getRiderAlbum(riderId) {
         try {
             const allAlbums = JSON.parse(localStorage.getItem('yp_rider_multi_albums') || '{}');
@@ -85,13 +98,31 @@
         } catch (e) {}
     }
 
-    // 获取某位队员详情页的排版配置 { layout: 'classic' | 'magazine' | 'reverse' | 'gallery_first', albumCols: 3 }
+    /**
+     * 队员个人主页独立排版配置：
+     * - layout: 'classic'(左图右文) | 'magazine'(杂志巨幕) | 'reverse'(左文右图) | 'gallery_first'(画廊置顶) | 'hero_bg'(大图作为背景悬浮)
+     * - albumMode: 'grid'(标准平铺) | 'featured'(首图巨幅焦点+平铺) | 'cinematic'(全宽电影画幅) | 'masonry'(错落画报流)
+     * - albumCols: 2 | 3 | 4
+     * - bgUrl: 自定义背景大图URL（可由相册一键设置或单独上传）
+     * - fullPageBg: true | false （是否将大图同时铺满整个独立主页底色背景）
+     * - bgDarkness: '40' | '65' | '85' （背景大图遮罩暗度百分比）
+     * - extraSection: 队员主页自定义扩展段落 HTML
+     */
     function getRiderLayoutConfig(riderId) {
+        const defaults = {
+            layout: 'classic',
+            albumMode: 'grid',
+            albumCols: 3,
+            bgUrl: '',
+            fullPageBg: false,
+            bgDarkness: '65',
+            extraSection: ''
+        };
         try {
             const allCfg = JSON.parse(localStorage.getItem('yp_rider_page_layouts') || '{}');
-            return allCfg[riderId] || { layout: 'classic', albumCols: 3 };
+            return { ...defaults, ...(allCfg[riderId] || {}) };
         } catch (e) {
-            return { layout: 'classic', albumCols: 3 };
+            return defaults;
         }
     }
 
@@ -104,7 +135,7 @@
     }
 
     // =========================================================================
-    // 三、通用丝滑拖拽排序引擎（支持队员卡片、商品卡片、队员详情页多图相册）
+    // 三、通用丝滑拖拽排序引擎（支持队员卡片、商城卡片、队员主页相册图片）
     // =========================================================================
     function bindLiveSortableGrid(gridEl, itemSelector, idAttr, onOrderChanged) {
         if (!gridEl || !isStrictAdmin()) return;
@@ -114,11 +145,13 @@
         items.forEach(item => {
             item.classList.add('yp-draggable-card');
             item.setAttribute('draggable', 'true');
-
-            // 防止内部图片拦截拖拽
             item.querySelectorAll('img, a').forEach(img => img.setAttribute('draggable', 'false'));
 
             item.ondragstart = function (e) {
+                if (isRiderSubpageEditing) {
+                    e.preventDefault();
+                    return;
+                }
                 draggingEl = this;
                 e.dataTransfer.effectAllowed = 'move';
                 try { e.dataTransfer.setData('text/plain', this.getAttribute(idAttr)); } catch (err) {}
@@ -129,7 +162,6 @@
                 this.classList.remove('yp-dragging');
                 gridEl.querySelectorAll(itemSelector).forEach(el => el.classList.remove('yp-drag-over'));
                 draggingEl = null;
-                // 读取当前 DOM 最新顺序并回调保存
                 const newIds = Array.from(gridEl.querySelectorAll(itemSelector)).map(el => el.getAttribute(idAttr));
                 onOrderChanged(newIds);
             };
@@ -140,7 +172,6 @@
                 if (!draggingEl || draggingEl === this) return;
                 this.classList.add('yp-drag-over');
 
-                // 实时在 DOM 中交换位置（所见即所得）
                 const allNodes = Array.from(gridEl.querySelectorAll(itemSelector));
                 const draggedIdx = allNodes.indexOf(draggingEl);
                 const targetIdx = allNodes.indexOf(this);
@@ -332,7 +363,7 @@
     };
 
     // =========================================================================
-    // 五、队员介绍列表 (Roster) 与 商城商品 (Products) 拖拽排序 & 列数控制
+    // 五、队员列表 (Roster) 与 商城商品 (Products) 拖拽排序 & 列数控制
     // =========================================================================
     function getRosterGridCols() { return localStorage.getItem('yp_roster_grid_cols') || '3'; }
     function getShopGridCols() { return localStorage.getItem('yp_shop_grid_cols') || '4'; }
@@ -351,7 +382,6 @@
         if (typeof showToast === 'function') showToast(`商城商品已切换为：每行 ${cols} 列`);
     };
 
-    // 按钮微调队员顺序（与鼠标拖拽形成双保险）
     window.moveRosterStep = function (id, dir) {
         if (!isStrictAdmin()) return;
         const list = getSavedRosterData();
@@ -367,7 +397,6 @@
         if (typeof showToast === 'function') showToast('已移动队员档案顺序');
     };
 
-    // 获取持久化的商城商品顺序
     function getOrderedProducts(filter = 'all') {
         if (typeof products === 'undefined') return [];
         try {
@@ -414,7 +443,7 @@
             bar.innerHTML = `
                 <div class="flex items-center space-x-2 text-yp-lime font-bold">
                     <i class="fa-solid fa-up-down-left-right text-base"></i>
-                    <span>管理员排版已启用：直接按住下方任意队员卡片【拖动到目标位置】或点卡片上的【◀ ▶】即可调整先后顺序！</span>
+                    <span>管理员排版已启用：直接按住下方任意队员卡片【拖动】或点卡片上的【◀ ▶】即可调整先后顺序！点击队员可进入【个人独立主页】定制背景大图与多图排版。</span>
                 </div>
                 <div class="flex items-center space-x-2">
                     <span class="text-gray-300 font-bold">每行排版列数：</span>
@@ -458,7 +487,6 @@
         }
     }
 
-    // 重写队员列表渲染
     window.renderRoster = function () {
         const rosterData = typeof getSavedRosterData === 'function' ? getSavedRosterData() : [];
         const savedPhotos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
@@ -481,7 +509,7 @@
             const photoUrl = savedPhotos[m.id] || m.photo || (album.length > 0 ? album[0].url : '');
 
             const slotLabel = lang === 'en' ? '2027 Official Portrait Slot' : (lang === 'es' ? 'Espacio para Foto Oficial 2027' : '2027赛季官方定妆照预留位');
-            const viewProfileLabel = lang === 'en' ? 'View Full Profile & Photo Album' : (lang === 'es' ? 'Ver Perfil y Álbum de Fotos' : `进入个人主页与多图相册 (${album.length}张)`);
+            const viewProfileLabel = lang === 'en' ? 'Enter Personal Page & Gallery' : (lang === 'es' ? 'Entrar a Página Personal y Galería' : `进入个人独立主页 (${album.length}图)`);
             const delLabel = lang === 'en' ? 'Delete' : (lang === 'es' ? 'Eliminar' : '删除');
 
             return `
@@ -522,7 +550,7 @@
                     </div>
                     <div data-no-edit="true" class="px-6 py-3 bg-gray-900/70 border-t border-gray-700 flex items-center justify-between text-xs">
                         <button onclick="openEntitySubpage('rider', '${m.id}')" class="text-yp-lime font-bold hover:underline flex items-center">
-                            <i class="fa-regular fa-images mr-1.5"></i><span>${viewProfileLabel}</span> <i class="fa-solid fa-arrow-right ml-1"></i>
+                            <i class="fa-solid fa-id-card-clip mr-1.5"></i><span>${viewProfileLabel}</span> <i class="fa-solid fa-arrow-right ml-1"></i>
                         </button>
                         ${isAdmin ? `<button onclick="deleteRosterMember('${m.id}')" class="text-red-400 hover:text-red-300 font-bold"><i class="fa-solid fa-trash mr-1"></i>${delLabel}</button>` : ''}
                     </div>
@@ -530,7 +558,6 @@
             `;
         }).join('');
 
-        // 绑定实时拖拽排序
         bindLiveSortableGrid(grid, '[data-roster-id]', 'data-roster-id', (newIds) => {
             const currentList = getSavedRosterData();
             const reordered = newIds.map(id => currentList.find(r => String(r.id) === String(id))).filter(Boolean);
@@ -541,7 +568,6 @@
         });
     };
 
-    // 重写商城商品渲染（支持实时拖拽排序 + 按钮调序 + 列数切换）
     window.renderProducts = function (filter = 'all') {
         const grid = document.getElementById('product-grid');
         if (!grid || typeof products === 'undefined') return;
@@ -598,7 +624,6 @@
             `;
         }).join('');
 
-        // 绑定商城商品实时拖拽排序
         bindLiveSortableGrid(grid, '[data-product-id]', 'data-product-id', (newIds) => {
             localStorage.setItem('yp_shop_order_ids', JSON.stringify(newIds));
             if (typeof showToast === 'function') showToast('✅ 商城器材展示顺序已实时保存！');
@@ -606,37 +631,164 @@
     };
 
     // =========================================================================
-    // 六、队员个人详情页：支持【无限添加多张图片 + 拖拽排图 + 4种页面排版切换】
+    // 六、队员个人独立主页：全方位编辑 + 大图背景壁纸 + 5种主体排版 + 4种多图画廊
     // =========================================================================
-    let currentDetailRiderId = null;
-
     function initDynamicSubpageContainer() {
         const main = document.getElementById('editable-main');
         if (!main || document.getElementById('page-subdetail')) return;
         const detailSec = document.createElement('div');
         detailSec.id = 'page-subdetail';
-        detailSec.className = 'page-section py-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8';
-        detailSec.innerHTML = `<div id="subdetail-content"></div>`;
+        detailSec.className = 'page-section min-h-[85vh] transition-all duration-300';
+        detailSec.innerHTML = `<div id="subdetail-backdrop-wrapper" class="py-10 px-4 sm:px-6 lg:px-8 min-h-[85vh]"><div id="subdetail-content" class="max-w-6xl mx-auto"></div></div>`;
         main.appendChild(detailSec);
     }
 
-    // 切换某位队员详情页的排版风格
+    // 切换个人独立主页的整体排版风格（新增 hero_bg 大图背景悬浮模式）
     window.changeRiderDetailLayout = function (riderId, layoutType) {
         if (!isStrictAdmin()) return;
         saveRiderLayoutConfig(riderId, { layout: layoutType });
         window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast('✨ 队员详情页排版已切换并保存！');
+        if (typeof showToast === 'function') showToast('✨ 个人独立主页排版已切换并保存！');
     };
 
-    // 切换某位队员详情页内相册的每行图片列数
+    // 切换个人独立主页相册的展示模式（平铺 / 首图巨幅焦点 / 全宽电影巨幕 / 错落画报）
+    window.changeRiderAlbumMode = function (riderId, mode) {
+        if (!isStrictAdmin()) return;
+        saveRiderLayoutConfig(riderId, { albumMode: mode });
+        window.openEntitySubpage('rider', riderId);
+        if (typeof showToast === 'function') showToast('📸 个人相册展示版式已更新！');
+    };
+
     window.changeRiderAlbumCols = function (riderId, cols) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, { albumCols: cols });
+        saveRiderLayoutConfig(riderId, { albumCols: cols, albumMode: 'grid' });
         window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast(`📸 队员相册已切换为每行 ${cols} 张图片`);
+        if (typeof showToast === 'function') showToast(`📸 个人相册已切换为每行 ${cols} 张平铺`);
     };
 
-    // 批量上传多张队员照片到该队员详情页相册
+    // 设置或上传大图作为个人独立主页的背景（Hero Backdrop / Full-Page Wallpaper）
+    window.setRiderHeroBgImage = function (riderId, bgUrl, enableFullPage = true) {
+        if (!isStrictAdmin()) return;
+        saveRiderLayoutConfig(riderId, {
+            bgUrl: bgUrl,
+            fullPageBg: enableFullPage,
+            layout: 'hero_bg'
+        });
+        window.openEntitySubpage('rider', riderId);
+        if (typeof showToast === 'function') showToast('🌌 已将该大图设为队员个人主页背景！');
+    };
+
+    window.handleRiderBgFileUpload = function (event, riderId) {
+        if (!isStrictAdmin()) return;
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            window.setRiderHeroBgImage(riderId, ev.target.result, true);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.toggleRiderFullPageBg = function (riderId) {
+        if (!isStrictAdmin()) return;
+        const cfg = getRiderLayoutConfig(riderId);
+        saveRiderLayoutConfig(riderId, { fullPageBg: !cfg.fullPageBg });
+        window.openEntitySubpage('rider', riderId);
+        if (typeof showToast === 'function') showToast(!cfg.fullPageBg ? '🌅 已开启整页全屏大图壁纸背景！' : '已切换为卡片局部大图背景');
+    };
+
+    window.changeRiderBgDarkness = function (riderId, darkness) {
+        if (!isStrictAdmin()) return;
+        saveRiderLayoutConfig(riderId, { bgDarkness: String(darkness) });
+        window.openEntitySubpage('rider', riderId);
+    };
+
+    window.clearRiderBgImage = function (riderId) {
+        if (!isStrictAdmin()) return;
+        saveRiderLayoutConfig(riderId, { bgUrl: '', fullPageBg: false, layout: 'classic' });
+        window.openEntitySubpage('rider', riderId);
+        if (typeof showToast === 'function') showToast('已清除背景大图并恢复标准排版');
+    };
+
+    // 开启/关闭个人独立主页内的直接文字编辑模式
+    window.toggleRiderSubpageEdit = function (riderId) {
+        if (!isStrictAdmin()) return;
+        isRiderSubpageEditing = !isRiderSubpageEditing;
+        const editableEls = document.querySelectorAll('#subdetail-content .rider-editable-field');
+        editableEls.forEach(el => {
+            el.setAttribute('contenteditable', isRiderSubpageEditing ? 'true' : 'false');
+        });
+        const btnEdit = document.getElementById('btn-rider-sub-edit');
+        const btnSave = document.getElementById('btn-rider-sub-save');
+        if (isRiderSubpageEditing) {
+            if (btnEdit) btnEdit.innerHTML = '<i class="fa-solid fa-xmark mr-1"></i>取消编辑';
+            if (btnSave) btnSave.classList.remove('hidden');
+            if (typeof showToast === 'function') showToast('✏️ 个人主页编辑已开启！请直接点击下方带绿框的文字或图片说明进行修改。');
+        } else {
+            window.openEntitySubpage('rider', riderId);
+        }
+    };
+
+    // 保存个人独立主页内的所有文字修改（同步回总列表 + 保存相册图注 + 保存附加模块）
+    window.saveRiderSubpageEdits = function (riderId) {
+        if (!isStrictAdmin()) return;
+        const list = getSavedRosterData();
+        const item = list.find(r => String(r.id) === String(riderId));
+        if (!item) return;
+
+        const roleEl = document.getElementById('sub-edit-role');
+        const flagEl = document.getElementById('sub-edit-flag');
+        const nameEl = document.getElementById('sub-edit-name');
+        const ageEl = document.getElementById('sub-edit-age');
+        const highEl = document.getElementById('sub-edit-high');
+        const bioEl = document.getElementById('sub-edit-bio');
+        const extraEl = document.getElementById('sub-edit-extra');
+
+        const lang = window.__ypLang || 'zh';
+        if (roleEl) {
+            if (lang === 'en') item.role_en = roleEl.innerHTML.trim();
+            else if (lang === 'es') item.role_es = roleEl.innerHTML.trim();
+            else item.role_zh = roleEl.innerHTML.trim();
+        }
+        if (flagEl) item.flag = flagEl.textContent.trim();
+        if (nameEl) item.name = nameEl.innerHTML.trim();
+        if (ageEl) item.ageSpec = ageEl.innerHTML.trim();
+        if (highEl) item.highlight = highEl.innerHTML.trim();
+        if (bioEl) item.bio = bioEl.innerHTML.trim();
+
+        // 若在英文/西文模式下编辑了内置翻译车手，同步更新内置词典缓存
+        if (lang !== 'zh' && rosterTranslations[riderId] && rosterTranslations[riderId][lang]) {
+            if (roleEl) rosterTranslations[riderId][lang].role = roleEl.innerHTML.trim();
+            if (ageEl) rosterTranslations[riderId][lang].ageSpec = ageEl.innerHTML.trim();
+            if (highEl) rosterTranslations[riderId][lang].highlight = highEl.innerHTML.trim();
+            if (bioEl) rosterTranslations[riderId][lang].bio = bioEl.innerHTML.trim();
+        }
+
+        localStorage.setItem('yp_roster_custom_data', JSON.stringify(list));
+
+        // 保存自定义附加图文模块
+        if (extraEl) {
+            saveRiderLayoutConfig(riderId, { extraSection: extraEl.innerHTML.trim() });
+        }
+
+        // 保存每张相册图片的图注说明修改
+        const album = getRiderAlbum(riderId);
+        document.querySelectorAll('[data-edit-caption-id]').forEach(capNode => {
+            const pid = capNode.getAttribute('data-edit-caption-id');
+            const targetPhoto = album.find(p => String(p.id) === String(pid));
+            if (targetPhoto) {
+                targetPhoto.caption = capNode.innerHTML.trim();
+            }
+        });
+        saveRiderAlbum(riderId, album);
+
+        isRiderSubpageEditing = false;
+        window.openEntitySubpage('rider', riderId);
+        window.renderRoster();
+        if (typeof showToast === 'function') showToast('✅ 个人独立主页所有文字与图注修改已永久保存！');
+    };
+
+    // 批量上传多张照片到队员个人相册
     window.handleRiderMultiPhotosUpload = function (event, riderId) {
         if (!isStrictAdmin()) return;
         const files = Array.from(event.target.files || []);
@@ -665,7 +817,6 @@
         });
     };
 
-    // 通过外链URL为队员添加新照片
     window.handleRiderUrlPhotoAdd = function (e, riderId) {
         e.preventDefault();
         if (!isStrictAdmin()) return;
@@ -687,7 +838,6 @@
         if (typeof showToast === 'function') showToast('✅ 已添加新照片至队员相册！');
     };
 
-    // 删除队员相册中的某张照片
     window.deleteRiderAlbumPhoto = function (riderId, photoId) {
         if (!isStrictAdmin()) return;
         const album = getRiderAlbum(riderId).filter(p => String(p.id) !== String(photoId));
@@ -697,7 +847,6 @@
         if (typeof showToast === 'function') showToast('已从相册移除该照片');
     };
 
-    // 将相册中的某张照片设为队员主封面
     window.setRiderMainCoverFromAlbum = function (riderId, photoUrl) {
         if (!isStrictAdmin()) return;
         const savedPhotos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
@@ -708,7 +857,6 @@
         if (typeof showToast === 'function') showToast('⭐ 已将该照片设为队员档案主封面！');
     };
 
-    // 左右按钮移动相册图片顺序
     window.moveRiderAlbumPhotoStep = function (riderId, photoId, dir) {
         if (!isStrictAdmin()) return;
         const album = getRiderAlbum(riderId);
@@ -723,15 +871,17 @@
         window.openEntitySubpage('rider', riderId);
     };
 
-    // 打开队员或商品详情独立子页面
+    // 核心渲染：打开队员或商品的个人独立主页
     window.openEntitySubpage = function (type, id) {
+        initDynamicSubpageContainer();
         const container = document.getElementById('subdetail-content');
-        if (!container) return;
+        const backdropWrapper = document.getElementById('subdetail-backdrop-wrapper');
+        if (!container || !backdropWrapper) return;
         const lang = window.__ypLang || 'zh';
         const isAdmin = isStrictAdmin();
+        isRiderSubpageEditing = false;
 
         if (type === 'rider' && typeof getSavedRosterData === 'function') {
-            currentDetailRiderId = id;
             const list = getSavedRosterData();
             const photos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
             const m = list.find(r => String(r.id) === String(id));
@@ -744,111 +894,221 @@
             const bioText = tr ? tr.bio : m.bio;
 
             const album = getRiderAlbum(m.id);
-            const mainImg = photos[m.id] || m.photo || (album.length > 0 ? album[0].url : 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80');
+            const mainImg = photos[m.id] || m.photo || (album.length > 0 ? album[0].url : 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80');
             const cfg = getRiderLayoutConfig(m.id);
+            const bgHeroUrl = cfg.bgUrl || mainImg;
+            const darkPct = cfg.bgDarkness || '65';
+            const darkRgba = darkPct === '40' ? 'rgba(17,24,39,0.45)' : (darkPct === '85' ? 'rgba(17,24,39,0.88)' : 'rgba(17,24,39,0.68)');
 
-            // 管理员专属：页面排版切换器 & 多图批量上传工具箱
+            // 判断是否开启“整页全屏大图壁纸背景”
+            if (cfg.fullPageBg && bgHeroUrl) {
+                backdropWrapper.style.backgroundImage = `linear-gradient(180deg, ${darkRgba} 0%, rgba(17,24,39,0.92) 100%), url('${bgHeroUrl}')`;
+                backdropWrapper.style.backgroundSize = 'cover';
+                backdropWrapper.style.backgroundPosition = 'center';
+                backdropWrapper.style.backgroundAttachment = 'fixed';
+            } else {
+                backdropWrapper.style.backgroundImage = '';
+                backdropWrapper.style.backgroundSize = '';
+                backdropWrapper.style.backgroundPosition = '';
+                backdropWrapper.style.backgroundAttachment = '';
+            }
+
+            // 管理员专属：个人独立主页编辑 + 排版定义 + 大图背景设置工作台
             const adminToolbarHtml = isAdmin ? `
-                <div data-no-edit="true" class="mb-8 p-5 rounded-3xl bg-gray-900 text-white border-2 border-yp-lime shadow-xl space-y-4">
+                <div data-no-edit="true" class="mb-8 p-6 rounded-3xl bg-gray-900/95 backdrop-blur-md text-white border-2 border-yp-lime shadow-2xl space-y-5">
+                    <!-- 第一排：直接编辑个人主页文字按钮 -->
                     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-800">
                         <div>
-                            <span class="px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">管理员专属 · 队员主页排版与多图相册中心</span>
-                            <h4 class="text-sm font-black mt-1">当前队员：${m.name}（您可以自由切换页面布局，或一次上传多张比赛/生活照片）</h4>
+                            <span class="px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">SUPER ADMIN · 个人独立主页编辑器</span>
+                            <h4 class="text-base font-black mt-1">当前主页：${m.name} — 支持直接修改主页文字、设置大图背景及切换多图排版</h4>
                         </div>
-                        <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                            <span class="text-gray-400 font-bold mr-1">页面排版风格：</span>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'classic')" class="px-3 py-1.5 rounded-lg font-bold ${cfg.layout === 'classic' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">① 左图右文</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'magazine')" class="px-3 py-1.5 rounded-lg font-bold ${cfg.layout === 'magazine' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">② 杂志巨幕全宽</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'reverse')" class="px-3 py-1.5 rounded-lg font-bold ${cfg.layout === 'reverse' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">③ 左文右图</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'gallery_first')" class="px-3 py-1.5 rounded-lg font-bold ${cfg.layout === 'gallery_first' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">④ 多图画廊优先</button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="btn-rider-sub-edit" onclick="toggleRiderSubpageEdit('${m.id}')" class="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-gray-900 text-xs font-black rounded-xl shadow flex items-center space-x-1.5 transition">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                <span>✏️ 开启主页文字与图注直接编辑</span>
+                            </button>
+                            <button id="btn-rider-sub-save" onclick="saveRiderSubpageEdits('${m.id}')" class="hidden px-5 py-2 bg-yp-green hover:bg-yp-darkGreen text-white text-xs font-black rounded-xl shadow flex items-center space-x-1.5 transition animate-pulse">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>💾 保存个人主页全部修改</span>
+                            </button>
                         </div>
                     </div>
 
+                    <!-- 第二排：5种主页主体排版 + 大图背景设置 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center pb-4 border-b border-gray-800 text-xs">
+                        <div class="lg:col-span-7 flex flex-wrap items-center gap-1.5">
+                            <span class="text-yp-lime font-bold mr-1"><i class="fa-solid fa-table-columns mr-1"></i>主页主体排版：</span>
+                            <button onclick="changeRiderDetailLayout('${m.id}', 'classic')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'classic' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">① 左图右文</button>
+                            <button onclick="changeRiderDetailLayout('${m.id}', 'magazine')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'magazine' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">② 杂志巨幕</button>
+                            <button onclick="changeRiderDetailLayout('${m.id}', 'reverse')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'reverse' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">③ 左文右图</button>
+                            <button onclick="changeRiderDetailLayout('${m.id}', 'gallery_first')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'gallery_first' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">④ 画廊置顶</button>
+                            <button onclick="changeRiderDetailLayout('${m.id}', 'hero_bg')" class="px-3 py-1.5 rounded-lg font-black ${cfg.layout === 'hero_bg' ? 'bg-purple-600 text-white ring-2 ring-purple-300' : 'bg-purple-900/60 text-purple-200 hover:bg-purple-800'}">⑤ 🌌 大图作为背景悬浮</button>
+                        </div>
+
+                        <div class="lg:col-span-5 flex flex-wrap items-center justify-end gap-2">
+                            <label class="cursor-pointer px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg flex items-center space-x-1 shadow">
+                                <i class="fa-solid fa-image"></i>
+                                <span>上传专属背景大图</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="handleRiderBgFileUpload(event, '${m.id}')">
+                            </label>
+                            <button onclick="toggleRiderFullPageBg('${m.id}')" class="px-3 py-1.5 rounded-lg font-bold border ${cfg.fullPageBg ? 'bg-yp-lime text-gray-900 border-yp-lime' : 'bg-gray-800 text-gray-300 border-gray-700'}">
+                                ${cfg.fullPageBg ? '🌅 整页壁纸背景：已开启' : '🌅 开启整页壁纸背景'}
+                            </button>
+                            <select onchange="changeRiderBgDarkness('${m.id}', this.value)" class="rounded-lg bg-gray-800 border border-gray-700 px-2 py-1.5 text-white">
+                                <option value="40" ${darkPct === '40' ? 'selected' : ''}>背景遮罩：明亮 (40%)</option>
+                                <option value="65" ${darkPct === '65' ? 'selected' : ''}>背景遮罩：标准 (65%)</option>
+                                <option value="85" ${darkPct === '85' ? 'selected' : ''}>背景遮罩：深邃 (85%)</option>
+                            </select>
+                            ${(cfg.bgUrl || cfg.fullPageBg) ? `<button onclick="clearRiderBgImage('${m.id}')" class="text-red-400 hover:underline px-1">清除背景</button>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- 第三排：批量添加多张图片 -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center text-xs">
                         <div class="lg:col-span-5">
-                            <label class="cursor-pointer w-full py-3 px-4 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl flex items-center justify-center space-x-2 shadow transition">
+                            <label class="cursor-pointer w-full py-2.5 px-4 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl flex items-center justify-center space-x-2 shadow transition">
                                 <i class="fa-solid fa-images text-base"></i>
-                                <span>➕ 点击批量选择本地照片（支持一次选多张）</span>
+                                <span>➕ 批量上传多张本地照片到个人主页</span>
                                 <input type="file" accept="image/*" multiple class="hidden" onchange="handleRiderMultiPhotosUpload(event, '${m.id}')">
                             </label>
                         </div>
                         <form onsubmit="handleRiderUrlPhotoAdd(event, '${m.id}')" class="lg:col-span-7 flex flex-wrap sm:flex-nowrap gap-2">
-                            <input type="url" id="rider-extra-photo-url" required placeholder="或粘贴图片链接 https://..." class="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2.5 text-white">
-                            <input type="text" id="rider-extra-photo-cap" placeholder="照片说明(选填)" class="w-36 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2.5 text-white">
-                            <button type="submit" class="px-4 py-2.5 bg-amber-400 text-gray-900 font-black rounded-xl hover:bg-amber-300 shrink-0">添加图片</button>
+                            <input type="url" id="rider-extra-photo-url" required placeholder="或粘贴图片外链 URL https://..." class="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                            <input type="text" id="rider-extra-photo-cap" placeholder="图片说明文字(选填)" class="w-36 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                            <button type="submit" class="px-4 py-2 bg-amber-400 text-gray-900 font-black rounded-xl hover:bg-amber-300 shrink-0">添加图片</button>
                         </form>
                     </div>
                 </div>
             ` : '';
 
-            // 队员多图相册网格 HTML
-            const albumSectionHtml = `
-                <div class="mt-10 bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs">
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div>
-                            <span class="text-yp-darkGreen font-black text-xs uppercase">RIDER PHOTO GALLERY</span>
-                            <h3 class="text-xl font-black text-gray-900 mt-0.5">📸 ${m.name} · 个人赛事与风采相册 (${album.length}张)</h3>
-                        </div>
+            // 构建相册内单张图片卡片的通用辅助函数（支持设为封面、设为背景大图、拖动排图、编辑图注）
+            const renderAlbumCard = (p, extraClass = '', imgHeightClass = 'h-64') => `
+                <div class="bg-gray-900 rounded-2xl overflow-hidden border border-gray-700/60 shadow-md group relative flex flex-col justify-between ${extraClass}" data-album-photo-id="${p.id}">
+                    <div class="${imgHeightClass} w-full overflow-hidden bg-black flex items-center justify-center relative">
+                        <img src="${p.url}" alt="${p.caption || m.name}" draggable="false" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                         ${isAdmin ? `
-                            <div class="flex items-center space-x-2 text-xs" data-no-edit="true">
-                                <span class="text-gray-500 font-bold">相册每行列数：</span>
-                                <button onclick="changeRiderAlbumCols('${m.id}', 2)" class="px-2.5 py-1 rounded ${cfg.albumCols == 2 ? 'bg-yp-darkGreen text-white font-bold' : 'bg-gray-100 text-gray-700'}">2列大图</button>
-                                <button onclick="changeRiderAlbumCols('${m.id}', 3)" class="px-2.5 py-1 rounded ${cfg.albumCols == 3 ? 'bg-yp-darkGreen text-white font-bold' : 'bg-gray-100 text-gray-700'}">3列标准</button>
-                                <button onclick="changeRiderAlbumCols('${m.id}', 4)" class="px-2.5 py-1 rounded ${cfg.albumCols == 4 ? 'bg-yp-darkGreen text-white font-bold' : 'bg-gray-100 text-gray-700'}">4列紧凑</button>
+                            <div data-no-edit="true" class="absolute top-2.5 left-2.5 flex items-center space-x-1">
+                                <span class="px-2 py-1 bg-amber-400 text-gray-900 text-[10px] font-black rounded shadow cursor-grab">
+                                    <i class="fa-solid fa-grip-vertical mr-1"></i>拖动排图
+                                </span>
+                                <button onclick="moveRiderAlbumPhotoStep('${m.id}', '${p.id}', -1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">◀</button>
+                                <button onclick="moveRiderAlbumPhotoStep('${m.id}', '${p.id}', 1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">▶</button>
+                            </div>
+                            <div data-no-edit="true" class="absolute top-2.5 right-2.5 flex flex-wrap items-center justify-end gap-1">
+                                <button onclick="setRiderMainCoverFromAlbum('${m.id}', '${p.url}')" class="px-2 py-1 bg-yp-green hover:bg-yp-darkGreen text-white text-[10px] font-bold rounded shadow">设为封面</button>
+                                <button onclick="setRiderHeroBgImage('${m.id}', '${p.url}', true)" class="px-2 py-1 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded shadow">🌌 设为背景</button>
+                                <button onclick="deleteRiderAlbumPhoto('${m.id}', '${p.id}')" class="w-6 h-6 bg-yp-red text-white text-[10px] font-bold rounded shadow">✕</button>
                             </div>
                         ` : ''}
                     </div>
-                    ${album.length === 0 ? `
-                        <div class="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400 text-xs">
-                            暂未上传更多个人相册图片。${isAdmin ? '管理员请点击上方绿色按钮批量上传多张队员照片！' : ''}
-                        </div>
-                    ` : `
-                        <div id="rider-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cfg.albumCols || 3} gap-5">
-                            ${album.map(p => `
-                                <div class="bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 shadow-xs group relative" data-album-photo-id="${p.id}">
-                                    <div class="h-64 overflow-hidden bg-black flex items-center justify-center">
-                                        <img src="${p.url}" alt="${p.caption || m.name}" draggable="false" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                                    </div>
-                                    ${p.caption ? `<div class="p-3 bg-white text-xs font-bold text-gray-800">${p.caption}</div>` : ''}
-                                    ${isAdmin ? `
-                                        <div data-no-edit="true" class="absolute top-2.5 left-2.5 flex items-center space-x-1">
-                                            <span class="px-2 py-1 bg-amber-400 text-gray-900 text-[10px] font-black rounded shadow cursor-grab">
-                                                <i class="fa-solid fa-grip-vertical mr-1"></i>拖动排图
-                                            </span>
-                                            <button onclick="moveRiderAlbumPhotoStep('${m.id}', '${p.id}', -1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">◀</button>
-                                            <button onclick="moveRiderAlbumPhotoStep('${m.id}', '${p.id}', 1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">▶</button>
-                                        </div>
-                                        <div data-no-edit="true" class="absolute top-2.5 right-2.5 flex items-center space-x-1">
-                                            <button onclick="setRiderMainCoverFromAlbum('${m.id}', '${p.url}')" class="px-2 py-1 bg-yp-green text-white text-[10px] font-bold rounded shadow" title="设为主封面">设为封面</button>
-                                            <button onclick="deleteRiderAlbumPhoto('${m.id}', '${p.id}')" class="w-6 h-6 bg-yp-red text-white text-[10px] font-bold rounded shadow" title="删除">✕</button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    `}
+                    <div class="p-3.5 bg-gray-900 text-xs font-bold text-gray-200 border-t border-gray-800">
+                        <div class="rider-editable-field" data-edit-caption-id="${p.id}">${p.caption || '点击上方开启编辑可修改此图片说明'}</div>
+                    </div>
                 </div>
             `;
 
-            // 根据管理员选择的 4 种排版生成主体结构
+            // 根据 albumMode 渲染 4 种不同的多图排版（网格平铺 / 首图巨幅焦点 / 全宽电影巨幕 / 错落画报）
+            let albumGridHtml = '';
+            if (album.length === 0) {
+                albumGridHtml = `
+                    <div class="text-center py-12 bg-gray-900/40 rounded-2xl border border-dashed border-gray-600 text-gray-400 text-xs">
+                        暂未上传更多个人相册图片。${isAdmin ? '管理员请点击上方「➕ 批量上传多张本地照片」按钮添加！' : ''}
+                    </div>
+                `;
+            } else if (cfg.albumMode === 'featured') {
+                // 首图巨幅焦点（第1张图跨2列全宽大图，其余平铺）
+                albumGridHtml = `
+                    <div id="rider-album-sortable-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${album.map((p, idx) => idx === 0
+                            ? renderAlbumCard(p, 'md:col-span-2', 'h-[420px]')
+                            : renderAlbumCard(p, '', 'h-72')
+                        ).join('')}
+                    </div>
+                `;
+            } else if (cfg.albumMode === 'cinematic') {
+                // 全宽电影巨幕流（每张图独占一行超大画幅）
+                albumGridHtml = `
+                    <div id="rider-album-sortable-grid" class="space-y-8">
+                        ${album.map(p => renderAlbumCard(p, 'w-full', 'h-[460px]')).join('')}
+                    </div>
+                `;
+            } else if (cfg.albumMode === 'masonry') {
+                // 错落杂志画报流
+                albumGridHtml = `
+                    <div id="rider-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                        ${album.map((p, idx) => renderAlbumCard(p, '', idx % 2 === 0 ? 'h-80' : 'h-60')).join('')}
+                    </div>
+                `;
+            } else {
+                // 标准多列平铺 (2列 / 3列 / 4列)
+                albumGridHtml = `
+                    <div id="rider-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cfg.albumCols || 3} gap-5">
+                        ${album.map(p => renderAlbumCard(p, '', 'h-64')).join('')}
+                    </div>
+                `;
+            }
+
+            const albumSectionHtml = `
+                <div class="mt-10 ${cfg.fullPageBg ? 'bg-gray-900/80 backdrop-blur-md text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'} rounded-3xl p-6 sm:p-8 border shadow-xl">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div>
+                            <span class="text-yp-lime font-black text-xs uppercase">PERSONAL PHOTO GALLERY & LAYOUT</span>
+                            <h3 class="text-xl font-black mt-0.5">📸 ${m.name} · 个人赛事与风采相册 (${album.length}张)</h3>
+                        </div>
+                        ${isAdmin ? `
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs" data-no-edit="true">
+                                <span class="text-gray-400 font-bold mr-1">相册图片排版：</span>
+                                <button onclick="changeRiderAlbumCols('${m.id}', 2)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 2 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">2列平铺</button>
+                                <button onclick="changeRiderAlbumCols('${m.id}', 3)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 3 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">3列平铺</button>
+                                <button onclick="changeRiderAlbumCols('${m.id}', 4)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 4 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">4列平铺</button>
+                                <button onclick="changeRiderAlbumMode('${m.id}', 'featured')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'featured' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🌟 首图巨幅焦点</button>
+                                <button onclick="changeRiderAlbumMode('${m.id}', 'cinematic')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'cinematic' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🎞️ 全宽电影巨幕</button>
+                                <button onclick="changeRiderAlbumMode('${m.id}', 'masonry')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'masonry' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🧱 错落画报流</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${albumGridHtml}
+                </div>
+            `;
+
+            // 可编辑核心字段公共区块
+            const editableInfoBlock = `
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span id="sub-edit-role" class="rider-editable-field px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">${roleText}</span>
+                        <span id="sub-edit-flag" class="rider-editable-field text-2xl">${m.flag || '🇨🇳'}</span>
+                    </div>
+                    <h2 id="sub-edit-name" class="rider-editable-field text-3xl sm:text-4xl font-black mb-1">${m.name}</h2>
+                    <p id="sub-edit-age" class="rider-editable-field text-xs text-gray-300 mb-4">${ageText}</p>
+                    <div id="sub-edit-high" class="rider-editable-field p-3.5 rounded-xl bg-gray-800/90 border border-gray-700 text-xs text-yp-lime font-bold mb-5">${highText}</div>
+                    <div id="sub-edit-bio" class="rider-editable-field text-sm text-gray-100 leading-relaxed space-y-2">${bioText}</div>
+                    <div id="sub-edit-extra" class="rider-editable-field mt-6 pt-5 border-t border-gray-700/80 text-sm text-gray-300 leading-relaxed">${cfg.extraSection || (isAdmin ? '【管理员可编辑扩展区】点击顶部“开启主页文字直接编辑”后，可在此处添加该队员的功率数据、战车配置或个人格言...' : '')}</div>
+                </div>
+            `;
+
+            // 根据 5 种页面主体排版生成个人主页布局（重点支持 ⑤ 沉浸式大图作为背景 hero_bg）
             let profileCardHtml = '';
-            if (cfg.layout === 'magazine') {
+            if (cfg.layout === 'hero_bg') {
+                // ⑤ 大图直接作为整个人物档案区的全屏背景，文字采用毛玻璃悬浮其上
+                profileCardHtml = `
+                    <div class="rounded-3xl overflow-hidden shadow-2xl border border-gray-700 relative min-h-[540px] flex items-end"
+                         style="background: linear-gradient(105deg, rgba(17,24,39,0.92) 0%, ${darkRgba} 55%, rgba(17,24,39,0.4) 100%), url('${bgHeroUrl}') center/cover no-repeat;">
+                        <div class="p-8 sm:p-14 w-full max-w-4xl text-white backdrop-blur-[2px]">
+                            <div class="inline-block px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[10px] font-black rounded mb-3">HERO BACKDROP PROFILE</div>
+                            ${editableInfoBlock}
+                        </div>
+                    </div>
+                    ${albumSectionHtml}
+                `;
+            } else if (cfg.layout === 'magazine') {
                 profileCardHtml = `
                     <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800">
                         <div class="h-96 w-full bg-gray-800 relative">
                             <img src="${mainImg}" alt="${m.name}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent"></div>
-                            <div class="absolute bottom-6 left-8 right-8 flex flex-wrap items-end justify-between gap-4">
-                                <div>
-                                    <span class="px-3 py-1 bg-yp-green text-white text-xs font-bold rounded">${roleText}</span>
-                                    <h2 class="text-4xl font-black mt-2">${m.name} <span class="text-2xl">${m.flag || '🇨🇳'}</span></h2>
-                                    <p class="text-xs text-gray-300 mt-1">${ageText}</p>
-                                </div>
-                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent"></div>
                         </div>
-                        <div class="p-8 sm:p-12 max-w-4xl mx-auto">
-                            <div class="p-4 rounded-xl bg-gray-800 border border-gray-700 text-sm text-yp-lime font-bold mb-6">${highText}</div>
-                            <div class="text-sm text-gray-200 leading-relaxed space-y-3">${bioText}</div>
+                        <div class="p-8 sm:p-12 max-w-4xl mx-auto -mt-16 relative z-10">
+                            ${editableInfoBlock}
                         </div>
                     </div>
                     ${albumSectionHtml}
@@ -857,18 +1117,9 @@
                 profileCardHtml = `
                     <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800 grid grid-cols-1 md:grid-cols-12">
                         <div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">${roleText}</span>
-                                    <span class="text-2xl">${m.flag || '🇨🇳'}</span>
-                                </div>
-                                <h2 class="text-3xl font-black mb-1">${m.name}</h2>
-                                <p class="text-xs text-gray-400 mb-4">${ageText}</p>
-                                <div class="p-3.5 rounded-xl bg-gray-800 border border-gray-700 text-xs text-yp-lime font-bold mb-5">${highText}</div>
-                                <div class="text-sm text-gray-200 leading-relaxed space-y-2">${bioText}</div>
-                            </div>
+                            ${editableInfoBlock}
                         </div>
-                        <div class="md:col-span-5 bg-gray-800 min-h-[340px]">
+                        <div class="md:col-span-5 bg-gray-800 min-h-[360px]">
                             <img src="${mainImg}" alt="${m.name}" class="w-full h-full object-cover">
                         </div>
                     </div>
@@ -878,34 +1129,18 @@
                 profileCardHtml = `
                     ${albumSectionHtml}
                     <div class="mt-8 bg-gray-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-gray-800">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">${roleText}</span>
-                            <span class="text-2xl">${m.flag || '🇨🇳'}</span>
-                        </div>
-                        <h2 class="text-3xl font-black mb-1">${m.name}</h2>
-                        <p class="text-xs text-gray-400 mb-4">${ageText}</p>
-                        <div class="p-3.5 rounded-xl bg-gray-800 border border-gray-700 text-xs text-yp-lime font-bold mb-5">${highText}</div>
-                        <div class="text-sm text-gray-200 leading-relaxed space-y-2">${bioText}</div>
+                        ${editableInfoBlock}
                     </div>
                 `;
             } else {
-                // 默认 classic 左图右文
+                // 默认 ① 经典左图右文
                 profileCardHtml = `
                     <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800 grid grid-cols-1 md:grid-cols-12">
-                        <div class="md:col-span-5 bg-gray-800 min-h-[340px]">
+                        <div class="md:col-span-5 bg-gray-800 min-h-[360px]">
                             <img src="${mainImg}" alt="${m.name}" class="w-full h-full object-cover">
                         </div>
                         <div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">${roleText}</span>
-                                    <span class="text-2xl">${m.flag || '🇨🇳'}</span>
-                                </div>
-                                <h2 class="text-3xl font-black mb-1">${m.name}</h2>
-                                <p class="text-xs text-gray-400 mb-4">${ageText}</p>
-                                <div class="p-3.5 rounded-xl bg-gray-800 border border-gray-700 text-xs text-yp-lime font-bold mb-5">${highText}</div>
-                                <div class="text-sm text-gray-200 leading-relaxed space-y-2">${bioText}</div>
-                            </div>
+                            ${editableInfoBlock}
                             <div class="mt-8 pt-4 border-t border-gray-800 text-xs text-gray-400">Youth Power Continental Team · Official Rider Profile</div>
                         </div>
                     </div>
@@ -914,14 +1149,16 @@
             }
 
             container.innerHTML = `
-                <button onclick="switchPage('roster')" class="mb-6 inline-flex items-center text-xs font-bold text-yp-darkGreen hover:underline">
-                    <i class="fa-solid fa-arrow-left mr-1.5"></i> 返回 2027 队员介绍列表
-                </button>
+                <div class="flex items-center justify-between mb-6" data-no-edit="true">
+                    <button onclick="switchPage('roster')" class="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900/80 text-yp-lime text-xs font-bold hover:bg-gray-900 transition shadow">
+                        <i class="fa-solid fa-arrow-left mr-1.5"></i> 返回 2027 队员介绍总列表
+                    </button>
+                </div>
                 ${adminToolbarHtml}
                 ${profileCardHtml}
             `;
 
-            // 为队员详情页内的相册绑定实时拖拽排图
+            // 绑定相册内图片拖拽排序
             const albumGrid = document.getElementById('rider-album-sortable-grid');
             if (albumGrid) {
                 bindLiveSortableGrid(albumGrid, '[data-album-photo-id]', 'data-album-photo-id', (newPhotoIds) => {
@@ -929,12 +1166,13 @@
                     const reordered = newPhotoIds.map(pid => currentAlbum.find(x => String(x.id) === String(pid))).filter(Boolean);
                     if (reordered.length === currentAlbum.length) {
                         saveRiderAlbum(m.id, reordered);
-                        if (typeof showToast === 'function') showToast('✅ 队员相册图片顺序已保存！');
+                        if (typeof showToast === 'function') showToast('✅ 队员个人主页图片顺序已保存！');
                     }
                 });
             }
 
         } else if (type === 'product' && typeof products !== 'undefined') {
+            backdropWrapper.style.backgroundImage = '';
             const p = products.find(x => String(x.id) === String(id));
             if (!p) return;
             const tr = (lang !== 'zh' && productTranslations[p.id] && productTranslations[p.id][lang]) ? productTranslations[p.id][lang] : null;
