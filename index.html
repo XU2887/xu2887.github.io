@@ -14,9 +14,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Noto Sans SC"', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['"Noto Sans SC"', 'sans-serif'] },
                     colors: {
                         yp: {
                             green: '#1db954',
@@ -36,31 +34,16 @@
             background: linear-gradient(105deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.85) 55%, rgba(18,140,59,0.75) 100%), 
                         url('https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
         }
-        .stripe-gradient {
-            background: linear-gradient(90deg, #128c3b 0%, #76c729 50%, #c82333 100%);
-        }
-        .page-section {
-            display: none;
-            animation: fadeIn 0.25s ease-in-out;
-        }
-        .page-section.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* 管理员全站文本编辑高亮样式 */
+        .stripe-gradient { background: linear-gradient(90deg, #128c3b 0%, #76c729 50%, #c82333 100%); }
+        .page-section { display: none; animation: fadeIn 0.25s ease-in-out; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         body.admin-editing-text [contenteditable="true"] {
-            outline: 1.5px dashed rgba(118, 199, 41, 0.75);
-            outline-offset: 2px;
-            cursor: text;
-            transition: outline 0.15s ease, background-color 0.15s ease;
+            outline: 1.5px dashed rgba(118, 199, 41, 0.75); outline-offset: 2px; cursor: text;
         }
         body.admin-editing-text [contenteditable="true"]:hover,
         body.admin-editing-text [contenteditable="true"]:focus {
-            outline: 2px solid #76c729;
-            background-color: rgba(118, 199, 41, 0.12);
+            outline: 2px solid #76c729; background-color: rgba(118, 199, 41, 0.12);
         }
     </style>
 </head>
@@ -75,19 +58,16 @@
                 <span class="hidden md:inline" data-i18n="top_sub">UCI Continental Team · 上海市自行车队储备人才基地</span>
             </div>
             <div class="flex items-center space-x-3">
-                <!-- 微信公众号快捷入口 -->
                 <button onclick="openWechatModal()" class="text-yp-wechat hover:text-green-400 font-bold flex items-center transition">
                     <i class="fa-brands fa-weixin text-sm mr-1"></i><span data-i18n="wechat_oa">公众号：青年力量发展车队</span>
                 </button>
                 <span class="text-gray-600">|</span>
-                <!-- 语言切换器：中文 / English / Español -->
                 <div class="inline-flex rounded-md bg-gray-800 p-0.5 border border-gray-700" data-no-edit="true">
                     <button onclick="setLanguage('zh')" id="lang-zh" class="px-2 py-0.5 rounded text-[11px] font-bold bg-yp-green text-white transition">中文</button>
                     <button onclick="setLanguage('en')" id="lang-en" class="px-2 py-0.5 rounded text-[11px] font-bold text-gray-400 hover:text-white transition">EN</button>
                     <button onclick="setLanguage('es')" id="lang-es" class="px-2 py-0.5 rounded text-[11px] font-bold text-gray-400 hover:text-white transition">ES</button>
                 </div>
                 <span class="text-gray-600">|</span>
-                <!-- 会员/管理员状态 -->
                 <div id="user-status-bar" class="flex items-center space-x-2" data-no-edit="true">
                     <button onclick="openAuthModal()" class="text-yp-lime hover:underline font-bold flex items-center">
                         <i class="fa-regular fa-user mr-1"></i><span data-i18n="login_register">会员登录 / 注册</span>
@@ -100,7 +80,6 @@
     <!-- 主导航栏 -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <!-- 车队Logo -->
             <button onclick="switchPage('home')" class="flex items-center space-x-3 text-left group focus:outline-none shrink-0">
                 <div class="w-11 h-11 rounded-full bg-gray-900 border-2 border-yp-green flex items-center justify-center text-white font-black text-lg shadow-md group-hover:scale-105 transition">
                     <i class="fa-solid fa-hand-fist text-yp-lime"></i>
@@ -111,7 +90,6 @@
                 </div>
             </button>
 
-            <!-- 桌面端导航按钮 -->
             <nav class="hidden xl:flex items-center space-x-1 text-xs font-bold">
                 <button onclick="switchPage('home')" data-target="home" class="nav-btn px-3 py-2 rounded-lg text-yp-darkGreen bg-green-50 transition" data-i18n="nav_home">车队简介</button>
                 <button onclick="switchPage('roster')" data-target="roster" class="nav-btn px-3 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen transition" data-i18n="nav_roster">2027队员介绍</button>
@@ -127,7 +105,6 @@
                 <button onclick="switchPage('sponsorship')" data-target="sponsorship" class="nav-btn px-3 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen transition" data-i18n="nav_sponsor">商业赞助</button>
             </nav>
 
-            <!-- 右侧公众号、购物车与报名快捷区 -->
             <div class="flex items-center space-x-2">
                 <button onclick="openWechatModal()" class="p-2.5 rounded-full bg-green-50 hover:bg-green-100 text-yp-wechat transition" title="关注微信公众号：青年力量发展车队">
                     <i class="fa-brands fa-weixin text-lg"></i>
@@ -142,7 +119,6 @@
             </div>
         </div>
 
-        <!-- 移动端/平板端横向滚动导航栏 -->
         <div class="xl:hidden flex overflow-x-auto border-t border-gray-100 bg-white px-4 py-2 space-x-2 text-xs font-bold whitespace-nowrap">
             <button onclick="switchPage('home')" data-target="home" class="nav-btn px-3 py-1.5 rounded-md text-yp-darkGreen bg-green-50" data-i18n="nav_home">车队简介</button>
             <button onclick="switchPage('roster')" data-target="roster" class="nav-btn px-3 py-1.5 rounded-md text-gray-700" data-i18n="nav_roster">2027队员介绍</button>
@@ -156,12 +132,10 @@
         <div class="h-1 w-full stripe-gradient"></div>
     </header>
 
-    <!-- 主内容区 (支持管理员全站文本编辑并自动持久化) -->
+    <!-- 主内容区 -->
     <main id="editable-main" class="flex-1">
 
-        <!-- ============================================================== -->
         <!-- 页面 1：车队简介及愿景 (home) -->
-        <!-- ============================================================== -->
         <div id="page-home" class="page-section active">
             <section class="hero-bg text-white py-16 lg:py-24 relative overflow-hidden">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -176,7 +150,6 @@
                         <p class="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed" data-i18n="hero_desc">
                             2021年底成立青年力量发展车队，5年间赢得多项全国U系列锦标赛冠军并向国家队、阿斯塔纳集训营及上海市自行车队输送人才。2027年，Youth Power Continental Team 全面开启中、美、欧、非多线职业征程！
                         </p>
-                        
                         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
                             <button onclick="switchPage('roster')" class="text-left p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition">
                                 <div class="text-xs text-yp-lime font-bold">2027 ROSTER</div>
@@ -199,10 +172,8 @@
                 </div>
             </section>
 
-            <!-- 车队简介与筹备工作详情 -->
             <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
-                    <!-- 左侧：洲际队愿景 -->
                     <div class="lg:col-span-6 bg-gray-900 text-white rounded-2xl p-8 flex flex-col justify-between">
                         <div>
                             <div class="inline-block px-3 py-1 bg-yp-green text-xs font-bold rounded mb-4">YOUTH POWER CONTINENTAL TEAM</div>
@@ -240,7 +211,6 @@
                         </div>
                     </div>
 
-                    <!-- 右侧：5年发展荣誉榜 -->
                     <div class="lg:col-span-6 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                         <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center">
                             <i class="fa-solid fa-trophy text-amber-500 mr-2"></i> 青年力量发展车队主要荣誉 (2021-2026)
@@ -275,9 +245,7 @@
             </section>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 2：2027赛季车队人员介绍 (roster) -->
-        <!-- ============================================================== -->
         <div id="page-roster" class="page-section py-14 bg-gray-900 text-white min-h-[85vh]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
@@ -285,7 +253,7 @@
                         <span class="text-yp-lime font-black tracking-widest text-sm uppercase">2027 SEASON ROSTER & STAFF</span>
                         <h2 class="text-3xl sm:text-4xl font-black mt-1" data-i18n="roster_title">2027赛季车队工作人员与队员介绍</h2>
                         <p class="text-gray-400 text-sm mt-1">
-                            预计注册17名运动员（8名哥伦比亚籍、7名中国籍、2名西班牙籍）。管理员登录后可直接点击上传照片或开启全站文本编辑修改任何介绍。
+                            预计注册17名运动员（8名哥伦比亚籍、7名中国籍、2名西班牙籍）。点击任意成员卡片可进入其专属个人独立详情页。
                         </p>
                     </div>
                     <div class="mt-4 md:mt-0 bg-gray-800 border border-gray-700 rounded-xl p-3 text-xs">
@@ -293,15 +261,11 @@
                         <div class="text-gray-300">1名中方中生代 + 2名外籍爬坡手 + 1名外籍综合GC手 + 2名成熟青训手 + 1名刚成年青训手</div>
                     </div>
                 </div>
-
-                <!-- 人员网格 -->
                 <div id="roster-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7"></div>
             </div>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 3：未来5年及2027赛季参赛计划 (calendar) -->
-        <!-- ============================================================== -->
         <div id="page-calendar" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-10">
                 <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">5-YEAR & 2027 RACING PLAN</span>
@@ -310,57 +274,27 @@
                     2027年以南美洲和中国大陆赛事为主（欧洲确保参加 Vuelta a Asturias）；2027-2029年将逐步拓展环摩洛哥、环阿尔巴尼亚、环塞尔维亚等北非及欧洲赛事。
                 </p>
             </div>
-
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- 大中华地区 (37天) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-gradient-to-r from-yp-darkGreen to-yp-green text-white p-6 flex items-center justify-between">
                         <div>
                             <h3 class="text-xl font-black">大中华地区拟定赛历</h3>
                             <p class="text-xs text-white/80 mt-0.5">争取全国锦标赛及全运会积分</p>
                         </div>
-                        <div class="text-right">
-                            <span class="text-3xl font-black">37</span>
-                            <span class="text-xs block">预计比赛日</span>
-                        </div>
+                        <div class="text-right"><span class="text-3xl font-black">37</span><span class="text-xs block">预计比赛日</span></div>
                     </div>
                     <div class="p-6 space-y-3 text-sm">
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">环门头沟职业自行车赛</span>
-                            <span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 3个赛段</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">环鄱阳湖职业自行车赛</span>
-                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 14个赛段</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">跨喜马拉雅国际自行车极限挑战赛</span>
-                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 5个赛段</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">环上海职业自行车赛</span>
-                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 3个赛段</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">沿黄河观光带·东营口职业自行车赛</span>
-                            <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 单日赛</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">环广州(2段) / 成都天府绿道(2段) / 环榆林(3段)</span>
-                            <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">在华C类职业赛事</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-900">中国自行车全国锦标赛 (U23/精英 大组+ITT)</span>
-                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">4个比赛日 · 6人次</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2">
-                            <span class="font-bold text-gray-900">中国职业自行车联赛(2~5站) & 中国自行车联赛(1~3站)</span>
-                            <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">国家级积分赛</span>
-                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">环门头沟职业自行车赛</span><span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 3个赛段</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">环鄱阳湖职业自行车赛</span><span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 14个赛段</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">跨喜马拉雅国际自行车极限挑战赛</span><span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 5个赛段</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">环上海职业自行车赛</span><span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 3个赛段</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">沿黄河观光带·东营口职业自行车赛</span><span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 单日赛</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">环广州(2段) / 成都天府绿道(2段) / 环榆林(3段)</span><span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">在华C类职业赛事</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">中国自行车全国锦标赛 (U23/精英 大组+ITT)</span><span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">4个比赛日 · 6人次</span></div>
+                        <div class="flex justify-between items-center py-2"><span class="font-bold text-gray-900">中国职业自行车联赛(2~5站) & 中国自行车联赛(1~3站)</span><span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">国家级积分赛</span></div>
                     </div>
                 </div>
 
-                <!-- 美洲及欧洲/北非赛区 (33天+) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between">
                     <div>
                         <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-6 flex items-center justify-between">
@@ -368,45 +302,22 @@
                                 <h3 class="text-xl font-black">美洲地区及欧洲/北非赛历</h3>
                                 <p class="text-xs text-gray-300 mt-0.5">副队长 Vladimir López 全权负责美洲赛区</p>
                             </div>
-                            <div class="text-right">
-                                <span class="text-3xl font-black text-yp-lime">33+</span>
-                                <span class="text-xs block text-gray-300">预计比赛日</span>
-                            </div>
+                            <div class="text-right"><span class="text-3xl font-black text-yp-lime">33+</span><span class="text-xs block text-gray-300">预计比赛日</span></div>
                         </div>
                         <div class="p-6 space-y-3.5 text-sm">
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="font-bold text-gray-900">环哥伦比亚职业自行车赛</span>
-                                <span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 14个赛段</span>
-                            </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="font-bold text-gray-900">环哥伦比亚 (Vuelta a Colombia)</span>
-                                <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.2 · 7个赛段</span>
-                            </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="font-bold text-gray-900">包含麦德林经典赛在内的 6~7 场古典赛</span>
-                                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 7~9个比赛日</span>
-                            </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="font-bold text-gray-900">UCI Gravel 世界杯（哥伦比亚站、墨西哥站）</span>
-                                <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">2个比赛日 · 4人次</span>
-                            </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="font-bold text-gray-900">UCI Gravel 世锦赛（代表哥伦比亚国家队）</span>
-                                <span class="px-2.5 py-0.5 bg-purple-100 text-purple-800 font-bold text-xs rounded">1个比赛日 · 2人次</span>
-                            </div>
-                            <div class="flex justify-between items-center py-2">
-                                <span class="font-bold text-gray-900">欧洲与北非拓展：Vuelta a Asturias / 环摩洛哥 / 环阿尔巴尼亚 / 环塞尔维亚</span>
-                                <span class="px-2.5 py-0.5 bg-gray-800 text-yp-lime font-bold text-xs rounded">2027-2029重点赛场</span>
-                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">环哥伦比亚职业自行车赛</span><span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 14个赛段</span></div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">环哥伦比亚 (Vuelta a Colombia)</span><span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.2 · 7个赛段</span></div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">包含麦德林经典赛在内的 6~7 场古典赛</span><span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 7~9个比赛日</span></div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">UCI Gravel 世界杯（哥伦比亚站、墨西哥站）</span><span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">2个比赛日 · 4人次</span></div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-bold text-gray-900">UCI Gravel 世锦赛（代表哥伦比亚国家队）</span><span class="px-2.5 py-0.5 bg-purple-100 text-purple-800 font-bold text-xs rounded">1个比赛日 · 2人次</span></div>
+                            <div class="flex justify-between items-center py-2"><span class="font-bold text-gray-900">欧洲与北非拓展：Vuelta a Asturias / 环摩洛哥 / 环阿尔巴尼亚 / 环塞尔维亚</span><span class="px-2.5 py-0.5 bg-gray-800 text-yp-lime font-bold text-xs rounded">2027-2029重点赛场</span></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 4：车队风采 Gallery (gallery) -->
-        <!-- ============================================================== -->
         <div id="page-gallery" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
                 <div>
@@ -422,7 +333,6 @@
                 </div>
             </div>
 
-            <!-- 管理员专属上传面板 -->
             <div id="admin-gallery-uploader" class="hidden mb-10 bg-gray-900 text-white p-6 rounded-2xl border-2 border-yp-lime shadow-lg" data-no-edit="true">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-2">
@@ -434,7 +344,7 @@
                 <form onsubmit="submitNewGalleryPhoto(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                         <label class="block text-xs text-gray-300 font-bold mb-1">方式1：选择本地图片文件</label>
-                        <input type="file" id="gallery-file-input" accept="image/*" class="w-full text-xs text-gray-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-yp-green file:text-white hover:file:bg-yp-darkGreen">
+                        <input type="file" id="gallery-file-input" accept="image/*" class="w-full text-xs text-gray-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-yp-green file:text-white">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-300 font-bold mb-1">或 方式2：粘贴图片网络链接 (URL)</label>
@@ -444,21 +354,16 @@
                         <label class="block text-xs text-gray-300 font-bold mb-1">照片标题 / 赛事说明 *</label>
                         <div class="flex space-x-2">
                             <input type="text" id="gallery-caption-input" required placeholder="如：2026全国公开赛枝江站夺冠" class="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-xs text-white">
-                            <button type="submit" class="px-5 py-2 bg-yp-lime text-gray-900 font-black rounded-xl text-xs hover:bg-white transition shrink-0">
-                                立即发布
-                            </button>
+                            <button type="submit" class="px-5 py-2 bg-yp-lime text-gray-900 font-black rounded-xl text-xs hover:bg-white transition shrink-0">立即发布</button>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <!-- 相册图片网格 -->
             <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 5：官方商城 (shop) -->
-        <!-- ============================================================== -->
         <div id="page-shop" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
                 <div>
@@ -479,13 +384,10 @@
                     <button onclick="filterShop('pedal', this)" class="shop-tab bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 px-3.5 py-2 rounded-lg text-xs font-bold transition">卓锐ZP115锁踏</button>
                 </div>
             </div>
-
             <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 6：千岛湖青旅 La Fuga青野·驿 与骑游招募公告 (rides) -->
-        <!-- ============================================================== -->
         <div id="page-rides" class="page-section py-14 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white rounded-3xl shadow-md border border-gray-200 overflow-hidden mb-10">
                 <div class="bg-gradient-to-r from-gray-900 via-gray-800 to-yp-darkGreen text-white p-8 sm:p-12">
@@ -505,13 +407,12 @@
                         <p class="text-sm text-gray-600 leading-relaxed">
                             我们的青年旅舍位于<strong>千岛湖亚运村（La Fuga 青野·驿）</strong>。您可以关注我们的微信公众号<strong>「青年力量发展车队」</strong>或注册成为本网站会员，一旦发布最新骑游招募或赛事获奖动态，您将第一时间收到推送！
                         </p>
-                        <!-- 管理员发布骑游/赛事新闻入口 -->
                         <div id="admin-ride-publisher" class="hidden p-5 bg-gray-900 text-white rounded-2xl border-2 border-yp-lime mt-4" data-no-edit="true">
                             <div class="text-xs font-black text-yp-lime mb-2">📢 管理员专属：发布新骑游招募 / 赛事获奖公告</div>
                             <form onsubmit="publishRidePost(event)" class="space-y-3 text-xs">
-                                <input type="text" id="post-title" required placeholder="活动或公告标题（如：千岛湖周末骑游招募 / 某某站夺冠喜报）" class="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                                <input type="text" id="post-title" required placeholder="活动或公告标题" class="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-white">
                                 <textarea id="post-content" required rows="3" placeholder="详细内容、集合时间地点或获奖详情..." class="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-white"></textarea>
-                                <button type="submit" class="px-4 py-2 bg-yp-lime text-gray-900 font-black rounded-lg hover:bg-white transition">立即发布公告并推送给订阅会员</button>
+                                <button type="submit" class="px-4 py-2 bg-yp-lime text-gray-900 font-black rounded-lg hover:bg-white transition">立即发布公告</button>
                             </form>
                         </div>
                     </div>
@@ -522,15 +423,12 @@
                         <form onsubmit="submitHostelForm(event)" class="space-y-3 text-sm" data-no-edit="true">
                             <input type="text" id="hostel-name" required placeholder="您的姓名 *" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 bg-white">
                             <input type="tel" id="hostel-phone" required placeholder="联系电话/微信 *" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 bg-white">
-                            <button type="submit" class="w-full py-3 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl transition">
-                                提交入住 / 骑游咨询
-                            </button>
+                            <button type="submit" class="w-full py-3 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl transition">提交入住 / 骑游咨询</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- 车队官方动态与骑游招募公告栏 -->
             <div>
                 <h3 class="text-xl font-black text-gray-900 mb-4 flex items-center">
                     <i class="fa-solid fa-bullhorn text-yp-green mr-2"></i> 车队最新骑游招募与赛事动态
@@ -539,9 +437,7 @@
             </div>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 7：自行车教练服务报名 (coaching) -->
-        <!-- ============================================================== -->
         <div id="page-coaching" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-10">
                 <div class="inline-flex items-center space-x-2 text-yp-darkGreen font-black text-sm uppercase">
@@ -597,7 +493,6 @@
                 </div>
             </div>
 
-            <!-- 报名与支付宝付款框 -->
             <div id="coach-form-box" class="bg-gray-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl" data-no-edit="true">
                 <h3 class="text-2xl font-black mb-2">填写教练服务报名表 & 支付宝付款</h3>
                 <p class="text-xs text-gray-400 mb-6">收款支付宝账号：<strong class="text-yp-lime">18513693097 (徐核)</strong></p>
@@ -643,9 +538,7 @@
             </div>
         </div>
 
-        <!-- ============================================================== -->
         <!-- 页面 8：商业赞助 (sponsorship) -->
-        <!-- ============================================================== -->
         <div id="page-sponsorship" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-12">
                 <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">SPONSORSHIP & COMMERCIAL RIGHTS</span>
@@ -656,7 +549,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                <!-- 招商席位需求 -->
                 <div class="lg:col-span-5 bg-gray-900 text-white rounded-2xl p-8 flex flex-col justify-between">
                     <div>
                         <h3 class="text-2xl font-black mb-6 text-yp-lime">2027 招商合作席位需求</h3>
@@ -685,7 +577,6 @@
                     </div>
                 </div>
 
-                <!-- 赞助商核心权益 -->
                 <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs sm:col-span-2">
                         <div class="inline-block px-2.5 py-1 bg-green-100 text-yp-darkGreen text-xs font-black rounded mb-2">核心亮点 · 品牌出海与海外渠道建立</div>
@@ -726,13 +617,11 @@
         </div>
     </footer>
 
-    <!-- ============================================================== -->
-    <!-- 管理员底部悬浮控制工具栏（支持开启/保存全站任意文本编辑） -->
-    <!-- ============================================================== -->
+    <!-- 管理员底部悬浮控制工具栏 -->
     <div id="admin-floating-bar" class="fixed bottom-0 left-0 right-0 z-50 hidden bg-gray-900/95 backdrop-blur-md text-white border-t-2 border-yp-lime px-4 py-3 shadow-2xl" data-no-edit="true">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center space-x-3">
-                <span class="px-2.5 py-1 bg-yp-red text-white text-xs font-black rounded">超级管理员模式</span>
+                <span class="px-2.5 py-1 bg-yp-red text-white text-xs font-black rounded">超级管理员模式 (SHA-256已加密)</span>
                 <span id="admin-edit-status" class="text-xs text-gray-300">点击右侧按钮即可直接在页面上修改任意文字内容</span>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -744,6 +633,9 @@
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>保存全站文本修改</span>
                 </button>
+                <button onclick="generateNewPasswordHashPrompt()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-amber-400 text-xs font-bold rounded-lg border border-gray-700 transition">
+                    🔑 密码加密生成器
+                </button>
                 <button onclick="resetGlobalTextEdits()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold rounded-lg border border-gray-700 transition">
                     恢复默认文本
                 </button>
@@ -751,9 +643,7 @@
         </div>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- 微信公众号「青年力量发展车队」关注与二维码弹窗 Modal -->
-    <!-- ============================================================== -->
+    <!-- 微信公众号弹窗 -->
     <div id="wechat-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" data-no-edit="true">
         <div onclick="closeWechatModal()" class="fixed inset-0 bg-black/70 backdrop-blur-xs"></div>
         <div class="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl relative z-10 text-center">
@@ -764,7 +654,6 @@
                 <p class="text-xs text-white/90 mt-1">官方微信公众号 · 每周更新推文、赛报与骑游招募</p>
             </div>
             <div class="p-6 space-y-4">
-                <!-- 二维码展示框（管理员可上传替换真实公众号二维码） -->
                 <div class="w-48 h-48 mx-auto rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden relative">
                     <img id="wechat-qr-img" src="" alt="公众号二维码" class="hidden w-full h-full object-cover">
                     <div id="wechat-qr-placeholder" class="p-4 text-center">
@@ -773,19 +662,15 @@
                         <div class="text-[11px] text-gray-500 mt-0.5">「青年力量发展车队」</div>
                     </div>
                 </div>
-
-                <!-- 管理员上传公众号二维码按钮 -->
                 <div id="admin-wechat-qr-box" class="hidden">
                     <label class="cursor-pointer inline-flex items-center px-3 py-1.5 bg-gray-900 text-yp-lime text-xs font-bold rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-upload mr-1.5"></i>管理员上传公众号二维码图片
                         <input type="file" accept="image/*" class="hidden" onchange="handleWechatQrUpload(event)">
                     </label>
                 </div>
-
                 <div class="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-gray-700">
                     公众号名称：<strong class="text-gray-900 select-all">青年力量发展车队</strong>
                 </div>
-
                 <button onclick="copyWechatName()" class="w-full py-3 bg-yp-wechat hover:bg-green-600 text-white font-black rounded-xl text-sm transition flex items-center justify-center space-x-2">
                     <i class="fa-regular fa-copy"></i>
                     <span>一键复制公众号名称并打开微信</span>
@@ -794,16 +679,14 @@
         </div>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- 会员注册 / 登录 / 管理员登录 弹窗 Modal -->
-    <!-- ============================================================== -->
+    <!-- 会员注册 / 管理员 SHA-256 加密登录 弹窗 -->
     <div id="auth-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" data-no-edit="true">
         <div onclick="closeAuthModal()" class="fixed inset-0 bg-black/70 backdrop-blur-xs"></div>
         <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative z-10">
             <div class="bg-gray-900 text-white p-6 flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-black">青年力量车队 · 会员与管理员登录</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">登录后自动保存购物车商品并接收骑游/获奖通知</p>
+                    <p class="text-xs text-gray-400 mt-0.5">内置纯JS SHA-256不可逆加密验证，源码零明文泄露</p>
                 </div>
                 <button onclick="closeAuthModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
@@ -814,7 +697,6 @@
                     <button onclick="switchAuthTab('register')" id="tab-register" class="py-2 rounded-lg text-gray-500">注册新会员</button>
                 </div>
 
-                <!-- 登录表单 -->
                 <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 text-sm">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">登录邮箱 *</label>
@@ -825,14 +707,13 @@
                         <input type="password" id="login-password" required placeholder="请输入密码" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5">
                     </div>
                     <button type="submit" class="w-full py-3 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl transition">
-                        立即登录
+                        🔒 SHA-256 加密验证登录
                     </button>
                     <p class="text-[11px] text-gray-400 text-center">
-                        * 管理员登录可开启「全站所有文本编辑」、「Gallery上传」及「发布骑游」权限。
+                        * 管理员登录将通过 SHA-256 哈希指纹比对，开启全站编辑、拖拽与合集权限。
                     </p>
                 </form>
 
-                <!-- 注册表单 -->
                 <form id="register-form" onsubmit="handleRegister(event)" class="hidden space-y-3.5 text-sm">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">您的昵称 / 姓名 *</label>
@@ -844,14 +725,14 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">设置密码 *</label>
-                        <input type="password" id="reg-password" required placeholder="请设置登录密码" class="w-full rounded-xl border border-gray-300 px-3.5 py-2">
+                        <input type="password" id="reg-password" required placeholder="密码将通过SHA-256加密存储" class="w-full rounded-xl border border-gray-300 px-3.5 py-2">
                     </div>
                     <label class="flex items-start space-x-2 text-xs text-gray-600 cursor-pointer pt-1">
                         <input type="checkbox" id="reg-subscribe" checked class="mt-0.5 rounded text-yp-green">
-                        <span>我愿意接收青年力量车队的广告与动态推送（包括发布最新线下骑游活动、参加国内外赛事获奖喜报等）</span>
+                        <span>我愿意接收青年力量车队的动态推送（骑游活动、赛事获奖喜报等）</span>
                     </label>
                     <button type="submit" class="w-full py-3 bg-gray-900 hover:bg-yp-darkGreen text-white font-black rounded-xl transition">
-                        完成注册并登录
+                        完成加密注册并登录
                     </button>
                 </form>
             </div>
@@ -933,20 +814,85 @@
         </div>
     </div>
 
-    <!-- 隐藏的管理员更换车手头像文件选择器 -->
     <input type="file" id="member-photo-file" accept="image/*" class="hidden" onchange="handleMemberPhotoSelected(event)">
 
-    <!-- 全局提示 Toast -->
     <div id="toast" class="fixed bottom-16 right-6 z-50 hidden bg-gray-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border-l-4 border-yp-lime text-sm font-bold flex items-center space-x-3" data-no-edit="true">
         <i class="fa-solid fa-circle-check text-yp-lime text-lg"></i>
         <span id="toast-msg">操作成功</span>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- 核心脚本：三语词典 + 全站文本可视化编辑 + 公众号 + 商城与支付宝 -->
-    <!-- ============================================================== -->
+    <!-- 主脚本：内置纯JavaScript标准 SHA-256 不可逆加密引擎（兼容本地file://与线上https://） -->
     <script>
-        // 1. 中 / 英 / 西 三语词典（已统一英文名为 Youth Power Continental Team 并移除哥伦比亚注册中字样）
+        // =====================================================================
+        // 0. 纯 JavaScript 标准 SHA-256 不可逆哈希算法（不依赖浏览器权限，100% 稳定）
+        // =====================================================================
+        function pureSha256(ascii) {
+            function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+            var mathPow = Math.pow, maxWord = mathPow(2, 32), lengthProperty = 'length', i, j, result = '';
+            var words = [], asciiBitLength = ascii[lengthProperty] * 8;
+            var hash = pureSha256.h = pureSha256.h || [], k = pureSha256.k = pureSha256.k || [], primeCounter = k[lengthProperty];
+            var isComposite = {};
+            for (var candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }
+                    hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+                    k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+                }
+            }
+            ascii += '\x80';
+            while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+            for (i = 0; i < ascii[lengthProperty]; i++) {
+                j = ascii.charCodeAt(i);
+                if (j >> 8) return '';
+                words[i >> 2] |= j << ((3 - i) % 4) * 8;
+            }
+            words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+            words[words[lengthProperty]] = (asciiBitLength);
+            for (j = 0; j < words[lengthProperty];) {
+                var w = words.slice(j, j += 16), oldHash = hash;
+                hash = hash.slice(0, 8);
+                for (i = 0; i < 64; i++) {
+                    var i2 = i + j, w15 = w[i - 15], w2 = w[i - 2];
+                    var a = hash[0], e = hash[4];
+                    var temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+                    var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                    hash = [(temp1 + temp2) | 0].concat(hash);
+                    hash[4] = (hash[4] + temp1) | 0;
+                }
+                for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i]) | 0; }
+            }
+            for (i = 0; i < 8; i++) {
+                for (j = 3; j + 1; j--) {
+                    var b = (hash[i] >> (j * 8)) & 255;
+                    result += ((b < 16) ? 0 : '') + b.toString(16);
+                }
+            }
+            return result;
+        }
+
+        // 管理员邮箱与标准 SHA-256 加密密文（对应初始密码的标准 SHA-256 哈希值，源码零明文！）
+        const ADMIN_EMAIL = 'team_youthpower@outlook.com';
+        const ADMIN_PASS_SHA256 = '1531667028e8800c7550a88802227e971929b9b99b6a5256f7500b585f998249';
+
+        // 验证管理员密码（比对 SHA-256 密文）
+        function verifyAdminPasswordHash(rawInput) {
+            if (!rawInput) return false;
+            const clean = rawInput.trim();
+            const customHash = localStorage.getItem('yp_custom_admin_sha256') || ADMIN_PASS_SHA256;
+            const calculatedHash = pureSha256(clean);
+            return calculatedHash === customHash || calculatedHash === ADMIN_PASS_SHA256;
+        }
+
+        // 管理员工具：一键生成新密码的 SHA-256 加密串或修改本地加密锁
+        function generateNewPasswordHashPrompt() {
+            if (!isCurrentUserAdmin()) return;
+            const newPass = prompt('请输入您想要加密的新密码，系统将为您生成对应的64位 SHA-256 不可逆加密密文：');
+            if (!newPass || !newPass.trim()) return;
+            const hashStr = pureSha256(newPass.trim());
+            prompt('已生成该密码的 SHA-256 加密密文（您可复制它替换代码中的 ADMIN_PASS_SHA256）：', hashStr);
+        }
+
+        // 1. 中/英/西三语词典
         const i18nDict = {
             zh: {
                 top_sub: 'UCI Continental Team · 上海市自行车队储备人才基地',
@@ -1022,22 +968,16 @@
             currentLang = lang;
             ['zh', 'en', 'es'].forEach(l => {
                 const btn = document.getElementById('lang-' + l);
-                if (l === lang) {
-                    btn.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-yp-green text-white transition';
-                } else {
-                    btn.className = 'px-2 py-0.5 rounded text-[11px] font-bold text-gray-400 hover:text-white transition';
-                }
+                if (btn) btn.className = l === lang ? 'px-2 py-0.5 rounded text-[11px] font-bold bg-yp-green text-white transition' : 'px-2 py-0.5 rounded text-[11px] font-bold text-gray-400 hover:text-white transition';
             });
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (i18nDict[lang][key]) {
-                    el.textContent = i18nDict[lang][key];
-                }
+                if (i18nDict[lang][key]) el.textContent = i18nDict[lang][key];
             });
             renderRoster();
         }
 
-        // 2. 2027赛季车队工作人员与车手数据
+        // 2. 2027赛季车队成员默认数据（已移除邱皓麟）
         const defaultRoster = [
             {
                 id: 'xuhe',
@@ -1137,18 +1077,6 @@
                 photo: ''
             },
             {
-                id: 'qiuhaolin',
-                role_zh: '中方青训强力冲刺手',
-                role_en: 'U23 Power Sprinter',
-                role_es: 'Esprínter Sub-23',
-                name: '邱皓麟 (Qiu Haolin)',
-                flag: '🇨🇳',
-                ageSpec: '19岁 · 强力冲刺手',
-                highlight: '16岁时30秒平均功率超 1000W (Quarq功率计) | 京津冀U16/U18多冠王',
-                bio: '一位强力冲刺手，在16岁时，30秒平均功率就超过 1000 watt（Quarq功率计）。青少年时期，他赢得了大量北京、天津以及周边地区U16、U18组别的冠亚军，是车队的重点培养对象之一。',
-                photo: ''
-            },
-            {
                 id: 'jinluoxi',
                 role_zh: '中方青训潜力冲刺手',
                 role_en: 'U23 Sprint Prospect',
@@ -1170,9 +1098,7 @@
         }
 
         function getSavedMemberPhotos() {
-            try {
-                return JSON.parse(localStorage.getItem('yp_member_photos') || '{}');
-            } catch (e) { return {}; }
+            try { return JSON.parse(localStorage.getItem('yp_member_photos') || '{}'); } catch (e) { return {}; }
         }
 
         let currentEditingMemberId = null;
@@ -1182,6 +1108,7 @@
             const savedPhotos = getSavedMemberPhotos();
             const isAdmin = isCurrentUserAdmin();
             const grid = document.getElementById('roster-grid');
+            if (!grid) return;
 
             grid.innerHTML = rosterData.map(m => {
                 const roleText = currentLang === 'en' ? m.role_en : (currentLang === 'es' ? m.role_es : m.role_zh);
@@ -1189,11 +1116,8 @@
                 return `
                     <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 flex flex-col justify-between hover:border-yp-lime transition group" data-roster-id="${m.id}">
                         <div>
-                            <!-- 预留标准 4:3 照片空间 -->
                             <div class="relative h-60 bg-gray-900 border-b border-gray-700 flex flex-col items-center justify-center overflow-hidden">
-                                ${photoUrl ? `
-                                    <img src="${photoUrl}" alt="${m.name}" class="w-full h-full object-cover">
-                                ` : `
+                                ${photoUrl ? `<img src="${photoUrl}" alt="${m.name}" class="w-full h-full object-cover">` : `
                                     <div class="text-center p-6">
                                         <div class="w-16 h-16 rounded-full bg-gray-800 border border-dashed border-gray-600 flex items-center justify-center mx-auto mb-2 text-gray-500">
                                             <i class="fa-solid fa-user-astronaut text-2xl"></i>
@@ -1206,31 +1130,22 @@
                                 <span class="absolute top-3 right-3 text-lg">${m.flag}</span>
                                 ${isAdmin ? `
                                     <button onclick="triggerMemberPhotoUpload('${m.id}')" data-no-edit="true" class="absolute bottom-3 right-3 px-3 py-1.5 bg-yp-red hover:bg-red-700 text-white text-xs font-black rounded-lg shadow-lg flex items-center space-x-1">
-                                        <i class="fa-solid fa-camera"></i>
-                                        <span>上传/更换照片</span>
+                                        <i class="fa-solid fa-camera"></i><span>上传/更换照片</span>
                                     </button>
                                 ` : ''}
                             </div>
-
-                            <!-- 文字介绍 (支持管理员直接点击修改) -->
                             <div class="p-6">
                                 <div class="roster-agespec text-xs text-gray-400 mb-1">${m.ageSpec}</div>
                                 <h3 class="roster-name text-2xl font-black text-white mb-2">${m.name}</h3>
-                                <div class="roster-highlight p-2.5 rounded-lg bg-gray-900/80 border border-gray-700 text-xs text-yp-lime font-bold mb-3">
-                                    ${m.highlight}
-                                </div>
-                                <div class="roster-bio text-xs text-gray-300 leading-relaxed space-y-1.5">
-                                    ${m.bio}
-                                </div>
+                                <div class="roster-highlight p-2.5 rounded-lg bg-gray-900/80 border border-gray-700 text-xs text-yp-lime font-bold mb-3">${m.highlight}</div>
+                                <div class="roster-bio text-xs text-gray-300 leading-relaxed space-y-1.5">${m.bio}</div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            if (isGlobalTextEditing) {
-                applyContentEditable(true);
-            }
+            if (isGlobalTextEditing) applyContentEditable(true);
         }
 
         function triggerMemberPhotoUpload(memberId) {
@@ -1252,20 +1167,15 @@
             reader.readAsDataURL(file);
         }
 
-        // ==============================================================
-        // 3. 管理员「全站所有文本可视化编辑 (CMS)」系统
-        // ==============================================================
+        // 3. 全站文本编辑系统
         let isGlobalTextEditing = false;
 
         function applyContentEditable(enable) {
             const selector = 'h1, h2, h3, h4, p, span, li, div.font-bold, div.font-black, .roster-agespec, .roster-name, .roster-highlight, .roster-bio';
             document.querySelectorAll(selector).forEach(el => {
                 if (el.closest('[data-no-edit="true"]')) return;
-                if (enable) {
-                    el.setAttribute('contenteditable', 'true');
-                } else {
-                    el.removeAttribute('contenteditable');
-                }
+                if (enable) el.setAttribute('contenteditable', 'true');
+                else el.removeAttribute('contenteditable');
             });
         }
 
@@ -1282,8 +1192,8 @@
                 btnToggle.innerHTML = '<i class="fa-solid fa-xmark"></i><span>退出编辑模式</span>';
                 btnToggle.className = 'px-4 py-2 bg-gray-700 text-white text-xs font-bold rounded-lg hover:bg-gray-600 transition flex items-center space-x-1.5';
                 btnSave.classList.remove('hidden');
-                statusText.textContent = '✏️ 编辑模式已开启：直接点击网页上任意带绿色虚线框的文字即可修改，改完请点「保存全站文本修改」';
-                showToast('全站文本编辑已开启！现在您可以直接点击页面上的任何文字进行修改。');
+                statusText.textContent = '✏️ 编辑模式已开启：直接点击网页上任意带绿色虚线框的文字即可修改';
+                showToast('全站文本编辑已开启！');
             } else {
                 document.body.classList.remove('admin-editing-text');
                 applyContentEditable(false);
@@ -1295,7 +1205,6 @@
         }
 
         function saveGlobalTextEdits() {
-            // 1. 同步保存队员卡片内的文本修改
             const rosterData = getSavedRosterData();
             document.querySelectorAll('[data-roster-id]').forEach(card => {
                 const id = card.getAttribute('data-roster-id');
@@ -1306,11 +1215,7 @@
                     const nameEl = card.querySelector('.roster-name');
                     const highEl = card.querySelector('.roster-highlight');
                     const bioEl = card.querySelector('.roster-bio');
-                    if (roleEl) {
-                        if (currentLang === 'en') item.role_en = roleEl.innerHTML;
-                        else if (currentLang === 'es') item.role_es = roleEl.innerHTML;
-                        else item.role_zh = roleEl.innerHTML;
-                    }
+                    if (roleEl) item.role_zh = roleEl.innerHTML;
                     if (ageEl) item.ageSpec = ageEl.innerHTML;
                     if (nameEl) item.name = nameEl.innerHTML;
                     if (highEl) item.highlight = highEl.innerHTML;
@@ -1319,7 +1224,6 @@
             });
             localStorage.setItem('yp_roster_custom_data', JSON.stringify(rosterData));
 
-            // 2. 保存静态板块（首页、赛历、青旅、教练、赞助）的 HTML 内容
             ['page-home', 'page-calendar', 'page-rides', 'page-coaching', 'page-sponsorship'].forEach(secId => {
                 const sec = document.getElementById(secId);
                 if (sec) {
@@ -1330,21 +1234,19 @@
             });
 
             toggleGlobalTextEdit();
-            showToast('✅ 全站文本修改已成功保存！刷新网页也会永久生效。');
+            showToast('✅ 全站文本修改已成功保存！');
         }
 
         function loadSavedStaticSections() {
             ['page-home', 'page-calendar', 'page-rides', 'page-coaching', 'page-sponsorship'].forEach(secId => {
                 const savedHtml = localStorage.getItem('yp_cms_' + secId);
                 const sec = document.getElementById(secId);
-                if (savedHtml && sec) {
-                    sec.innerHTML = savedHtml;
-                }
+                if (savedHtml && sec) sec.innerHTML = savedHtml;
             });
         }
 
         function resetGlobalTextEdits() {
-            if (!confirm('确定要恢复全站默认初始文本吗？（您上传的照片不会丢失）')) return;
+            if (!confirm('确定要恢复全站默认初始文本吗？')) return;
             localStorage.removeItem('yp_roster_custom_data');
             ['page-home', 'page-calendar', 'page-rides', 'page-coaching', 'page-sponsorship'].forEach(secId => {
                 localStorage.removeItem('yp_cms_' + secId);
@@ -1352,9 +1254,7 @@
             location.reload();
         }
 
-        // ==============================================================
-        // 4. 微信公众号「青年力量发展车队」弹窗与二维码上传
-        // ==============================================================
+        // 4. 微信公众号弹窗
         function openWechatModal() {
             const savedQr = localStorage.getItem('yp_wechat_qr_img');
             const qrImg = document.getElementById('wechat-qr-img');
@@ -1366,19 +1266,11 @@
             }
             document.getElementById('wechat-modal').classList.remove('hidden');
         }
-
-        function closeWechatModal() {
-            document.getElementById('wechat-modal').classList.add('hidden');
-        }
-
+        function closeWechatModal() { document.getElementById('wechat-modal').classList.add('hidden'); }
         function copyWechatName() {
             navigator.clipboard.writeText('青年力量发展车队');
-            showToast('已复制公众号名称「青年力量发展车队」，请打开微信搜索关注！');
-            setTimeout(() => {
-                window.location.href = 'weixin://';
-            }, 600);
+            showToast('已复制公众号名称「青年力量发展车队」！');
         }
-
         function handleWechatQrUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1386,60 +1278,35 @@
             reader.onload = function(e) {
                 localStorage.setItem('yp_wechat_qr_img', e.target.result);
                 openWechatModal();
-                showToast('微信公众号二维码图片已成功上传保存！');
+                showToast('微信公众号二维码已保存！');
             };
             reader.readAsDataURL(file);
         }
 
-        // ==============================================================
-        // 5. 车队风采 Gallery 系统 & 骑游公告系统
-        // ==============================================================
+        // 5. 车队风采 Gallery & 骑游公告
         const defaultGallery = [
-            {
-                id: 1,
-                title: '2024全国青少年U系列公路自行车锦标赛（常州·溧阳）领奖台包揽冠亚军',
-                tag: '全国锦标赛夺冠',
-                url: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=900&q=80'
-            },
-            {
-                id: 2,
-                title: '车队征战西班牙与摩洛哥洲际赛事主集团突围瞬间',
-                tag: '海外拉练与外赛',
-                url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80'
-            },
-            {
-                id: 3,
-                title: '2026全国公开赛（湖北枝江）大学生组张浩阳强势夺冠',
-                tag: '2026赛季捷报',
-                url: 'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=900&q=80'
-            }
+            { id: 1, title: '2024全国青少年U系列公路自行车锦标赛（常州·溧阳）领奖台包揽冠亚军', tag: '全国锦标赛夺冠', url: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=900&q=80' },
+            { id: 2, title: '车队征战西班牙与摩洛哥洲际赛事主集团突围瞬间', tag: '海外拉练与外赛', url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80' },
+            { id: 3, title: '2026全国公开赛（湖北枝江）大学生组张浩阳强势夺冠', tag: '2026赛季捷报', url: 'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=900&q=80' }
         ];
 
         function getGalleryList() {
-            try {
-                const saved = localStorage.getItem('yp_gallery_items');
-                return saved ? JSON.parse(saved) : defaultGallery;
-            } catch (e) { return defaultGallery; }
+            try { return JSON.parse(localStorage.getItem('yp_gallery_items') || 'null') || defaultGallery; } catch (e) { return defaultGallery; }
         }
 
         function renderGallery() {
             const list = getGalleryList();
             const isAdmin = isCurrentUserAdmin();
             const grid = document.getElementById('gallery-grid');
+            if (!grid) return;
             grid.innerHTML = list.map(item => `
                 <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between">
                     <div class="relative h-60 bg-gray-900">
                         <img src="${item.url}" alt="${item.title}" class="w-full h-full object-cover">
                         <span class="absolute top-3 left-3 px-2.5 py-1 bg-yp-darkGreen text-white text-xs font-bold rounded">${item.tag || '车队风采'}</span>
-                        ${isAdmin ? `
-                            <button onclick="deleteGalleryItem(${item.id})" data-no-edit="true" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-yp-red text-white text-xs flex items-center justify-center shadow" title="删除此图片">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        ` : ''}
+                        ${isAdmin ? `<button onclick="deleteGalleryItem(${item.id})" data-no-edit="true" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-yp-red text-white text-xs flex items-center justify-center shadow"><i class="fa-solid fa-trash"></i></button>` : ''}
                     </div>
-                    <div class="p-4">
-                        <h4 class="font-bold text-gray-900 text-sm">${item.title}</h4>
-                    </div>
+                    <div class="p-4"><h4 class="font-bold text-gray-900 text-sm">${item.title}</h4></div>
                 </div>
             `).join('');
         }
@@ -1447,10 +1314,10 @@
         function handleStaffUploadClick() {
             if (isCurrentUserAdmin()) {
                 document.getElementById('admin-gallery-uploader').scrollIntoView({ behavior: 'smooth' });
-                showToast('您已处于管理员模式，请直接在下方上传框上传图片！');
+                showToast('请直接在下方上传框上传图片！');
             } else {
                 openAuthModal();
-                showToast('请使用管理员账号 (team_youthpower@outlook.com) 登录以开启上传权限');
+                showToast('请先使用管理员账号登录');
             }
         }
 
@@ -1459,50 +1326,32 @@
             const fileInput = document.getElementById('gallery-file-input');
             const urlInput = document.getElementById('gallery-url-input').value.trim();
             const caption = document.getElementById('gallery-caption-input').value.trim();
-
             const savePhoto = (imgSrc) => {
                 const list = getGalleryList();
                 list.unshift({ id: Date.now(), title: caption, tag: '管理员上传', url: imgSrc });
                 localStorage.setItem('yp_gallery_items', JSON.stringify(list));
                 renderGallery();
                 e.target.reset();
-                showToast('照片已成功上传至「车队风采 Gallery」！');
+                showToast('照片已上传！');
             };
-
             if (fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(ev) { savePhoto(ev.target.result); };
+                reader.onload = ev => savePhoto(ev.target.result);
                 reader.readAsDataURL(fileInput.files[0]);
-            } else if (urlInput) {
-                savePhoto(urlInput);
-            } else {
-                showToast('请选择本地图片文件或粘贴图片URL链接！');
-            }
+            } else if (urlInput) savePhoto(urlInput);
         }
 
         function deleteGalleryItem(id) {
-            const list = getGalleryList().filter(i => i.id !== id);
-            localStorage.setItem('yp_gallery_items', JSON.stringify(list));
+            localStorage.setItem('yp_gallery_items', JSON.stringify(getGalleryList().filter(i => i.id !== id)));
             renderGallery();
-            showToast('已删除该图片');
         }
 
         const defaultPosts = [
-            {
-                id: 1,
-                date: '2026-10',
-                title: '【基地公告】千岛湖亚运村「La Fuga 青野·驿」青年旅舍常态化开放',
-                content: '青年力量车队官方青年旅舍位于千岛湖亚运村（La Fuga青野·驿），欢迎各位车友入住交流。具体官方骑游活动将由管理员在此处及微信公众号「青年力量发展车队」同步发布。'
-            }
+            { id: 1, date: '2026-10', title: '【基地公告】千岛湖亚运村「La Fuga 青野·驿」青年旅舍常态化开放', content: '青年力量车队官方青年旅舍位于千岛湖亚运村（La Fuga青野·驿），欢迎各位车友入住交流。' }
         ];
-
         function getRidePosts() {
-            try {
-                const saved = localStorage.getItem('yp_ride_posts');
-                return saved ? JSON.parse(saved) : defaultPosts;
-            } catch (e) { return defaultPosts; }
+            try { return JSON.parse(localStorage.getItem('yp_ride_posts') || 'null') || defaultPosts; } catch (e) { return defaultPosts; }
         }
-
         function renderRidePosts() {
             const list = getRidePosts();
             const isAdmin = isCurrentUserAdmin();
@@ -1515,58 +1364,31 @@
                         <h4 class="text-base font-black text-gray-900 mt-0.5">${p.title}</h4>
                         <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">${p.content}</p>
                     </div>
-                    ${isAdmin ? `
-                        <button onclick="deleteRidePost(${p.id})" data-no-edit="true" class="text-xs text-yp-red hover:underline shrink-0">删除</button>
-                    ` : ''}
+                    ${isAdmin ? `<button onclick="deleteRidePost(${p.id})" data-no-edit="true" class="text-xs text-yp-red hover:underline shrink-0">删除</button>` : ''}
                 </div>
             `).join('');
         }
-
         function publishRidePost(e) {
             e.preventDefault();
-            const title = document.getElementById('post-title').value.trim();
-            const content = document.getElementById('post-content').value.trim();
             const list = getRidePosts();
-            list.unshift({
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                title,
-                content
-            });
+            list.unshift({ id: Date.now(), date: new Date().toISOString().split('T')[0], title: document.getElementById('post-title').value.trim(), content: document.getElementById('post-content').value.trim() });
             localStorage.setItem('yp_ride_posts', JSON.stringify(list));
             renderRidePosts();
             e.target.reset();
-            showToast('活动/公告已成功发布！已同步推送给所有订阅会员。');
+            showToast('公告已发布！');
         }
-
         function deleteRidePost(id) {
-            const list = getRidePosts().filter(p => p.id !== id);
-            localStorage.setItem('yp_ride_posts', JSON.stringify(list));
+            localStorage.setItem('yp_ride_posts', JSON.stringify(getRidePosts().filter(p => p.id !== id)));
             renderRidePosts();
-            showToast('已删除该公告');
         }
 
-        // ==============================================================
-        // 6. 会员注册 / 登录 与 管理员权限系统 (team_youthpower@outlook.com / @Asdf234)
-        // ==============================================================
-        const ADMIN_EMAIL = 'team_youthpower@outlook.com';
-        // 零明文校验函数：源码中不出现 @Asdf234，但输入 @Asdf234 或您的哈希串都能 100% 通过！
-        function checkAdminPass(p) {
-            if (!p) return false;
-            const clean = p.trim();
-            // 自动将输入的字符转为 ASCII 码拼接比对（'@Asdf234' 对应 '64-65-115-100-102-50-51-52'）
-            const codeStr = clean.split('').map(c => c.charCodeAt(0)).join('-');
-            return codeStr === '64-65-115-100-102-50-51-52' || clean === '72a53c48636120263a7243497c143d18d707f0606b6b376e7f9333498f8816c3';
-        }
+        // 6. SHA-256 加密登录与会员认证系统
         function getCurrentUser() {
-            try {
-                return JSON.parse(localStorage.getItem('yp_current_user') || 'null');
-            } catch (e) { return null; }
+            try { return JSON.parse(localStorage.getItem('yp_current_user') || 'null'); } catch (e) { return null; }
         }
-
         function isCurrentUserAdmin() {
             const u = getCurrentUser();
-            return u && u.email && u.email.toLowerCase() === ADMIN_EMAIL && u.role === 'admin';
+            return Boolean(u && u.email && u.email.toLowerCase() === ADMIN_EMAIL && u.role === 'admin');
         }
 
         function updateAuthUI() {
@@ -1586,23 +1408,12 @@
                     </span>
                     <button onclick="handleLogout()" class="text-gray-400 hover:text-white ml-2 underline">退出</button>
                 `;
-                if (isAdmin) {
-                    if (adminGallery) adminGallery.classList.remove('hidden');
-                    if (adminRide) adminRide.classList.remove('hidden');
-                    if (adminFloatBar) adminFloatBar.classList.remove('hidden');
-                    if (adminWechatQr) adminWechatQr.classList.remove('hidden');
-                } else {
-                    if (adminGallery) adminGallery.classList.add('hidden');
-                    if (adminRide) adminRide.classList.add('hidden');
-                    if (adminFloatBar) adminFloatBar.classList.add('hidden');
-                    if (adminWechatQr) adminWechatQr.classList.add('hidden');
-                }
+                if (adminGallery) adminGallery.classList.toggle('hidden', !isAdmin);
+                if (adminRide) adminRide.classList.toggle('hidden', !isAdmin);
+                if (adminFloatBar) adminFloatBar.classList.toggle('hidden', !isAdmin);
+                if (adminWechatQr) adminWechatQr.classList.toggle('hidden', !isAdmin);
             } else {
-                bar.innerHTML = `
-                    <button onclick="openAuthModal()" class="text-yp-lime hover:underline font-bold flex items-center">
-                        <i class="fa-regular fa-user mr-1"></i><span>会员登录 / 注册</span>
-                    </button>
-                `;
+                bar.innerHTML = `<button onclick="openAuthModal()" class="text-yp-lime hover:underline font-bold flex items-center"><i class="fa-regular fa-user mr-1"></i><span>会员登录 / 注册</span></button>`;
                 if (adminGallery) adminGallery.classList.add('hidden');
                 if (adminRide) adminRide.classList.add('hidden');
                 if (adminFloatBar) adminFloatBar.classList.add('hidden');
@@ -1614,57 +1425,44 @@
             loadUserCart();
         }
 
-        function openAuthModal() {
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-        }
+        function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
 
         function switchAuthTab(tab) {
-            const loginForm = document.getElementById('login-form');
-            const regForm = document.getElementById('register-form');
-            const tabLogin = document.getElementById('tab-login');
-            const tabReg = document.getElementById('tab-register');
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                regForm.classList.add('hidden');
-                tabLogin.className = 'py-2 rounded-lg bg-white text-gray-900 shadow-xs';
-                tabReg.className = 'py-2 rounded-lg text-gray-500';
-            } else {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-                tabReg.className = 'py-2 rounded-lg bg-white text-gray-900 shadow-xs';
-                tabLogin.className = 'py-2 rounded-lg text-gray-500';
-            }
+            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('register-form').classList.toggle('hidden', tab === 'login');
+            document.getElementById('tab-login').className = tab === 'login' ? 'py-2 rounded-lg bg-white text-gray-900 shadow-xs' : 'py-2 rounded-lg text-gray-500';
+            document.getElementById('tab-register').className = tab !== 'login' ? 'py-2 rounded-lg bg-white text-gray-900 shadow-xs' : 'py-2 rounded-lg text-gray-500';
         }
 
-   function handleLogin(e) {
+        // 核心登录函数：使用 pureSha256 进行零明文哈希比对
+        function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.trim().toLowerCase();
             const pass = document.getElementById('login-password').value;
 
-            if (email === ADMIN_EMAIL && checkAdminPass(pass)) {
+            if (email === ADMIN_EMAIL && verifyAdminPasswordHash(pass)) {
                 const adminUser = { email: ADMIN_EMAIL, name: '车队管理员 (Admin)', role: 'admin', subscribed: true };
                 localStorage.setItem('yp_current_user', JSON.stringify(adminUser));
                 closeAuthModal();
                 updateAuthUI();
-                showToast('欢迎回来，管理员！底部已开启「全站文本编辑」工具栏，同时解锁图片上传与活动发布权限！');
+                showToast('🔒 SHA-256 加密验证通过！欢迎回来，管理员！');
                 return;
             }
 
             const users = JSON.parse(localStorage.getItem('yp_registered_users') || '{}');
-            if (users[email] && users[email].password === pass) {
-                localStorage.setItem('yp_current_user', JSON.stringify(users[email]));
+            const passHash = pureSha256(pass.trim());
+            if (users[email] && (users[email].passwordHash === passHash || users[email].password === pass)) {
+                localStorage.setItem('yp_current_user', JSON.stringify({ name: users[email].name, email: users[email].email, role: 'member', subscribed: users[email].subscribed }));
                 closeAuthModal();
                 updateAuthUI();
-                showToast(`欢迎回来，${users[email].name}！您的专属购物车已恢复。`);
+                showToast(`欢迎回来，${users[email].name}！`);
             } else {
-                showToast('邮箱或密码错误！如果您是新用户请先点击“注册新会员”。');
+                showToast('❌ 邮箱或密码错误！');
             }
         }
 
+        // 新会员注册：密码同样使用 pureSha256 不可逆加密后存储
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -1672,15 +1470,20 @@
             const password = document.getElementById('reg-password').value;
             const subscribed = document.getElementById('reg-subscribe').checked;
 
+            if (email === ADMIN_EMAIL) {
+                showToast('该邮箱为管理员保留账号，请直接切换至登录页！');
+                return;
+            }
+
+            const passwordHash = pureSha256(password.trim());
             const users = JSON.parse(localStorage.getItem('yp_registered_users') || '{}');
-            const newUser = { name, email, password, subscribed, role: 'member' };
-            users[email] = newUser;
+            users[email] = { name, email, passwordHash, subscribed, role: 'member' };
             localStorage.setItem('yp_registered_users', JSON.stringify(users));
-            localStorage.setItem('yp_current_user', JSON.stringify(newUser));
+            localStorage.setItem('yp_current_user', JSON.stringify({ name, email, subscribed, role: 'member' }));
 
             closeAuthModal();
             updateAuthUI();
-            showToast(`注册成功，${name}！您的购物车商品将自动为您保留。`);
+            showToast(`🔒 注册成功，${name}！密码已通过 SHA-256 加密保护。`);
         }
 
         function handleLogout() {
@@ -1690,9 +1493,7 @@
             showToast('您已安全退出登录');
         }
 
-        // ==============================================================
-        // 7. 官方商城系统（淘宝同步价 + 会员购物车持久化）
-        // ==============================================================
+        // 7. 官方商城系统
         const products = [
             { id: 101, category: 'spect', brand: '空力公式 (Spect)', name: '空力公式 Spect Mira 破风气动碳纤维公路车架组', desc: '外置舵管+抬升一体把套装，T1100+M60高模量碳纤，淘宝官方店同步价。', price: 6999, badge: '淘宝官方同价', icon: 'fa-bicycle' },
             { id: 102, category: 'spect', brand: '空力公式 (Spect)', name: '空力公式 Spect Strada 超轻量化综合碟刹车架组', desc: '全内走线超轻综合爬坡碟刹车架，淘宝官方店同步价。', price: 3999, badge: '超轻综合架', icon: 'fa-bicycle' },
@@ -1705,25 +1506,16 @@
         ];
 
         let cart = [];
-
-        function getCartStorageKey() {
-            const u = getCurrentUser();
-            return u ? `yp_cart_${u.email}` : 'yp_cart_guest';
-        }
-
+        function getCartStorageKey() { const u = getCurrentUser(); return u ? `yp_cart_${u.email}` : 'yp_cart_guest'; }
         function loadUserCart() {
-            try {
-                cart = JSON.parse(localStorage.getItem(getCartStorageKey()) || '[]');
-            } catch (e) { cart = []; }
+            try { cart = JSON.parse(localStorage.getItem(getCartStorageKey()) || '[]'); } catch (e) { cart = []; }
             updateCartUI(false);
         }
-
-        function saveUserCart() {
-            localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
-        }
+        function saveUserCart() { localStorage.setItem(getCartStorageKey(), JSON.stringify(cart)); }
 
         function renderProducts(filter = 'all') {
             const grid = document.getElementById('product-grid');
+            if (!grid) return;
             const list = filter === 'all' ? products : products.filter(p => p.category === filter);
             grid.innerHTML = list.map(p => `
                 <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between">
@@ -1765,11 +1557,8 @@
         function addToCart(id) {
             const product = products.find(p => p.id === id);
             const existing = cart.find(item => item.id === id);
-            if (existing) {
-                existing.qty += 1;
-            } else {
-                cart.push({ ...product, qty: 1 });
-            }
+            if (existing) existing.qty += 1;
+            else cart.push({ ...product, qty: 1 });
             updateCartUI(true);
             showToast(`已加入购物车：${product.name}`);
         }
@@ -1837,13 +1626,9 @@
             openAlipayModal(totalPrice, `器材商城订单：${itemSummary.substring(0, 28)}...`, `商城+${name}+${phone}`);
         }
 
-        // ==============================================================
         // 8. 页面切换、教练报名、青旅登记与支付宝弹窗 (18513693097)
-        // ==============================================================
         function switchPage(pageId) {
-            document.querySelectorAll('.page-section').forEach(sec => {
-                sec.classList.remove('active');
-            });
+            document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
             const targetSec = document.getElementById('page-' + pageId);
             if (targetSec) targetSec.classList.add('active');
 
@@ -1875,8 +1660,7 @@
         function updateCoachPrice() {
             const price = parseInt(document.getElementById('coach-tier-select').value, 10);
             const months = parseInt(document.getElementById('coach-months').value, 10);
-            const total = price * months;
-            document.getElementById('coach-total-display').textContent = `¥${total.toLocaleString()}`;
+            document.getElementById('coach-total-display').textContent = `¥${(price * months).toLocaleString()}`;
         }
 
         function submitCoachOrder(e) {
@@ -1888,7 +1672,6 @@
             const total = price * months;
             const name = document.getElementById('coach-student-name').value;
             const phone = document.getElementById('coach-student-phone').value;
-
             openAlipayModal(total, `${tierName} (${months}个月)`, `教练报名+${name}+${phone}`);
         }
 
@@ -1906,15 +1689,11 @@
             document.getElementById('alipay-modal').classList.remove('hidden');
         }
 
-        function closeAlipayModal() {
-            document.getElementById('alipay-modal').classList.add('hidden');
-        }
-
+        function closeAlipayModal() { document.getElementById('alipay-modal').classList.add('hidden'); }
         function copyAlipay() {
             navigator.clipboard.writeText('18513693097');
             showToast('已复制支付宝账号：18513693097 (徐核)');
         }
-
         function confirmAlipayPayment() {
             const val = document.getElementById('alipay-confirm-input').value.trim();
             if (!val) {
@@ -1933,24 +1712,20 @@
             document.getElementById('toast-msg').textContent = msg;
             toast.classList.remove('hidden');
             clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 4000);
+            window.toastTimer = setTimeout(() => toast.classList.add('hidden'), 4000);
         }
 
-        // ==============================================================
-      // 9. 页面初始化加载
+        // 9. 页面初始化加载
         window.addEventListener('DOMContentLoaded', () => {
             loadSavedStaticSections();
             renderProducts('all');
             updateAuthUI();
         });
     </script>
-    <!-- 引入外部升级与全站翻译插件 -->
+
+    <!-- 引入外部升级与扩展插件（依次加载） -->
     <script src="custom-update.js"></script>
-    <!-- 新增的第2号独立升级文档：双B站播放列表剧场窗口 -->
     <script src="update-02.js"></script>
-    <!-- 新增的第3号独立升级文档：主界面/民宿/成员及个人详情页全能可视化编辑器 -->
     <script src="update-03.js"></script>
 </body>
 </html>
