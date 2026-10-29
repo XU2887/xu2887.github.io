@@ -2117,3 +2117,423 @@
         if (typeof showToast === 'function') showToast(`🔒 注册成功，${name}！您的账户已受 SHA-256 加密保护。`);
     };
 })();
+/**
+ * ============================================================================
+ * 青年力量洲际队官网 - 主界面(首页)背景大图、首页焦点图集与全站任意图片编辑补丁
+ * 说明：直接将此段代码追加粘贴到 custom-update.js 的最末尾即可生效！
+ * ============================================================================
+ */
+(function () {
+    'use strict';
+
+    function isHomeAdmin() {
+        try {
+            const u = JSON.parse(localStorage.getItem('yp_current_user') || 'null');
+            return Boolean(u && u.email && u.email.toLowerCase() === 'team_youthpower@outlook.com' && u.role === 'admin');
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // =========================================================================
+    // 一、主界面首屏巨幕背景大图 (Hero Banner) 读取与渲染
+    // =========================================================================
+    const DEFAULT_HERO_BG = 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1920&q=80';
+
+    function getHomeHeroConfig() {
+        const defaults = {
+            bgUrl: DEFAULT_HERO_BG,
+            overlayMode: 'standard' // 'light' | 'standard' | 'dark' | 'none'
+        };
+        try {
+            return { ...defaults, ...JSON.parse(localStorage.getItem('yp_home_hero_cfg') || '{}') };
+        } catch (e) {
+            return defaults;
+        }
+    }
+
+    function saveHomeHeroConfig(cfg) {
+        try {
+            localStorage.setItem('yp_home_hero_cfg', JSON.stringify({ ...getHomeHeroConfig(), ...cfg }));
+        } catch (e) {}
+    }
+
+    window.applyHomeHeroBg = function () {
+        const heroSection = document.querySelector('#page-home section.hero-bg');
+        if (!heroSection) return;
+        const cfg = getHomeHeroConfig();
+        const url = cfg.bgUrl || DEFAULT_HERO_BG;
+
+        let gradientStr = 'linear-gradient(105deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.82) 55%, rgba(18,140,59,0.72) 100%), ';
+        if (cfg.overlayMode === 'light') {
+            gradientStr = 'linear-gradient(105deg, rgba(17,24,39,0.72) 0%, rgba(17,24,39,0.45) 55%, rgba(18,140,59,0.35) 100%), ';
+        } else if (cfg.overlayMode === 'dark') {
+            gradientStr = 'linear-gradient(105deg, rgba(17,24,39,0.98) 0%, rgba(17,24,39,0.92) 60%, rgba(17,24,39,0.85) 100%), ';
+        } else if (cfg.overlayMode === 'none') {
+            gradientStr = 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%), ';
+        }
+
+        heroSection.style.background = `${gradientStr}url('${url}') center/cover no-repeat`;
+
+        // 注入或更新管理员首屏背景编辑悬浮工具条
+        let ctrlBar = document.getElementById('admin-home-hero-bar');
+        if (!isHomeAdmin()) {
+            if (ctrlBar) ctrlBar.remove();
+            return;
+        }
+
+        if (!ctrlBar) {
+            ctrlBar = document.createElement('div');
+            ctrlBar.id = 'admin-home-hero-bar';
+            ctrlBar.setAttribute('data-no-edit', 'true');
+            ctrlBar.className = 'relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 -mt-6';
+            heroSection.insertBefore(ctrlBar, heroSection.firstChild);
+        }
+
+        ctrlBar.innerHTML = `
+            <div class="p-3.5 rounded-2xl bg-gray-900/95 backdrop-blur-md border-2 border-yp-lime text-white shadow-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 bg-yp-lime text-gray-900 font-black rounded text-[10px]">主界面首屏背景编辑</span>
+                    <span class="text-gray-300 font-bold">您可以直接上传新照片替换当前首页大背景：</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="cursor-pointer px-3 py-1.5 bg-yp-green hover:bg-yp-darkGreen text-white font-black rounded-lg shadow flex items-center space-x-1 transition">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>上传本地背景大图</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="handleHomeHeroFileUpload(event)">
+                    </label>
+                    <button onclick="promptHomeHeroUrl()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-200 font-bold rounded-lg transition">
+                        🔗 粘贴图片URL
+                    </button>
+                    <select onchange="changeHomeHeroOverlay(this.value)" class="rounded-lg bg-gray-800 border border-gray-600 px-2.5 py-1.5 text-white font-bold">
+                        <option value="light" ${cfg.overlayMode === 'light' ? 'selected' : ''}>遮罩：明亮清晰</option>
+                        <option value="standard" ${cfg.overlayMode === 'standard' ? 'selected' : ''}>遮罩：标准竞速绿</option>
+                        <option value="dark" ${cfg.overlayMode === 'dark' ? 'selected' : ''}>遮罩：深邃暗黑</option>
+                        <option value="none" ${cfg.overlayMode === 'none' ? 'selected' : ''}>遮罩：原图无渐变</option>
+                    </select>
+                    <button onclick="resetHomeHeroBg()" class="px-2.5 py-1.5 text-red-400 hover:underline font-bold">恢复默认图</button>
+                </div>
+            </div>
+        `;
+    };
+
+    window.handleHomeHeroFileUpload = function (event) {
+        if (!isHomeAdmin()) return;
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            saveHomeHeroConfig({ bgUrl: ev.target.result });
+            window.applyHomeHeroBg();
+            if (typeof showToast === 'function') showToast('✅ 主界面首屏背景大图已更换并永久保存！');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.promptHomeHeroUrl = function () {
+        if (!isHomeAdmin()) return;
+        const current = getHomeHeroConfig().bgUrl;
+        const url = prompt('请输入主界面首屏背景大图的 URL 链接：', current);
+        if (url && url.trim()) {
+            saveHomeHeroConfig({ bgUrl: url.trim() });
+            window.applyHomeHeroBg();
+            if (typeof showToast === 'function') showToast('✅ 主界面首屏背景大图已更新！');
+        }
+    };
+
+    window.changeHomeHeroOverlay = function (mode) {
+        if (!isHomeAdmin()) return;
+        saveHomeHeroConfig({ overlayMode: mode });
+        window.applyHomeHeroBg();
+    };
+
+    window.resetHomeHeroBg = function () {
+        if (!isHomeAdmin()) return;
+        saveHomeHeroConfig({ bgUrl: DEFAULT_HERO_BG, overlayMode: 'standard' });
+        window.applyHomeHeroBg();
+        if (typeof showToast === 'function') showToast('已恢复默认首屏背景图');
+    };
+
+    // =========================================================================
+    // 二、主界面（首页）「焦点视觉照片墙」模块（支持上传、删除、改说明、切换列数）
+    // =========================================================================
+    const defaultHomePhotos = [
+        {
+            id: 'hmp_1',
+            url: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=1000&q=80',
+            caption: '全国U系列公路自行车锦标赛夺冠荣耀时刻'
+        },
+        {
+            id: 'hmp_2',
+            url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1000&q=80',
+            caption: '青年力量洲际队海内外职业赛场突围瞬间'
+        },
+        {
+            id: 'hmp_3',
+            url: 'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=1000&q=80',
+            caption: '科学功率训练体系与洲际队战车装备展示'
+        }
+    ];
+
+    function getHomePhotosConfig() {
+        const defaults = {
+            visible: true,
+            cols: 3, // 1 | 2 | 3
+            photos: defaultHomePhotos
+        };
+        try {
+            const saved = localStorage.getItem('yp_home_showcase_photos');
+            return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+        } catch (e) {
+            return defaults;
+        }
+    }
+
+    function saveHomePhotosConfig(cfg) {
+        try {
+            localStorage.setItem('yp_home_showcase_photos', JSON.stringify({ ...getHomePhotosConfig(), ...cfg }));
+        } catch (e) {}
+    }
+
+    window.renderHomeShowcasePhotos = function () {
+        const homePage = document.getElementById('page-home');
+        if (!homePage) return;
+
+        let showcaseSec = document.getElementById('home-photo-showcase-sec');
+        if (!showcaseSec) {
+            showcaseSec = document.createElement('section');
+            showcaseSec.id = 'home-photo-showcase-sec';
+            showcaseSec.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12';
+            const heroSec = homePage.querySelector('section.hero-bg');
+            if (heroSec && heroSec.nextSibling) {
+                homePage.insertBefore(showcaseSec, heroSec.nextSibling);
+            } else {
+                homePage.appendChild(showcaseSec);
+            }
+        }
+
+        const cfg = getHomePhotosConfig();
+        const isAdmin = isHomeAdmin();
+
+        if (!cfg.visible && !isAdmin) {
+            showcaseSec.innerHTML = '';
+            showcaseSec.className = 'hidden';
+            return;
+        }
+        showcaseSec.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12';
+
+        const adminControlsHtml = isAdmin ? `
+            <div data-no-edit="true" class="mb-6 p-4 rounded-2xl bg-gray-900 text-white border-2 border-yp-lime shadow-lg flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 bg-yp-lime text-gray-900 font-black rounded text-[10px]">主界面照片墙管理</span>
+                    <span class="font-bold text-gray-200">在主界面直接添加/替换/删除展示照片，支持拖动或点 ◀ ▶ 调序：</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="cursor-pointer px-3 py-1.5 bg-yp-green hover:bg-yp-darkGreen text-white font-black rounded-lg flex items-center space-x-1 shadow">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>批量上传首页照片</span>
+                        <input type="file" accept="image/*" multiple class="hidden" onchange="handleHomeShowcaseUpload(event)">
+                    </label>
+                    <button onclick="promptHomeShowcaseUrl()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold rounded-lg">
+                        🔗 粘贴图片URL
+                    </button>
+                    <button onclick="setHomeShowcaseCols(1)" class="px-2.5 py-1.5 rounded-lg ${cfg.cols == 1 ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">1列巨幕</button>
+                    <button onclick="setHomeShowcaseCols(2)" class="px-2.5 py-1.5 rounded-lg ${cfg.cols == 2 ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">2列大图</button>
+                    <button onclick="setHomeShowcaseCols(3)" class="px-2.5 py-1.5 rounded-lg ${cfg.cols == 3 ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">3列标准</button>
+                    <button onclick="toggleHomeShowcaseVisible()" class="px-2.5 py-1.5 rounded-lg border ${cfg.visible ? 'border-gray-600 text-gray-300' : 'bg-red-600 text-white border-red-500'}">
+                        ${cfg.visible ? '👁️ 访客可见' : '🚫 已对访客隐藏'}
+                    </button>
+                </div>
+            </div>
+        ` : '';
+
+        const imgHeight = cfg.cols == 1 ? 'h-[440px]' : (cfg.cols == 2 ? 'h-80' : 'h-60');
+
+        showcaseSec.innerHTML = `
+            ${adminControlsHtml}
+            ${(cfg.visible || isAdmin) ? `
+                <div class="grid grid-cols-1 md:grid-cols-${cfg.cols || 3} gap-6">
+                    ${cfg.photos.map(p => `
+                        <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm group relative" data-home-photo-id="${p.id}">
+                            <div class="${imgHeight} bg-gray-900 overflow-hidden relative">
+                                <img src="${p.url}" alt="${p.caption || ''}" draggable="false" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                ${isAdmin ? `
+                                    <div data-no-edit="true" class="absolute top-2.5 left-2.5 flex items-center space-x-1">
+                                        <button onclick="moveHomeShowcasePhoto('${p.id}', -1)" class="w-7 h-7 bg-gray-900/90 hover:bg-yp-green text-white text-xs font-black rounded shadow" title="左移">◀</button>
+                                        <button onclick="moveHomeShowcasePhoto('${p.id}', 1)" class="w-7 h-7 bg-gray-900/90 hover:bg-yp-green text-white text-xs font-black rounded shadow" title="右移">▶</button>
+                                    </div>
+                                    <div data-no-edit="true" class="absolute top-2.5 right-2.5 flex items-center space-x-1">
+                                        <label class="cursor-pointer px-2.5 py-1 bg-yp-green hover:bg-yp-darkGreen text-white text-[11px] font-bold rounded shadow">
+                                            换图
+                                            <input type="file" accept="image/*" class="hidden" onchange="replaceSingleHomePhoto(event, '${p.id}')">
+                                        </label>
+                                        <button onclick="editHomeShowcaseCaption('${p.id}')" class="px-2 py-1 bg-amber-400 text-gray-900 text-[11px] font-black rounded shadow">改字</button>
+                                        <button onclick="deleteHomeShowcasePhoto('${p.id}')" class="w-7 h-7 bg-yp-red text-white text-xs font-bold rounded shadow">✕</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            ${p.caption ? `<div class="p-3.5 text-xs font-bold text-gray-800 bg-white">${p.caption}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    };
+
+    window.handleHomeShowcaseUpload = function (event) {
+        if (!isHomeAdmin()) return;
+        const files = Array.from(event.target.files || []);
+        if (files.length === 0) return;
+        const cfg = getHomePhotosConfig();
+        let count = 0;
+        files.forEach(f => {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                cfg.photos.push({
+                    id: 'hmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    url: ev.target.result,
+                    caption: f.name.replace(/\.[^/.]+$/, '')
+                });
+                count++;
+                if (count === files.length) {
+                    saveHomePhotosConfig({ photos: cfg.photos });
+                    window.renderHomeShowcasePhotos();
+                    if (typeof showToast === 'function') showToast(`✅ 已向主界面添加 ${files.length} 张照片！`);
+                }
+            };
+            reader.readAsDataURL(f);
+        });
+    };
+
+    window.replaceSingleHomePhoto = function (event, photoId) {
+        if (!isHomeAdmin()) return;
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            const cfg = getHomePhotosConfig();
+            const item = cfg.photos.find(p => String(p.id) === String(photoId));
+            if (item) {
+                item.url = ev.target.result;
+                saveHomePhotosConfig({ photos: cfg.photos });
+                window.renderHomeShowcasePhotos();
+                if (typeof showToast === 'function') showToast('✅ 照片已成功替换！');
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.promptHomeShowcaseUrl = function () {
+        if (!isHomeAdmin()) return;
+        const url = prompt('请输入要添加到主界面的图片 URL 链接：');
+        if (!url || !url.trim()) return;
+        const caption = prompt('请输入该图片的说明文字（选填）：', '车队赛场风采') || '';
+        const cfg = getHomePhotosConfig();
+        cfg.photos.push({ id: 'hmp_' + Date.now(), url: url.trim(), caption: caption.trim() });
+        saveHomePhotosConfig({ photos: cfg.photos });
+        window.renderHomeShowcasePhotos();
+        if (typeof showToast === 'function') showToast('✅ 新照片已添加至主界面！');
+    };
+
+    window.editHomeShowcaseCaption = function (photoId) {
+        if (!isHomeAdmin()) return;
+        const cfg = getHomePhotosConfig();
+        const item = cfg.photos.find(p => String(p.id) === String(photoId));
+        if (!item) return;
+        const nextCap = prompt('修改照片说明文字：', item.caption || '');
+        if (nextCap !== null) {
+            item.caption = nextCap.trim();
+            saveHomePhotosConfig({ photos: cfg.photos });
+            window.renderHomeShowcasePhotos();
+        }
+    };
+
+    window.deleteHomeShowcasePhoto = function (photoId) {
+        if (!isHomeAdmin()) return;
+        const cfg = getHomePhotosConfig();
+        cfg.photos = cfg.photos.filter(p => String(p.id) !== String(photoId));
+        saveHomePhotosConfig({ photos: cfg.photos });
+        window.renderHomeShowcasePhotos();
+        if (typeof showToast === 'function') showToast('已从主界面删除该照片');
+    };
+
+    window.moveHomeShowcasePhoto = function (photoId, dir) {
+        if (!isHomeAdmin()) return;
+        const cfg = getHomePhotosConfig();
+        const idx = cfg.photos.findIndex(p => String(p.id) === String(photoId));
+        if (idx === -1) return;
+        const targetIdx = idx + dir;
+        if (targetIdx < 0 || targetIdx >= cfg.photos.length) return;
+        const temp = cfg.photos[idx];
+        cfg.photos[idx] = cfg.photos[targetIdx];
+        cfg.photos[targetIdx] = temp;
+        saveHomePhotosConfig({ photos: cfg.photos });
+        window.renderHomeShowcasePhotos();
+    };
+
+    window.setHomeShowcaseCols = function (cols) {
+        if (!isHomeAdmin()) return;
+        saveHomePhotosConfig({ cols: cols });
+        window.renderHomeShowcasePhotos();
+    };
+
+    window.toggleHomeShowcaseVisible = function () {
+        if (!isHomeAdmin()) return;
+        const cfg = getHomePhotosConfig();
+        saveHomePhotosConfig({ visible: !cfg.visible });
+        window.renderHomeShowcasePhotos();
+    };
+
+    // =========================================================================
+    // 三、全站任意图片 (`<img>`) 管理员双击一键替换功能
+    // =========================================================================
+    let activeReplacingImgEl = null;
+    const globalImgInput = document.createElement('input');
+    globalImgInput.type = 'file';
+    globalImgInput.accept = 'image/*';
+    globalImgInput.className = 'hidden';
+    globalImgInput.onchange = function (e) {
+        const file = (e.target.files || [])[0];
+        if (!file || !activeReplacingImgEl) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            activeReplacingImgEl.src = ev.target.result;
+            if (typeof showToast === 'function') {
+                showToast('✅ 图片已替换！（若在静态板块，请点底部「保存全站文本修改」永久固化）');
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+    document.body.appendChild(globalImgInput);
+
+    // 管理员双击页面上任何一张图片即可直接弹出文件选择框换图
+    document.addEventListener('dblclick', function (e) {
+        if (!isHomeAdmin()) return;
+        const target = e.target;
+        if (target && target.tagName && target.tagName.toLowerCase() === 'img') {
+            activeReplacingImgEl = target;
+            globalImgInput.value = '';
+            globalImgInput.click();
+        }
+    });
+
+    // =========================================================================
+    // 四、初始化与管理员登录状态联动
+    // =========================================================================
+    function initHomePhotoEditor() {
+        window.applyHomeHeroBg();
+        window.renderHomeShowcasePhotos();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initHomePhotoEditor, 60);
+
+        const prevUpdateAuth = window.updateAuthUI;
+        if (prevUpdateAuth) {
+            window.updateAuthUI = function () {
+                prevUpdateAuth();
+                initHomePhotoEditor();
+            };
+        }
+    });
+})();
