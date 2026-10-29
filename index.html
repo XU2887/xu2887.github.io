@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="scroll-smooth">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>青年力量洲际队官方网站 | Youth's Power Continental Team (team-youthpower.org.cn)</title>
+    <title>青年力量洲际队官方网站 | team-youthpower.org.cn</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome 图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 思源黑体 Google Fonts -->
+    <!-- 思源黑体 -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -23,7 +23,7 @@
                             darkGreen: '#128c3b',
                             lime: '#76c729',
                             red: '#c82333',
-                            dark: '#111827'
+                            alipay: '#1677FF'
                         }
                     }
                 }
@@ -31,44 +31,48 @@
         }
     </script>
     <style>
-        /* 竞速斜切设计元素 */
-        .skew-box {
-            transform: skewX(-12deg);
-        }
-        .skew-box > * {
-            transform: skewX(12deg);
-        }
         .hero-bg {
-            background: linear-gradient(105deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.85) 50%, rgba(18,140,59,0.75) 100%), 
+            background: linear-gradient(105deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.85) 55%, rgba(18,140,59,0.75) 100%), 
                         url('https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
         }
         .stripe-gradient {
             background: linear-gradient(90deg, #128c3b 0%, #76c729 50%, #c82333 100%);
         }
+        .page-section {
+            display: none;
+            animation: fadeIn 0.25s ease-in-out;
+        }
+        .page-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-yp-green selection:text-white">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased flex flex-col min-h-screen selection:bg-yp-green selection:text-white">
 
-    <!-- 顶部域名与快捷信息栏 -->
+    <!-- 顶部状态栏 -->
     <div class="bg-gray-900 text-gray-300 text-xs py-2 px-4 border-b border-gray-800">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
-            <div class="flex items-center space-x-4">
-                <span class="text-yp-lime font-semibold"><i class="fa-solid fa-globe mr-1"></i>team-youthpower.org.cn</span>
-                <span class="hidden sm:inline">|</span>
+            <div class="flex items-center space-x-3">
+                <span class="text-yp-lime font-bold"><i class="fa-solid fa-globe mr-1"></i>team-youthpower.org.cn</span>
+                <span class="hidden sm:inline text-gray-600">|</span>
                 <span class="hidden sm:inline">UCI Continental Team (哥伦比亚自协注册中)</span>
             </div>
             <div class="flex items-center space-x-4">
-                <span><i class="fa-solid fa-location-dot text-yp-green mr-1"></i>训练基地：杭州余杭 / 千岛湖</span>
-                <a href="tel:18513693097" class="hover:text-white transition"><i class="fa-solid fa-phone text-yp-green mr-1"></i>徐核：18513693097</a>
+                <span><i class="fa-solid fa-hotel text-yp-lime mr-1"></i>千岛湖亚运村基地：La Fuga青野·驿</span>
+                <a href="tel:18513693097" class="hover:text-white transition"><i class="fa-brands fa-alipay text-yp-alipay mr-1"></i>官方支付宝/电话：18513693097 (徐核)</a>
             </div>
         </div>
     </div>
 
-    <!-- 导航栏 -->
+    <!-- 顶部主导航栏（点击切换独立页面） -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <!-- 车队Logo -->
-            <a href="#" class="flex items-center space-x-3 group">
+            <button onclick="switchPage('home')" class="flex items-center space-x-3 text-left group focus:outline-none">
                 <div class="w-12 h-12 rounded-full bg-gray-900 border-2 border-yp-green flex items-center justify-center text-white font-black text-xl shadow-md group-hover:scale-105 transition">
                     <i class="fa-solid fa-hand-fist text-yp-lime"></i>
                 </div>
@@ -76,871 +80,778 @@
                     <div class="text-xl font-black tracking-wider text-gray-900 leading-none">青年力量洲际队</div>
                     <div class="text-[11px] font-semibold text-gray-500 tracking-widest mt-1">YOUTH'S POWER DEVELOPMENT TEAM</div>
                 </div>
-            </a>
+            </button>
 
-            <!-- 桌面端导航链接 -->
-            <nav class="hidden lg:flex items-center space-x-7 text-sm font-bold text-gray-700">
-                <a href="#about" class="hover:text-yp-darkGreen transition">车队简介</a>
-                <a href="#roster" class="hover:text-yp-darkGreen transition">车队阵容</a>
-                <a href="#calendar" class="hover:text-yp-darkGreen transition">2027赛历</a>
-                <a href="#shop" class="text-yp-darkGreen flex items-center"><i class="fa-solid fa-bag-shopping mr-1"></i>官方商城</a>
-                <a href="#rides" class="hover:text-yp-darkGreen transition">线下骑游报名</a>
-                <a href="#coaching" class="hover:text-yp-darkGreen transition">教练服务报名</a>
-                <a href="#sponsorship" class="hover:text-yp-darkGreen transition">商业赞助</a>
+            <!-- 桌面端页面切换导航 -->
+            <nav class="hidden lg:flex items-center space-x-1 text-sm font-bold">
+                <button onclick="switchPage('home')" data-target="home" class="nav-btn px-3.5 py-2 rounded-lg text-yp-darkGreen bg-green-50 transition">首页与车队简介</button>
+                <button onclick="switchPage('roster')" data-target="roster" class="nav-btn px-3.5 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen hover:bg-gray-50 transition">队员介绍</button>
+                <button onclick="switchPage('calendar')" data-target="calendar" class="nav-btn px-3.5 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen hover:bg-gray-50 transition">2027赛历</button>
+                <button onclick="switchPage('shop')" data-target="shop" class="nav-btn px-3.5 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen hover:bg-gray-50 transition flex items-center">
+                    <i class="fa-solid fa-bag-shopping mr-1.5 text-yp-green"></i>官方商城
+                </button>
+                <button onclick="switchPage('rides')" data-target="rides" class="nav-btn px-3.5 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen hover:bg-gray-50 transition">青旅与骑游</button>
+                <button onclick="switchPage('coaching')" data-target="coaching" class="nav-btn px-3.5 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen hover:bg-gray-50 transition">教练服务报名</button>
+                <button onclick="switchPage('sponsorship')" data-target="sponsorship" class="nav-btn px-3.5 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen hover:bg-gray-50 transition">商业赞助</button>
             </nav>
 
-            <!-- 购物车与快捷报名按钮 -->
+            <!-- 右侧购物车与快捷按钮 -->
             <div class="flex items-center space-x-3">
                 <button onclick="toggleCart()" class="relative p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 transition" title="查看购物车">
                     <i class="fa-solid fa-cart-shopping text-lg"></i>
                     <span id="cart-badge" class="absolute -top-1 -right-1 bg-yp-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">0</span>
                 </button>
-                <a href="#coaching" class="hidden sm:inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-yp-darkGreen to-yp-lime text-white text-sm font-bold rounded-lg shadow hover:opacity-95 transition">
-                    青训/私教报名
-                </a>
+                <button onclick="switchPage('coaching')" class="hidden sm:inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-yp-darkGreen to-yp-lime text-white text-sm font-bold rounded-lg shadow hover:opacity-95 transition">
+                    报班/教练训练
+                </button>
             </div>
+        </div>
+
+        <!-- 移动端横向滚动导航栏 -->
+        <div class="lg:hidden flex overflow-x-auto border-t border-gray-100 bg-white px-4 py-2 space-x-2 text-xs font-bold whitespace-nowrap">
+            <button onclick="switchPage('home')" data-target="home" class="nav-btn px-3 py-1.5 rounded-md text-yp-darkGreen bg-green-50">车队简介</button>
+            <button onclick="switchPage('roster')" data-target="roster" class="nav-btn px-3 py-1.5 rounded-md text-gray-700">队员介绍</button>
+            <button onclick="switchPage('calendar')" data-target="calendar" class="nav-btn px-3 py-1.5 rounded-md text-gray-700">2027赛历</button>
+            <button onclick="switchPage('shop')" data-target="shop" class="nav-btn px-3 py-1.5 rounded-md text-gray-700">🛒 官方商城</button>
+            <button onclick="switchPage('rides')" data-target="rides" class="nav-btn px-3 py-1.5 rounded-md text-gray-700">🏨 La Fuga青野·驿</button>
+            <button onclick="switchPage('coaching')" data-target="coaching" class="nav-btn px-3 py-1.5 rounded-md text-gray-700">📋 教练报名</button>
+            <button onclick="switchPage('sponsorship')" data-target="sponsorship" class="nav-btn px-3 py-1.5 rounded-md text-gray-700">商业赞助</button>
         </div>
         <div class="h-1 w-full stripe-gradient"></div>
     </header>
 
-    <!-- HERO 首屏区域 -->
-    <section class="hero-bg text-white py-20 lg:py-28 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-3xl">
-                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-yp-green/20 border border-yp-lime/40 text-yp-lime text-xs font-bold mb-6">
-                    <span class="w-2 h-2 rounded-full bg-yp-lime animate-ping"></span>
-                    <span>坚持群众路线 · 体教结合 · 2027全新征程</span>
-                </div>
-                <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-tight mb-6">
-                    打通从<span class="text-yp-lime">群众体育</span>到<br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-yp-lime to-white">职业赛场</span>的上升通道
-                </h1>
-                <p class="text-lg text-gray-300 mb-8 leading-relaxed">
-                    青年力量发展车队成立于2021年底。经过5年深耕，我们已斩获多项全国U系列锦标赛冠军并向国家队、世巡赛集训营输送人才。2027年，车队正式在哥伦比亚自协注册成为<strong>UCI洲际车队</strong>，征战大中华与美洲双线赛场！
-                </p>
-                
-                <!-- 三大核心业务快捷入口 -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                    <a href="#shop" class="flex items-center justify-between p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition group">
-                        <div>
-                            <div class="text-xs text-yp-lime font-bold">OFFICIAL STORE</div>
-                            <div class="text-base font-black mt-0.5">车队同款装备商城</div>
+    <!-- 主内容容器 -->
+    <main class="flex-1">
+
+        <!-- ============================================================== -->
+        <!-- 页面 1：首页与车队简介 (home) -->
+        <!-- ============================================================== -->
+        <div id="page-home" class="page-section active">
+            <!-- HERO 首屏区域 -->
+            <section class="hero-bg text-white py-20 lg:py-24 relative overflow-hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div class="max-w-3xl">
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-yp-green/20 border border-yp-lime/40 text-yp-lime text-xs font-bold mb-6">
+                            <span class="w-2 h-2 rounded-full bg-yp-lime animate-ping"></span>
+                            <span>坚持群众路线 · 体教结合 · 2027洲际队新征程</span>
                         </div>
-                        <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-white group-hover:translate-x-1 transition"></i>
-                    </a>
-                    <a href="#rides" class="flex items-center justify-between p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition group">
-                        <div>
-                            <div class="text-xs text-yp-lime font-bold">CLUB RIDES</div>
-                            <div class="text-base font-black mt-0.5">余杭/千岛湖骑游报名</div>
-                        </div>
-                        <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-white group-hover:translate-x-1 transition"></i>
-                    </a>
-                    <a href="#coaching" class="flex items-center justify-between p-4 rounded-xl bg-yp-green/90 hover:bg-yp-green text-white shadow-lg transition group">
-                        <div>
-                            <div class="text-xs text-white/90 font-bold">UCI L2 COACHING</div>
-                            <div class="text-base font-black mt-0.5">自行车教练服务报名</div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right group-hover:translate-x-1 transition"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 核心数据概览 -->
-    <section class="bg-white border-b border-gray-200 relative z-20 -mt-8 mx-4 sm:mx-auto max-w-6xl rounded-2xl shadow-xl p-6 sm:p-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-gray-100">
-            <div>
-                <div class="text-3xl sm:text-4xl font-black text-yp-darkGreen">2021<span class="text-lg font-bold">年底</span></div>
-                <div class="text-xs sm:text-sm text-gray-500 font-medium mt-1">青训车队成立</div>
-            </div>
-            <div>
-                <div class="text-3xl sm:text-4xl font-black text-gray-900">17<span class="text-lg font-bold text-yp-green">名</span></div>
-                <div class="text-xs sm:text-sm text-gray-500 font-medium mt-1">2027注册洲际车手 (4国阵容)</div>
-            </div>
-            <div>
-                <div class="text-3xl sm:text-4xl font-black text-gray-900">70<span class="text-lg font-bold text-yp-green">天</span></div>
-                <div class="text-xs sm:text-sm text-gray-500 font-medium mt-1">年度职业比赛日 (中37+美33)</div>
-            </div>
-            <div>
-                <div class="text-3xl sm:text-4xl font-black text-yp-red">UCI 2.PRO</div>
-                <div class="text-xs sm:text-sm text-gray-500 font-medium mt-1">最高参赛级别 & Gravel世锦赛</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- PART 01: 车队简介及愿景 -->
-    <section id="about" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
-            <div>
-                <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">PART 01 / ABOUT & VISION</span>
-                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">车队简介及发展愿景</h2>
-            </div>
-            <p class="text-gray-500 text-sm mt-2 md:mt-0 max-w-md">
-                非体校“专业路线”，坚持群众路线，建立属于我们自己的体教结合晋升体系。
-            </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
-            <!-- 左侧：车队愿景与国际合作 -->
-            <div class="lg:col-span-5 bg-gray-900 text-white rounded-2xl p-8 flex flex-col justify-between relative overflow-hidden">
-                <div>
-                    <div class="inline-block px-3 py-1 bg-yp-green text-xs font-bold rounded mb-4">UCI CONTINENTAL TEAM</div>
-                    <h3 class="text-2xl font-black mb-4">彻底打通从群众体育到职业体育的上升通道</h3>
-                    <p class="text-gray-300 text-sm leading-relaxed mb-6">
-                        作为一支坚持群众路线的车队，我们在过去5年取得了优异成绩。为了给青训选手们更多的学习与参赛机会，我们在2027年成立长期运营的<strong>青年力量洲际车队</strong>，目前已在<strong>哥伦比亚自行车协会</strong>进入注册流程。
-                    </p>
-                    <div class="space-y-4 border-t border-gray-800 pt-6">
-                        <div class="flex items-start space-x-3">
-                            <i class="fa-solid fa-handshake text-yp-lime mt-1"></i>
-                            <div>
-                                <h4 class="font-bold text-sm">国际合作积淀（自2022年起）</h4>
-                                <p class="text-xs text-gray-400 mt-1">先后与西班牙U23车队 <strong>Team Cycling Galicia</strong>、摩洛哥洲际队 <strong>SIDI ALI Unlock Team</strong> 达成深度合作，积累了丰富的出国比赛经验与国际人脉。</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <i class="fa-solid fa-map-location-dot text-yp-lime mt-1"></i>
-                            <div>
-                                <h4 class="font-bold text-sm">双大本营常态化运作</h4>
-                                <p class="text-xs text-gray-400 mt-1">国内依托<strong>杭州余杭区</strong>与<strong>千岛湖</strong>两大训练基地；海外依托哥伦比亚美洲分部全权负责拉美赛训。</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-8 pt-4 border-t border-gray-800 flex items-center justify-between text-xs text-gray-400">
-                    <span>青年力量发展车队 · 始于2021</span>
-                    <span class="text-yp-lime font-bold">体教结合践行者</span>
-                </div>
-            </div>
-
-            <!-- 右侧：5年发展辉煌战绩时间轴 -->
-            <div class="lg:col-span-7 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center">
-                    <i class="fa-solid fa-trophy text-amber-500 mr-2"></i> 青年力量青训发展里程碑 (2021-2026)
-                </h3>
-                <div class="relative border-l-2 border-yp-green/30 ml-3 space-y-6">
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
-                        <div class="text-xs font-bold text-yp-darkGreen">2026 赛季</div>
-                        <div class="font-bold text-gray-900 mt-0.5">全国公开赛（湖北枝江）大学生组 冠军 — <span class="text-yp-darkGreen">张浩阳</span></div>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
-                        <div class="text-xs font-bold text-yp-darkGreen">2025 赛季</div>
-                        <div class="font-bold text-gray-900 mt-0.5"><span class="text-yp-darkGreen">苏毅</span> 成功入选世巡赛阿斯塔纳（Astana）车队集训名单</div>
-                        <div class="font-bold text-gray-900 mt-1">全国U系列锦标赛乙组大组赛 冠军 — <span class="text-yp-darkGreen">李东润</span></div>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
-                        <div class="text-xs font-bold text-yp-darkGreen">2024 赛季</div>
-                        <div class="font-bold text-gray-900 mt-0.5">全国U系列锦标赛甲组 大组赛冠军 — <span class="text-yp-darkGreen">戴铭亨</span></div>
-                        <div class="font-bold text-gray-900 mt-1">全国U系列锦标赛甲组 个人计时赛(ITT) 冠军、亚军 — <span class="text-yp-darkGreen">戴铭亨、尚睿濛</span></div>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
-                        <div class="text-xs font-bold text-yp-darkGreen">2023 赛季</div>
-                        <div class="font-bold text-gray-900 mt-0.5">全国U系列锦标赛甲组 ITT 冠军 — <span class="text-yp-darkGreen">马浩均</span>（后入选大学生国家队、成年国家队）</div>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-gray-400 border-2 border-white"></span>
-                        <div class="text-xs font-bold text-gray-500">2021 年底</div>
-                        <div class="font-bold text-gray-700 mt-0.5">青年力量发展车队正式成立，开启群众路线青训探索</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- PART 02: 人员构成及核心成员 -->
-    <section id="roster" class="py-20 bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
-                <div>
-                    <span class="text-yp-lime font-black tracking-widest text-sm uppercase">PART 02 / TEAM ROSTER</span>
-                    <h2 class="text-3xl sm:text-4xl font-black mt-1">人员构成与核心团队</h2>
-                </div>
-                <div class="flex flex-wrap gap-2 mt-4 md:mt-0 text-xs font-bold">
-                    <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇨🇴 哥伦比亚籍 8人</span>
-                    <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇨🇳 中国籍 7人</span>
-                    <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇧🇦 波黑籍 1人</span>
-                    <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇦🇱 阿尔巴尼亚籍 1人</span>
-                </div>
-            </div>
-
-            <!-- 梯队结构说明 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="bg-gray-800/70 border border-gray-700 p-6 rounded-xl">
-                    <div class="text-yp-lime font-black text-lg mb-1">1~2位 外籍主力车手</div>
-                    <p class="text-gray-400 text-xs leading-relaxed">车队总成绩（GC）与爬坡王荣誉衫（KOM）的核心保障，并在赛场内外为年轻队员传授职业经验。</p>
-                </div>
-                <div class="bg-gray-800/70 border border-gray-700 p-6 rounded-xl">
-                    <div class="text-yp-lime font-black text-lg mb-1">2~3位 中生代车手</div>
-                    <p class="text-gray-400 text-xs leading-relaxed">承担比赛突围曝光重任，同时作为桥梁润滑管理工作团队与青年车手之间的日常及战术沟通。</p>
-                </div>
-                <div class="bg-gray-800/70 border border-gray-700 p-6 rounded-xl">
-                    <div class="text-yp-lime font-black text-lg mb-1">10~12位 青训车手</div>
-                    <p class="text-gray-400 text-xs leading-relaxed">成熟车手全力争夺最佳青年车手白衫；刚成年车手在职业赛场历练完赛，并承担领骑、送水等团队任务。</p>
-                </div>
-            </div>
-
-            <!-- 4位核心人物卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- 徐核 -->
-                <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 flex flex-col justify-between hover:border-yp-lime transition">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="px-2.5 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">经理 / 体育主管 / 队长</span>
-                            <span class="text-xs text-gray-400">28岁 · 冲刺手</span>
-                        </div>
-                        <h3 class="text-2xl font-black mb-1">徐核 <span class="text-sm font-normal text-gray-400">🇨🇳</span></h3>
-                        <p class="text-xs text-yp-lime font-semibold mb-4">UCI 2级教练 | 精通西班牙语/英语</p>
-                        <p class="text-xs text-gray-300 leading-relaxed">
-                            青年力量车队建立者之一。曾效力于Avimosa Chozas Team、广州风雷、五指山1867、Kiwi Atlántico、SIDI ALI Unlock等洲际队。参与过环阿斯图里亚斯等欧洲高级别赛事，获2023中西建交50周年自行车赛亚军。
+                        <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-tight mb-6">
+                            打通从<span class="text-yp-lime">群众体育</span>到<br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-yp-lime to-white">职业赛场</span>的上升通道
+                        </h1>
+                        <p class="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed">
+                            青年力量发展车队成立于2021年底。经过5年深耕，我们已斩获多项全国U系列锦标赛冠军并向国家队、世巡赛集训营输送人才。2027年，车队在哥伦比亚自协注册成为<strong>UCI洲际车队</strong>，征战大中华与美洲双线赛场！
                         </p>
-                    </div>
-                    <div class="px-6 py-3 bg-gray-900/60 border-t border-gray-700 text-[11px] text-gray-400">
-                        负责车队整体运营、战术指挥及中外队员沟通
-                    </div>
-                </div>
-
-                <!-- 董元 -->
-                <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 flex flex-col justify-between hover:border-yp-lime transition">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="px-2.5 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">领队 / 教练 / 机械师</span>
-                            <span class="text-xs text-gray-400">26岁</span>
+                        
+                        <!-- 页面快速跳转入口卡片 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                            <button onclick="switchPage('shop')" class="text-left flex items-center justify-between p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition group">
+                                <div>
+                                    <div class="text-xs text-yp-lime font-bold">OFFICIAL STORE</div>
+                                    <div class="text-base font-black mt-0.5">进入器材商城选购</div>
+                                    <div class="text-[11px] text-gray-300 mt-0.5">与淘宝官方旗舰店同价</div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-white group-hover:translate-x-1 transition"></i>
+                            </button>
+                            <button onclick="switchPage('rides')" class="text-left flex items-center justify-between p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition group">
+                                <div>
+                                    <div class="text-xs text-yp-lime font-bold">LA FUGA HOSTEL</div>
+                                    <div class="text-base font-black mt-0.5">La Fuga青野·驿</div>
+                                    <div class="text-[11px] text-gray-300 mt-0.5">千岛湖亚运村车队青旅</div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-white group-hover:translate-x-1 transition"></i>
+                            </button>
+                            <button onclick="switchPage('coaching')" class="text-left flex items-center justify-between p-4 rounded-xl bg-yp-green/90 hover:bg-yp-green text-white shadow-lg transition group">
+                                <div>
+                                    <div class="text-xs text-white/90 font-bold">COACHING SERVICE</div>
+                                    <div class="text-base font-black mt-0.5">自行车教练服务报名</div>
+                                    <div class="text-[11px] text-white/90 mt-0.5">U16/U18/U23/成人分级指导</div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right group-hover:translate-x-1 transition"></i>
+                            </button>
                         </div>
-                        <h3 class="text-2xl font-black mb-1">董元 <span class="text-sm font-normal text-gray-400">🇨🇳</span></h3>
-                        <p class="text-xs text-yp-lime font-semibold mb-4">车队联合创始人 | 资深技师与训练指导</p>
-                        <p class="text-xs text-gray-300 leading-relaxed">
-                            青少年时期曾参与中国自行车联赛精英组阿里山站、环多伦等成年赛事，后因连续伤病退役。作为车队建立者之一，自2023年初开始带队征战全国赛事，为队员提供全方位训练与器材保障。
-                        </p>
-                    </div>
-                    <div class="px-6 py-3 bg-gray-900/60 border-t border-gray-700 text-[11px] text-gray-400">
-                        负责日常带队比赛、科学训练执行与职业器材维护
                     </div>
                 </div>
+            </section>
 
-                <!-- Vladimir López -->
-                <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 flex flex-col justify-between hover:border-yp-lime transition">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="px-2.5 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded">美洲分部负责人 / 副队长</span>
-                            <span class="text-xs text-gray-400">37岁 · 综合型(GC)</span>
-                        </div>
-                        <h3 class="text-2xl font-black mb-1">Vladimir López <span class="text-sm font-normal text-gray-400">🇨🇴</span></h3>
-                        <p class="text-xs text-amber-400 font-semibold mb-4">体育主管助理 | 外籍GC主力车手</p>
-                        <p class="text-xs text-gray-300 leading-relaxed">
-                            拥有海量职业参赛经验的综合型名将，曾效力于日本Team Ukyo、中国甘肃银行等洲际车队，多次在国际职业环赛中取得总成绩（GC）前10名，是车队总成绩的强力保障。
-                        </p>
-                    </div>
-                    <div class="px-6 py-3 bg-gray-900/60 border-t border-gray-700 text-[11px] text-gray-400">
-                        全权负责美洲赛区赛事统筹与年轻车手经验传授
-                    </div>
-                </div>
-
-                <!-- Vedad Karić -->
-                <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 flex flex-col justify-between hover:border-yp-lime transition">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="px-2.5 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded">外籍绝对主力</span>
-                            <span class="text-xs text-gray-400">38岁 · 全能国家冠军</span>
-                        </div>
-                        <h3 class="text-2xl font-black mb-1">Vedad Karić <span class="text-sm font-normal text-gray-400">🇧🇦</span></h3>
-                        <p class="text-xs text-amber-400 font-semibold mb-4">18次波黑国家锦标赛冠军得主</p>
-                        <ul class="text-xs text-gray-300 space-y-1.5 leading-relaxed">
-                            <li>• <strong>公路大组赛：</strong>2021, 2022, 2024, 2025, 2026年 5次夺得波黑国家冠军</li>
-                            <li>• <strong>个人计时赛：</strong>2017–2019及2021–2023 共6次加冕国家冠军</li>
-                            <li>• <strong>山地越野/爬坡：</strong>累计6次波黑山地国家冠军 + 2018公路爬坡国家冠军</li>
-                        </ul>
-                    </div>
-                    <div class="px-6 py-3 bg-gray-900/60 border-t border-gray-700 text-[11px] text-gray-400">
-                        多线争冠核心，提供顶级赛场统治力与技术背书
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- PART 02-B: 2027年度拟定参赛计划 -->
-    <section id="calendar" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto mb-12">
-            <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">2027 RACING CALENDAR</span>
-            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">2027年度双线参赛计划（共70个比赛日）</h2>
-            <p class="text-gray-500 text-sm mt-2">横跨大中华区与拉丁美洲，覆盖UCI 2.PRO、UCI 2.1、全国锦标赛及UCI Gravel世锦赛。</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- 大中华地区 -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-yp-darkGreen to-yp-green text-white p-6 flex items-center justify-between">
+            <!-- 车队简介及愿景详情 -->
+            <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
                     <div>
-                        <h3 class="text-xl font-black">大中华地区赛历</h3>
-                        <p class="text-xs text-white/80 mt-0.5">争夺全锦赛及全运会积分 · 央视与骑友网全覆盖</p>
+                        <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">PART 01 / ABOUT & VISION</span>
+                        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">车队简介及发展愿景</h2>
                     </div>
-                    <div class="text-right">
-                        <span class="text-3xl font-black">37</span>
-                        <span class="text-xs block">预计比赛日</span>
+                    <div class="mt-4 md:mt-0">
+                        <button onclick="switchPage('roster')" class="inline-flex items-center text-sm font-bold text-yp-darkGreen hover:underline">
+                            查看车队17人完整阵容与外籍队员介绍 <i class="fa-solid fa-arrow-right ml-1.5"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="p-6 space-y-3 text-sm">
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">环门头沟职业自行车赛</span>
-                        <span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 3个赛段</span>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
+                    <div class="lg:col-span-5 bg-gray-900 text-white rounded-2xl p-8 flex flex-col justify-between">
+                        <div>
+                            <div class="inline-block px-3 py-1 bg-yp-green text-xs font-bold rounded mb-4">UCI CONTINENTAL TEAM</div>
+                            <h3 class="text-2xl font-black mb-4">彻底打通从群众体育到职业体育的上升通道</h3>
+                            <p class="text-gray-300 text-sm leading-relaxed mb-6">
+                                作为一支坚持群众路线的车队（非体校的“专业路线”），我们取得了不错的成绩。为了实现体教结合的最终愿景、建立属于我们自己的晋升体系，我们希望在2027年成立一支洲际车队长期运营，给青训选手们更多的学习与参赛机会。目前车队已在<strong>哥伦比亚自协</strong>进入注册流程。
+                            </p>
+                            <div class="space-y-4 border-t border-gray-800 pt-6">
+                                <div class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-handshake text-yp-lime mt-1"></i>
+                                    <div>
+                                        <h4 class="font-bold text-sm">国际合作积淀（自2022年起）</h4>
+                                        <p class="text-xs text-gray-400 mt-1">先后与西班牙U23车队 <strong>Team Cycling Galicia</strong>、摩洛哥洲际车队 <strong>SIDI ALI Unlock Team</strong> 达成合作，为运动员谋得参赛机会，工作团队也积累了出国比赛的经验与人脉。</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-location-dot text-yp-lime mt-1"></i>
+                                    <div>
+                                        <h4 class="font-bold text-sm">常态化基地与青年旅舍</h4>
+                                        <p class="text-xs text-gray-400 mt-1">拥有杭州市余杭区及<strong>千岛湖亚运村（La Fuga青野·驿）</strong>常态化训练基地，毗邻热门骑行线路。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">环鄱阳湖职业自行车赛</span>
-                        <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 14个赛段</span>
+
+                    <div class="lg:col-span-7 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center">
+                            <i class="fa-solid fa-trophy text-amber-500 mr-2"></i> 青年力量发展车队荣誉榜 (2021-2026)
+                        </h3>
+                        <div class="relative border-l-2 border-yp-green/30 ml-3 space-y-6">
+                            <div class="relative pl-6">
+                                <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
+                                <div class="text-xs font-bold text-yp-darkGreen">2026年</div>
+                                <div class="font-bold text-gray-900 mt-0.5">全国公开赛（湖北枝江）大学生组 冠军 — <span class="text-yp-darkGreen">张浩阳</span></div>
+                            </div>
+                            <div class="relative pl-6">
+                                <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
+                                <div class="text-xs font-bold text-yp-darkGreen">2025年</div>
+                                <div class="font-bold text-gray-900 mt-0.5"><span class="text-yp-darkGreen">苏毅</span> 入选阿斯塔纳（Astana）集训名单</div>
+                                <div class="font-bold text-gray-900 mt-1">全国U系列锦标赛乙组大组赛 冠军 — <span class="text-yp-darkGreen">李东润</span></div>
+                            </div>
+                            <div class="relative pl-6">
+                                <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
+                                <div class="text-xs font-bold text-yp-darkGreen">2024年</div>
+                                <div class="font-bold text-gray-900 mt-0.5">全国U系列锦标赛甲组大组赛 冠军 — <span class="text-yp-darkGreen">戴铭亨</span></div>
+                                <div class="font-bold text-gray-900 mt-1">全国U系列锦标赛甲组 ITT 冠军、亚军 — <span class="text-yp-darkGreen">戴铭亨、尚睿濛</span></div>
+                            </div>
+                            <div class="relative pl-6">
+                                <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white"></span>
+                                <div class="text-xs font-bold text-yp-darkGreen">2023年</div>
+                                <div class="font-bold text-gray-900 mt-0.5">全国U系列锦标赛甲组 ITT 冠军 — <span class="text-yp-darkGreen">马浩均</span>（后入选大学生国家队、成年国家队）</div>
+                            </div>
+                            <div class="relative pl-6">
+                                <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-gray-400 border-2 border-white"></span>
+                                <div class="text-xs font-bold text-gray-500">2021年底</div>
+                                <div class="font-bold text-gray-700 mt-0.5">成立青训车队：青年力量发展车队</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">跨喜马拉雅国际自行车极限挑战赛</span>
-                        <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 5个赛段</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- 页面 2：队员介绍与工作人员 (roster) -->
+        <!-- ============================================================== -->
+        <div id="page-roster" class="page-section py-14 bg-gray-900 text-white min-h-[80vh]">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+                    <div>
+                        <span class="text-yp-lime font-black tracking-widest text-sm uppercase">PART 02 / TEAM ROSTER & STAFF</span>
+                        <h2 class="text-3xl sm:text-4xl font-black mt-1">车队人员构成与队员介绍</h2>
+                        <p class="text-gray-400 text-sm mt-1">预计注册17名运动员，主要由哥伦比亚和中国青年车手构成。</p>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">环上海职业自行车赛</span>
-                        <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 3个赛段</span>
+                    <div class="flex flex-wrap gap-2 mt-4 md:mt-0 text-xs font-bold">
+                        <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇨🇴 哥伦比亚籍 8人</span>
+                        <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇨🇳 中国籍 7人</span>
+                        <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇧🇦 波黑籍 1人</span>
+                        <span class="px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700">🇦🇱 阿尔巴尼亚籍 1人</span>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">沿黄河观光带·东营口职业自行车赛</span>
-                        <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 单日赛</span>
+                </div>
+
+                <!-- 梯队角色构成 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-gray-800/80 border border-gray-700 p-6 rounded-xl">
+                        <div class="text-yp-lime font-black text-lg mb-1">1~2位 外籍主力车手</div>
+                        <p class="text-gray-300 text-xs leading-relaxed">主要任务在于赢得总成绩冠军（GC）以及爬坡王荣誉衫（KOM），为年轻车手传授大赛经验。</p>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">中国自行车全国锦标赛 <span class="text-xs text-gray-500 font-normal">(U23/精英 大组+ITT)</span></span>
-                        <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">4个比赛日 · 6人次</span>
+                    <div class="bg-gray-800/80 border border-gray-700 p-6 rounded-xl">
+                        <div class="text-yp-lime font-black text-lg mb-1">2~3位 中生代车手</div>
+                        <p class="text-gray-300 text-xs leading-relaxed">完成比赛突围曝光、润滑车队工作团队与青年车手之间的战术及日常沟通工作。</p>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span class="font-bold text-gray-900">环广州(2段) / 成都天府绿道(2段) / 环榆林(3段)</span>
-                        <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">在华C类职业赛事</span>
+                    <div class="bg-gray-800/80 border border-gray-700 p-6 rounded-xl">
+                        <div class="text-yp-lime font-black text-lg mb-1">10~12位 青训车手</div>
+                        <p class="text-gray-300 text-xs leading-relaxed">成熟车手把重心放在最佳青年车手荣誉衫争夺上；刚成年车手尝试完成职业比赛，并为团队提供支持（如领骑、送水等）。</p>
                     </div>
-                    <div class="flex justify-between items-center py-2">
-                        <span class="font-bold text-gray-900">中国职业自行车联赛(2~5站) & 中国自行车联赛(1~3站)</span>
-                        <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">国家级积分联赛</span>
+                </div>
+
+                <!-- 核心管理团队与已确定外籍主力 -->
+                <h3 class="text-xl font-black text-white mb-6 border-l-4 border-yp-lime pl-3">核心管理团队 & 已确定外籍主力车手</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <!-- 徐核 -->
+                    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">经理 / 体育主管 / 队长</span>
+                                <span class="text-xs text-gray-400">28岁 · 冲刺型车手</span>
+                            </div>
+                            <h4 class="text-2xl font-black">徐核 <span class="text-sm font-normal text-gray-400">🇨🇳</span></h4>
+                            <p class="text-xs text-yp-lime font-semibold mt-1 mb-3">UCI 2级教练证书持有者 | 精通西班牙语和英语</p>
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                曾效力于 Avimosa Chozas Team、广州风雷洲际队、五指山1867洲际队、Kiwi Atlántico洲际队、SIDI ALI Unlock洲际队。参与过 Vuelta a Asturias（环阿斯图里亚斯）等欧洲高级别赛事，近期赢得过2023年中西建交50周年自行车赛亚军。青年力量车队建立者之一，长期负责运营车队及教练工作，于2025年取得UCI 2级教练证书。
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-700 flex justify-between items-center text-xs text-gray-400">
+                            <span>联系电话/支付宝：18513693097</span>
+                            <button onclick="switchPage('coaching')" class="text-yp-lime font-bold hover:underline">预约徐核教练训练 &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- 董元 -->
+                    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">领队 / 教练 / 机械师</span>
+                                <span class="text-xs text-gray-400">26岁</span>
+                            </div>
+                            <h4 class="text-2xl font-black">董元 <span class="text-sm font-normal text-gray-400">🇨🇳</span></h4>
+                            <p class="text-xs text-yp-lime font-semibold mt-1 mb-3">车队联合建立者 | 赛训与器材技术保障专家</p>
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                在青少年时期曾参与过中国自行车联赛精英组阿里山站、环多伦等成年赛事，后因连续的伤病退役。是青年力量车队的建立者之一，从2023年初开始带队比赛，并为队员提供日常训练和器材上的全方位帮助。
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-400">
+                            负责全国赛事带队、青训技术指导及全队战车精密机械维护
+                        </div>
+                    </div>
+
+                    <!-- Vladimir López -->
+                    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded">外籍主力 / 美洲分部负责人 / 副队长</span>
+                                <span class="text-xs text-gray-400">37岁 · 综合型GC车手</span>
+                            </div>
+                            <h4 class="text-2xl font-black">Vladimir López <span class="text-sm font-normal text-gray-400">🇨🇴 哥伦比亚</span></h4>
+                            <p class="text-xs text-amber-400 font-semibold mt-1 mb-3">前 Team Ukyo、甘肃银行洲际队名将</p>
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                一位有大量参赛经验的综合型车手，曾效力过 Team Ukyo、甘肃银行等洲际车队，并多次在职业环赛中取得总成绩（GC）前10名的成绩。他的到来能为车队的年轻人提供宝贵经验，也是车队总成绩的有力保障。同时兼任车队体育主管助理及美洲分部全权负责人。
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-400">
+                            坐镇哥伦比亚大本营，统领美洲区33个比赛日征程
+                        </div>
+                    </div>
+
+                    <!-- Vedad Karić -->
+                    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded">外籍主力车手</span>
+                                <span class="text-xs text-gray-400">38岁 · 多栖国家冠军</span>
+                            </div>
+                            <h4 class="text-2xl font-black">Vedad Karić <span class="text-sm font-normal text-gray-400">🇧🇦 波黑</span></h4>
+                            <p class="text-xs text-amber-400 font-semibold mt-1 mb-3">累计斩获 18 次波黑国家锦标赛冠军</p>
+                            <ul class="text-sm text-gray-300 space-y-1.5 leading-relaxed">
+                                <li>• <strong>公路大组赛：</strong>分别于 2021、2022、2024、2025 及 2026 年 5 次夺得波黑国家冠军，达成最新连冠。</li>
+                                <li>• <strong>个人计时赛：</strong>分别于 2017–2019 年（三连冠）及 2021–2023 年（三连冠）共 6 次加冕波黑个人计时赛国家冠军。</li>
+                                <li>• <strong>山地车越野赛：</strong>职业生涯在波黑国家山地车越野/马拉松锦标赛累计获 6 次国家冠军头衔。</li>
+                                <li>• <strong>公路爬坡赛：</strong>于 2018 年获得波黑国家公路爬坡锦标赛冠军。</li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-400">
+                            车队大组、计时与爬坡全天候核心主将
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 优秀青训及中方代表车手 -->
+                <h3 class="text-xl font-black text-white mb-4 border-l-4 border-yp-green pl-3">青训培养杰出代表车手</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
+                    <div class="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                        <div class="font-black text-base text-white">马浩均</div>
+                        <div class="text-[11px] text-yp-lime mt-1">2023全国U系列甲组ITT冠军</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">入选大学生/成年国家队</div>
+                    </div>
+                    <div class="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                        <div class="font-black text-base text-white">戴铭亨</div>
+                        <div class="text-[11px] text-yp-lime mt-1">2024全国U系列甲组</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">大组赛 & ITT 双料冠军</div>
+                    </div>
+                    <div class="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                        <div class="font-black text-base text-white">尚睿濛</div>
+                        <div class="text-[11px] text-yp-lime mt-1">2024全国U系列甲组</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">个人计时赛(ITT) 亚军</div>
+                    </div>
+                    <div class="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                        <div class="font-black text-base text-white">苏毅</div>
+                        <div class="text-[11px] text-yp-lime mt-1">2025优秀青训代表</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">入选阿斯塔纳集训名单</div>
+                    </div>
+                    <div class="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                        <div class="font-black text-base text-white">李东润</div>
+                        <div class="text-[11px] text-yp-lime mt-1">2025全国U系列乙组</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">大组赛 冠军</div>
+                    </div>
+                    <div class="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                        <div class="font-black text-base text-white">张浩阳</div>
+                        <div class="text-[11px] text-yp-lime mt-1">2026全国公开赛(枝江)</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5">大学生组 冠军</div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 美洲地区 -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between">
-                <div>
-                    <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-6 flex items-center justify-between">
+        <!-- ============================================================== -->
+        <!-- 页面 3：2027赛历 (calendar) -->
+        <!-- ============================================================== -->
+        <div id="page-calendar" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">2027 RACING CALENDAR</span>
+                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">2027年度拟定参赛计划（共70个比赛日）</h2>
+                <p class="text-gray-500 text-sm mt-2">大中华地区37个比赛日 + 美洲地区33个比赛日，全方位覆盖职业环赛与世锦赛。</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 大中华地区 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-yp-darkGreen to-yp-green text-white p-6 flex items-center justify-between">
                         <div>
-                            <h3 class="text-xl font-black">美洲地区赛历</h3>
-                            <p class="text-xs text-gray-300 mt-0.5">由副队长 Vladimir López 全权负责 · 国家电视台直播</p>
+                            <h3 class="text-xl font-black">大中华地区参赛计划</h3>
+                            <p class="text-xs text-white/80 mt-0.5">全力争取全国锦标赛及全运会积分</p>
                         </div>
                         <div class="text-right">
-                            <span class="text-3xl font-black text-yp-lime">33</span>
-                            <span class="text-xs block text-gray-300">预计比赛日</span>
+                            <span class="text-3xl font-black">37</span>
+                            <span class="text-xs block">预计比赛日</span>
                         </div>
                     </div>
-                    <div class="p-6 space-y-4 text-sm">
-                        <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
-                            <div>
-                                <div class="font-bold text-gray-900">环哥伦比亚职业自行车赛</div>
-                                <div class="text-xs text-gray-500">南美顶级环赛 · Señal Colombia / RCN全国直播</div>
-                            </div>
-                            <span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 14个赛段</span>
+                    <div class="p-6 space-y-3 text-sm">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">环门头沟职业自行车赛</span>
+                            <span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 共3个赛段</span>
                         </div>
-                        <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
-                            <div>
-                                <div class="font-bold text-gray-900">环哥伦比亚 (Vuelta a Colombia)</div>
-                                <div class="text-xs text-gray-500">南美传统核心多日赛</div>
-                            </div>
-                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.2 · 7个赛段</span>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">环鄱阳湖职业自行车赛</span>
+                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 共14个赛段</span>
                         </div>
-                        <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
-                            <div>
-                                <div class="font-bold text-gray-900">包含麦德林经典赛在内的 6~7 场古典赛</div>
-                                <div class="text-xs text-gray-500">高频次拉美本土曝光与实战拉练</div>
-                            </div>
-                            <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 7~9个比赛日</span>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">跨喜马拉雅国际自行车极限挑战赛</span>
+                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 共5个赛段</span>
                         </div>
-                        <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
-                            <div>
-                                <div class="font-bold text-gray-900">UCI Gravel 世界杯（哥伦比亚站、墨西哥站）</div>
-                                <div class="text-xs text-gray-500">预计上场 4 人次</div>
-                            </div>
-                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">UCI 世界杯 · 2个比赛日</span>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">环上海职业自行车赛</span>
+                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.1 · 共3个赛段</span>
                         </div>
-                        <div class="flex justify-between items-center py-2.5">
-                            <div>
-                                <div class="font-bold text-gray-900">UCI Gravel 世锦赛（精英男子组）</div>
-                                <div class="text-xs text-gray-500">代表哥伦比亚国家队出战，预计上场 2 人次</div>
-                            </div>
-                            <span class="px-2.5 py-0.5 bg-purple-100 text-purple-800 font-bold text-xs rounded">世锦赛 · 1个比赛日</span>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">沿黄河观光带·东营口职业自行车赛</span>
+                            <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 单日赛</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">环广州(2段) / 成都天府绿道(2段) / 环榆林(3段)</span>
+                            <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">在华C类职业赛事</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="font-bold text-gray-900">中国自行车全国锦标赛 <span class="text-xs text-gray-500 font-normal">(U23/精英 大组+ITT)</span></span>
+                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">4个比赛日 · 预计6人次</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="font-bold text-gray-900">中国职业自行车联赛(2~5站) & 中国自行车联赛(1~3站)</span>
+                            <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold text-xs rounded">积分联赛</span>
                         </div>
                     </div>
                 </div>
-                <div class="p-4 bg-gray-50 border-t border-gray-100 text-xs text-gray-500">
-                    * 注：此外车队还将择机参与西班牙环阿斯图里亚斯（Vuelta a Asturias，RTPA及Eurosport转播）等海外高水平赛事。
+
+                <!-- 美洲地区 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-6 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-xl font-black">美洲地区参赛计划</h3>
+                                <p class="text-xs text-gray-300 mt-0.5">体育主管助理兼副队长 Vladimir López 全权负责</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-3xl font-black text-yp-lime">33</span>
+                                <span class="text-xs block text-gray-300">预计比赛日</span>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4 text-sm">
+                            <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
+                                <span class="font-bold text-gray-900">环哥伦比亚职业自行车赛</span>
+                                <span class="px-2.5 py-0.5 bg-red-100 text-yp-red font-bold text-xs rounded">UCI 2.PRO · 共14个赛段</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
+                                <span class="font-bold text-gray-900">环哥伦比亚 (Vuelta a Colombia)</span>
+                                <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen font-bold text-xs rounded">UCI 2.2 · 共7个赛段</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
+                                <span class="font-bold text-gray-900">包含麦德林经典赛在内的 6~7 场古典赛</span>
+                                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-xs rounded">UCI 1.2 · 共7~9个比赛日</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b border-gray-100">
+                                <span class="font-bold text-gray-900">UCI Gravel 世界杯哥伦比亚站、墨西哥站</span>
+                                <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-xs rounded">共2个比赛日 · 预计上场4人次</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5">
+                                <span class="font-bold text-gray-900">UCI Gravel 世锦赛（精英男子组，代表哥伦比亚国家队）</span>
+                                <span class="px-2.5 py-0.5 bg-purple-100 text-purple-800 font-bold text-xs rounded">1个比赛日 · 预计上场2人次</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-gray-50 border-t border-gray-100 text-xs text-gray-500">
+                        注：由于美洲经济和政治环境相对不稳定，参与赛事名称可能存在一定变动，但车队仍会参与足量赛事以满足赞助商曝光需求。
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- ============================================================== -->
-    <!-- 通道一：官方装备商城 (网上购物通道) -->
-    <!-- ============================================================== -->
-    <section id="shop" class="py-20 bg-gray-100 border-t border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- ============================================================== -->
+        <!-- 页面 4：官方装备商城 (shop) - 与淘宝官方店铺同价 + 支付宝结算 -->
+        <!-- ============================================================== -->
+        <div id="page-shop" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
                 <div>
                     <div class="inline-flex items-center space-x-2 text-yp-darkGreen font-black text-sm uppercase">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                        <span>OFFICIAL E-SHOP / 网上购物通道</span>
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <span>OFFICIAL E-SHOP / 车队器材官方商城</span>
                     </div>
-                    <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">车队赞助商正版装备商城</h2>
+                    <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">车队合作器材直售（淘宝官方旗舰店同步售价）</h2>
                     <p class="text-gray-600 text-sm mt-1">
-                        与每年70个比赛日“赛场流动线下展销会”同源！外籍主力与国内精英高强度赛训实测背书，支持线上直购或赛场扫码提货。
+                        全部商品售价与品牌方淘宝官方店铺严格保持一致！下单直接通过车队官方支付宝（<strong>18513693097 徐核</strong>）结算，正品保障。
                     </p>
                 </div>
                 <!-- 商品分类过滤 -->
                 <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
-                    <button onclick="filterShop('all')" class="shop-tab active bg-yp-darkGreen text-white px-4 py-2 rounded-lg text-xs font-bold transition">全部装备</button>
-                    <button onclick="filterShop('frame')" class="shop-tab bg-white text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition">空力公式车架</button>
-                    <button onclick="filterShop('apparel')" class="shop-tab bg-white text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition">NZSE车队版骑行服</button>
-                    <button onclick="filterShop('helmet')" class="shop-tab bg-white text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition">ESSEN头盔</button>
-                    <button onclick="filterShop('gear')" class="shop-tab bg-white text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition">和博/卓锐配件</button>
+                    <button onclick="filterShop('all', this)" class="shop-tab bg-yp-darkGreen text-white px-3.5 py-2 rounded-lg text-xs font-bold transition">全部器材</button>
+                    <button onclick="filterShop('spect', this)" class="shop-tab bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 px-3.5 py-2 rounded-lg text-xs font-bold transition">空力公式 (Spect)</button>
+                    <button onclick="filterShop('elves', this)" class="shop-tab bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 px-3.5 py-2 rounded-lg text-xs font-bold transition">精灵 (ELVES)</button>
+                    <button onclick="filterShop('helmet', this)" class="shop-tab bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 px-3.5 py-2 rounded-lg text-xs font-bold transition">ESSEN赫拉头盔</button>
+                    <button onclick="filterShop('pedal', this)" class="shop-tab bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 px-3.5 py-2 rounded-lg text-xs font-bold transition">卓锐ZP115锁踏</button>
                 </div>
             </div>
 
             <!-- 商品网格 -->
-            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 商品由下方 JS 动态渲染 -->
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 由下方 JS 动态渲染 -->
             </div>
         </div>
-    </section>
 
-    <!-- ============================================================== -->
-    <!-- 通道二：线下骑游与训练基地活动报名 -->
-    <!-- ============================================================== -->
-    <section id="rides" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="mb-12">
-            <div class="inline-flex items-center space-x-2 text-yp-darkGreen font-black text-sm uppercase">
-                <i class="fa-solid fa-bicycle"></i>
-                <span>OFFLINE RIDES / 线下骑游报名通道</span>
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">杭州余杭 & 千岛湖训练基地 · 骑游活动报名</h2>
-            <p class="text-gray-600 text-sm mt-1">
-                依托车队位于杭州市余杭区和千岛湖的两个常态化训练基地，高频次开展车迷骑游互动、赞助商器材试骑体验及后勤保障拉练。
-            </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <!-- 左侧：近期骑游路线卡片 -->
-            <div class="lg:col-span-7 space-y-4">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:border-yp-green transition flex flex-col sm:flex-row justify-between gap-4">
-                    <div>
-                        <div class="flex items-center space-x-2 mb-2">
-                            <span class="px-2.5 py-0.5 bg-green-100 text-yp-darkGreen text-xs font-bold rounded">余杭常态化基地</span>
-                            <span class="text-xs text-gray-500 font-semibold"><i class="fa-regular fa-calendar mr-1"></i>每周六 07:30 集合</span>
-                        </div>
-                        <h3 class="text-lg font-black text-gray-900">余杭径山—百丈平山坡职业跟队骑游 (85km)</h3>
-                        <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                            包含基地器材展厅参观、ESSEN头盔与空力公式车架试骑体验。车队定制拉花队车全程跟随保障，提供和博骑行水壶补给。
-                        </p>
-                        <div class="mt-3 flex items-center space-x-4 text-xs text-gray-500 font-medium">
-                            <span><i class="fa-solid fa-gauge-high text-yp-green mr-1"></i>分组：休闲养生组 / 进阶拉练组</span>
-                            <span><i class="fa-solid fa-coins text-amber-500 mr-1"></i>费用：¥68/人 (含补给与保险)</span>
-                        </div>
+        <!-- ============================================================== -->
+        <!-- 页面 5：千岛湖亚运村青旅 La Fuga青野·驿 (rides) -->
+        <!-- ============================================================== -->
+        <div id="page-rides" class="page-section py-14 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-3xl shadow-md border border-gray-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-900 via-gray-800 to-yp-darkGreen text-white p-8 sm:p-12">
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 text-yp-lime text-xs font-bold mb-4">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>千岛湖亚运村 · 车队常态化驿站与青年旅舍</span>
                     </div>
-                    <div class="sm:self-center shrink-0">
-                        <button onclick="selectRide('余杭径山—百丈平山坡职业跟队骑游 (85km)')" class="w-full sm:w-auto px-4 py-2.5 bg-yp-darkGreen text-white text-xs font-bold rounded-xl hover:bg-yp-green transition">
-                            选择此活动
-                        </button>
-                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black tracking-tight">La Fuga 青野·驿</h2>
+                    <p class="text-gray-200 text-base sm:text-lg mt-3 max-w-2xl leading-relaxed">
+                        青年力量洲际队官方青年旅舍与骑行大本营，坐落于风景秀丽的<strong>杭州千岛湖亚运村</strong>。
+                    </p>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:border-yp-green transition flex flex-col sm:flex-row justify-between gap-4">
-                    <div>
-                        <div class="flex items-center space-x-2 mb-2">
-                            <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded">千岛湖常态化基地</span>
-                            <span class="text-xs text-gray-500 font-semibold"><i class="fa-regular fa-calendar mr-1"></i>每月双周周末 (2天1夜)</span>
+                <div class="p-8 sm:p-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div class="md:col-span-7 space-y-5">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 rounded-xl bg-green-100 text-yp-darkGreen flex items-center justify-center shrink-0 font-bold">
+                                <i class="fa-solid fa-map-pin"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-gray-900 text-lg">青年旅舍位置</h3>
+                                <p class="text-sm text-gray-600 mt-1">浙江省杭州市淳安县 <strong>千岛湖亚运村 · La Fuga 青野·驿</strong>（毗邻千岛湖环湖核心骑行线路，店内长期陈列展出车队赞助商正版装备）。</p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-black text-gray-900">千岛湖138km环湖经典赛段·洲际队沉浸式骑游营</h3>
-                        <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                            深度体验洲际车队赛训生活！由现役队员领骑破风，董元教练提供行前车辆快检，晚间举办基地烧烤与功率训练分享沙龙。
-                        </p>
-                        <div class="mt-3 flex items-center space-x-4 text-xs text-gray-500 font-medium">
-                            <span><i class="fa-solid fa-car-side text-yp-green mr-1"></i>含队车收容+跟拍+基地住宿</span>
-                            <span><i class="fa-solid fa-coins text-amber-500 mr-1"></i>费用：¥499/人</span>
-                        </div>
-                    </div>
-                    <div class="sm:self-center shrink-0">
-                        <button onclick="selectRide('千岛湖138km环湖经典赛段·洲际队沉浸式骑游营')" class="w-full sm:w-auto px-4 py-2.5 bg-yp-darkGreen text-white text-xs font-bold rounded-xl hover:bg-yp-green transition">
-                            选择此活动
-                        </button>
-                    </div>
-                </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:border-yp-green transition flex flex-col sm:flex-row justify-between gap-4">
-                    <div>
-                        <div class="flex items-center space-x-2 mb-2">
-                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded">赛场嘉年华同游</span>
-                            <span class="text-xs text-gray-500 font-semibold"><i class="fa-regular fa-calendar mr-1"></i>随2027国内赛历开启</span>
-                        </div>
-                        <h3 class="text-lg font-black text-gray-900">2027环上海 / 环鄱阳湖 赛场观赛助威+荣誉骑游团</h3>
-                        <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                            直击青年力量洲际队职业赛场大本营，零距离探访车队Paddock准备区，体验赛场专属产品展销与赛段荣誉骑行。
-                        </p>
-                        <div class="mt-3 flex items-center space-x-4 text-xs text-gray-500 font-medium">
-                            <span><i class="fa-solid fa-shirt text-yp-green mr-1"></i>赠车迷助威纪念水壶+贴纸</span>
-                            <span><i class="fa-solid fa-coins text-amber-500 mr-1"></i>费用：¥199/人</span>
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-gray-900 text-lg">线下骑游活动说明</h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    具体的官方线下骑游路线与活动日程目前暂未正式发布。欢迎全国各地骑友前来 <strong>La Fuga 青野·驿</strong> 入住打卡、交流骑行，或登记预约后续骑游通知！
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div class="sm:self-center shrink-0">
-                        <button onclick="selectRide('2027环上海 / 环鄱阳湖 赛场观赛助威+荣誉骑游团')" class="w-full sm:w-auto px-4 py-2.5 bg-yp-darkGreen text-white text-xs font-bold rounded-xl hover:bg-yp-green transition">
-                            选择此活动
-                        </button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- 右侧：线下骑游在线报名表单 -->
-            <div class="lg:col-span-5 bg-white rounded-2xl shadow-md border border-gray-200 p-6 sm:p-8">
-                <h3 class="text-xl font-black text-gray-900 mb-1">填写线下骑游报名表</h3>
-                <p class="text-xs text-gray-500 mb-6">提交后工作人员将添加您的微信拉入当期骑游活动群。</p>
-                <form onsubmit="submitRideForm(event)" class="space-y-4 text-sm">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">选择骑游活动 *</label>
-                        <select id="ride-select" required class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 focus:outline-none focus:border-yp-green">
-                            <option value="余杭径山—百丈平山坡职业跟队骑游 (85km)">余杭径山—百丈平山坡职业跟队骑游 (85km)</option>
-                            <option value="千岛湖138km环湖经典赛段·洲际队沉浸式骑游营">千岛湖138km环湖经典赛段·洲际队沉浸式骑游营</option>
-                            <option value="2027环上海 / 环鄱阳湖 赛场观赛助威+荣誉骑游团">2027环上海 / 环鄱阳湖 赛场观赛助威+荣誉骑游团</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">您的姓名 *</label>
-                            <input type="text" id="ride-name" required placeholder="请输入真实姓名(购保险用)" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 focus:outline-none focus:border-yp-green">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">手机号码(微信同号) *</label>
-                            <input type="tel" id="ride-phone" required placeholder="11位手机号" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 focus:outline-none focus:border-yp-green">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">骑行组别 *</label>
-                            <select id="ride-group" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 focus:outline-none focus:border-yp-green">
-                                <option value="进阶拉练组 (巡航32-38km/h)">进阶拉练组 (巡航32-38km/h)</option>
-                                <option value="休闲骑游组 (巡航25-30km/h)">休闲骑游组 (巡航25-30km/h)</option>
-                                <option value="挑战精英组 (跟车队青训拉练)">挑战精英组 (跟车队青训拉练)</option>
+                    <div class="md:col-span-5 bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                        <h4 class="font-black text-gray-900 text-base mb-2">青旅入住 / 骑游意向登记</h4>
+                        <p class="text-xs text-gray-500 mb-4">留下您的联系方式，或直接联系徐核（18513693097）预订青旅床位。</p>
+                        <form onsubmit="submitHostelForm(event)" class="space-y-3 text-sm">
+                            <input type="text" id="hostel-name" required placeholder="您的姓名 *" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 bg-white">
+                            <input type="tel" id="hostel-phone" required placeholder="联系电话/微信 *" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 bg-white">
+                            <select id="hostel-type" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 bg-white">
+                                <option value="预订千岛湖亚运村 La Fuga青野·驿 住宿">预订千岛湖亚运村 La Fuga青野·驿 住宿</option>
+                                <option value="接收后续线下骑游活动发布通知">接收后续线下骑游活动发布通知</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">预约体验赞助商器材</label>
-                            <select id="ride-gear" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 focus:outline-none focus:border-yp-green">
-                                <option value="自带车辆，无需试骑">自带车辆，无需试骑</option>
-                                <option value="申请试骑：空力公式公路整车">申请试骑：空力公式公路整车</option>
-                                <option value="申请试戴：ESSEN气动/爬坡头盔">申请试戴：ESSEN气动/爬坡头盔</option>
-                                <option value="申请体验：卓锐锁踏">申请体验：卓锐锁踏</option>
-                            </select>
-                        </div>
+                            <button type="submit" class="w-full py-3 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl transition">
+                                提交登记 / 联系青旅
+                            </button>
+                        </form>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">备注信息（选填）</label>
-                        <input type="text" id="ride-note" placeholder="如：身高尺码、紧急联系人等" class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 focus:outline-none focus:border-yp-green">
-                    </div>
-                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-yp-darkGreen to-yp-green text-white font-black rounded-xl shadow hover:opacity-95 transition">
-                        立即提交骑游报名
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
-    </section>
 
-    <!-- ============================================================== -->
-    <!-- 通道三：自行车教练服务与青训选拔报名通道 -->
-    <!-- ============================================================== -->
-    <section id="coaching" class="py-20 bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-12">
-                <div class="inline-flex items-center space-x-2 text-yp-lime font-black text-sm uppercase">
+        <!-- ============================================================== -->
+        <!-- 页面 6：自行车教练服务报名 (coaching) - U16/U18/U23/成人 + 支付宝 -->
+        <!-- ============================================================== -->
+        <div id="page-coaching" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10">
+                <div class="inline-flex items-center space-x-2 text-yp-darkGreen font-black text-sm uppercase">
                     <i class="fa-solid fa-medal"></i>
-                    <span>PRO COACHING & YOUTH ACADEMY / 自行车教练服务报名通道</span>
+                    <span>PRO COACHING SERVICE / 自行车教练服务报名通道</span>
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-black mt-1">UCI 2级教练领衔 · 科学训练与青训晋升报名</h2>
-                <p class="text-gray-400 text-sm mt-1">
-                    曾培养多位全国U系列锦标赛冠军、国家队队员及世巡赛集训营车手！无论您是渴望提升FTP的业余爱好者，还是志在冲击职业赛场的青少年，我们为您提供全套职业级指导。
+                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">UCI 2级教练科学训练服务 · 分级收费标准</h2>
+                <p class="text-gray-600 text-sm mt-1">
+                    由车队经理兼教练 <strong>徐核（UCI 2级教练）</strong> 与领队教练 <strong>董元</strong> 亲自执教，打造全国U系列锦标赛冠军同款训练体系。所有报名费用直接连接支付宝账号 <strong>18513693097</strong>。
                 </p>
             </div>
 
-            <!-- 教练服务套餐卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 flex flex-col justify-between">
+            <!-- 四个年龄组别定价卡片 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <!-- U16 -->
+                <div class="bg-white rounded-2xl border-2 border-gray-200 hover:border-yp-green p-6 shadow-xs flex flex-col justify-between transition">
                     <div>
-                        <span class="px-2.5 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">主教练：徐核 (UCI 2级教练)</span>
-                        <h3 class="text-xl font-black mt-3">1对1 功率周期化线上+线下私教</h3>
-                        <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                            基于TrainingPeaks/功率数据定制周度训练计划，每周进行训练负荷复盘、冲刺/爬坡技术动作指导及比赛战术规划。
+                        <span class="px-3 py-1 bg-green-100 text-yp-darkGreen text-xs font-black rounded-full">青少年启蒙与提高</span>
+                        <h3 class="text-2xl font-black text-gray-900 mt-4">U16 组别训练</h3>
+                        <div class="mt-3 mb-4">
+                            <span class="text-4xl font-black text-yp-darkGreen">¥800</span>
+                            <span class="text-sm text-gray-500 font-bold"> / 月</span>
+                        </div>
+                        <p class="text-xs text-gray-600 leading-relaxed mb-4">
+                            面向16岁以下青少年车手，夯实有氧基础与正确踩踏技术，备战全国U系列锦标赛乙组赛事。
                         </p>
-                        <ul class="text-xs text-gray-300 space-y-1.5 mt-4">
-                            <li><i class="fa-solid fa-check text-yp-lime mr-1.5"></i>个人专属FTP与无氧能力测评</li>
-                            <li><i class="fa-solid fa-check text-yp-lime mr-1.5"></i>定制月度/赛季备赛周期计划</li>
-                            <li><i class="fa-solid fa-check text-yp-lime mr-1.5"></i>余杭/千岛湖基地每月1次线下跟车指导</li>
+                        <ul class="text-xs text-gray-600 space-y-2">
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>周度科学训练计划定制</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>基础控车与安全规范指导</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>体教结合成长档案跟踪</li>
                         </ul>
                     </div>
-                    <div class="mt-6 pt-4 border-t border-gray-700 flex items-center justify-between">
-                        <div>
-                            <span class="text-2xl font-black text-yp-lime">¥1,200</span>
-                            <span class="text-xs text-gray-400"> / 月</span>
-                        </div>
-                        <button onclick="selectCoachCourse('徐核教练：1对1功率周期化科学训练私教 (¥1200/月)')" class="px-4 py-2 bg-yp-green text-white text-xs font-bold rounded-lg hover:bg-yp-darkGreen transition">
-                            报名此课程
-                        </button>
-                    </div>
+                    <button onclick="selectCoachTier('U16组别教练服务', 800)" class="mt-6 w-full py-3 bg-gray-900 hover:bg-yp-darkGreen text-white text-xs font-black rounded-xl transition">
+                        选择 U16 (¥800/月) 报名
+                    </button>
                 </div>
 
-                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 flex flex-col justify-between">
+                <!-- U18 -->
+                <div class="bg-white rounded-2xl border-2 border-gray-200 hover:border-yp-green p-6 shadow-xs flex flex-col justify-between transition">
                     <div>
-                        <span class="px-2.5 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded">导师：董元 (资深领队/机械师)</span>
-                        <h3 class="text-xl font-black mt-3">杭州基地 Bike Fitting + 控车特训课</h3>
-                        <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                            结合B站主页实拍“杭州Fitting Lab全流程”与职业技师经验，解决骑行疼痛、优化气动姿态，并教授集团跟车、高速过弯与摇车技巧。
+                        <span class="px-3 py-1 bg-green-100 text-yp-darkGreen text-xs font-black rounded-full">青年竞技突破</span>
+                        <h3 class="text-2xl font-black text-gray-900 mt-4">U18 组别训练</h3>
+                        <div class="mt-3 mb-4">
+                            <span class="text-4xl font-black text-yp-darkGreen">¥1,000</span>
+                            <span class="text-sm text-gray-500 font-bold"> / 月</span>
+                        </div>
+                        <p class="text-xs text-gray-600 leading-relaxed mb-4">
+                            面向16-18岁青年车手，强化专项功率输出与比赛战术意识，剑指全国U系列锦标赛甲组领奖台。
                         </p>
-                        <ul class="text-xs text-gray-300 space-y-1.5 mt-4">
-                            <li><i class="fa-solid fa-check text-amber-400 mr-1.5"></i>锁片微调、座垫高度与把立落差精准设定</li>
-                            <li><i class="fa-solid fa-check text-amber-400 mr-1.5"></i>整车机械变速/刹车职业级深度精调</li>
-                            <li><i class="fa-solid fa-check text-amber-400 mr-1.5"></i>2小时基地路面控车、轮换领骑实操教学</li>
+                        <ul class="text-xs text-gray-600 space-y-2">
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>功率周期化专项负荷管理</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>ITT个人计时与大组突围战术</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>优秀苗子纳入车队青训考察</li>
                         </ul>
                     </div>
-                    <div class="mt-6 pt-4 border-t border-gray-700 flex items-center justify-between">
-                        <div>
-                            <span class="text-2xl font-black text-amber-400">¥680</span>
-                            <span class="text-xs text-gray-400"> / 次</span>
-                        </div>
-                        <button onclick="selectCoachCourse('董元教练：Bike Fitting调整 + 路面控车特训课 (¥680/次)')" class="px-4 py-2 bg-amber-500 text-gray-900 text-xs font-bold rounded-lg hover:bg-amber-400 transition">
-                            报名此课程
-                        </button>
-                    </div>
+                    <button onclick="selectCoachTier('U18组别教练服务', 1000)" class="mt-6 w-full py-3 bg-gray-900 hover:bg-yp-darkGreen text-white text-xs font-black rounded-xl transition">
+                        选择 U18 (¥1000/月) 报名
+                    </button>
                 </div>
 
-                <div class="bg-gradient-to-b from-yp-darkGreen/40 to-gray-800 border-2 border-yp-lime rounded-2xl p-6 flex flex-col justify-between">
+                <!-- U23 -->
+                <div class="bg-white rounded-2xl border-2 border-yp-green p-6 shadow-md flex flex-col justify-between relative transition">
+                    <span class="absolute -top-3 right-4 px-3 py-0.5 bg-yp-green text-white text-[11px] font-black rounded-full shadow">洲际队直通梯队</span>
                     <div>
-                        <span class="px-2.5 py-1 bg-yp-lime text-gray-900 text-xs font-black rounded">核心通道 · 体教结合晋升</span>
-                        <h3 class="text-xl font-black mt-3">青年力量青训营 & 洲际队梯队选拔</h3>
-                        <p class="text-xs text-gray-300 mt-2 leading-relaxed">
-                            面向14-22岁青少年及大学生车手！复刻马浩均、戴铭亨、苏毅、李东润、张浩阳的冠军成长路径，优秀者直通青年力量洲际队或推荐海外车队。
+                        <span class="px-3 py-1 bg-green-100 text-yp-darkGreen text-xs font-black rounded-full">准职业/大学生精英</span>
+                        <h3 class="text-2xl font-black text-gray-900 mt-4">U23 组别训练</h3>
+                        <div class="mt-3 mb-4">
+                            <span class="text-4xl font-black text-yp-darkGreen">¥1,200</span>
+                            <span class="text-sm text-gray-500 font-bold"> / 月</span>
+                        </div>
+                        <p class="text-xs text-gray-600 leading-relaxed mb-4">
+                            面向18-22岁U23及大学生车手，对标洲际队高强度赛训标准，冲击全国公开赛大学生组及全国锦标赛U23组。
                         </p>
-                        <ul class="text-xs text-gray-200 space-y-1.5 mt-4">
-                            <li><i class="fa-solid fa-star text-yp-lime mr-1.5"></i>备战全国U系列锦标赛、全国公开赛大学生组</li>
-                            <li><i class="fa-solid fa-star text-yp-lime mr-1.5"></i>寒暑假杭州/千岛湖基地全封闭集训</li>
-                            <li><i class="fa-solid fa-star text-yp-lime mr-1.5"></i>达标选手可获洲际队注册资格与赞助器材支持</li>
+                        <ul class="text-xs text-gray-600 space-y-2">
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>UCI 2级教练1对1深度数据分析</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>高强度多日环赛恢复与营养方案</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>达标可获洲际队及海外比赛机会</li>
                         </ul>
                     </div>
-                    <div class="mt-6 pt-4 border-t border-gray-700 flex items-center justify-between">
-                        <div>
-                            <span class="text-lg font-black text-white">能力评估选拔制</span>
+                    <button onclick="selectCoachTier('U23组别教练服务', 1200)" class="mt-6 w-full py-3 bg-yp-darkGreen hover:bg-yp-green text-white text-xs font-black rounded-xl transition">
+                        选择 U23 (¥1200/月) 报名
+                    </button>
+                </div>
+
+                <!-- 成人 -->
+                <div class="bg-white rounded-2xl border-2 border-gray-200 hover:border-yp-green p-6 shadow-xs flex flex-col justify-between transition">
+                    <div>
+                        <span class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-black rounded-full">业余精英定制私教</span>
+                        <h3 class="text-2xl font-black text-gray-900 mt-4">成人组 科学私教</h3>
+                        <div class="mt-3 mb-4">
+                            <span class="text-4xl font-black text-gray-900">¥1,800</span>
+                            <span class="text-sm text-gray-500 font-bold"> / 月</span>
                         </div>
-                        <button onclick="selectCoachCourse('青年力量青训营 & 洲际队预备梯队选拔报名')" class="px-4 py-2 bg-yp-lime text-gray-900 text-xs font-black rounded-lg hover:bg-white transition">
-                            申请青训试训
-                        </button>
+                        <p class="text-xs text-gray-600 leading-relaxed mb-4">
+                            面向成年业余骑行爱好者与赛场精英，兼顾工作生活节奏，高效提升FTP、爬坡能力与赛事名次。
+                        </p>
+                        <ul class="text-xs text-gray-600 space-y-2">
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>定制个性化时间表与功率计划</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>每周数据复盘与动作姿态优化</li>
+                            <li><i class="fa-solid fa-check text-yp-green mr-1.5"></i>格兰芬多/业余联赛备赛策略指导</li>
+                        </ul>
                     </div>
+                    <button onclick="selectCoachTier('成人组科学私教服务', 1800)" class="mt-6 w-full py-3 bg-gray-900 hover:bg-yp-darkGreen text-white text-xs font-black rounded-xl transition">
+                        选择 成人组 (¥1800/月) 报名
+                    </button>
                 </div>
             </div>
 
-            <!-- 教练服务报名表单 -->
-            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6 sm:p-8">
-                <h3 class="text-xl font-black mb-2">自行车教练服务 / 青训选拔登记表</h3>
-                <p class="text-xs text-gray-400 mb-6">提交后，徐核教练或董元教练将在24小时内与您电话/微信联系，进行初步运动背景评估。</p>
-                <form onsubmit="submitCoachForm(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-gray-300 mb-1">意向报名课程 / 通道 *</label>
-                        <select id="coach-course" required class="w-full rounded-xl bg-gray-900 border border-gray-700 text-white px-3.5 py-2.5 focus:outline-none focus:border-yp-lime">
-                            <option value="徐核教练：1对1功率周期化科学训练私教 (¥1200/月)">徐核教练：1对1功率周期化科学训练私教 (¥1200/月)</option>
-                            <option value="董元教练：Bike Fitting调整 + 路面控车特训课 (¥680/次)">董元教练：Bike Fitting调整 + 路面控车特训课 (¥680/次)</option>
-                            <option value="青年力量青训营 & 洲际队预备梯队选拔报名">青年力量青训营 & 洲际队预备梯队选拔报名</option>
+            <!-- 教练报名与支付宝结算表单 -->
+            <div id="coach-form-box" class="bg-gray-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-6 border-b border-gray-800">
+                    <div>
+                        <h3 class="text-2xl font-black">填写教练服务报名表 & 支付宝缴费</h3>
+                        <p class="text-xs text-gray-400 mt-1">提交表单后将自动唤起官方支付宝（账号：<strong class="text-yp-lime">18513693097 徐核</strong>）完成付款。</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex items-center space-x-2 bg-yp-alipay/20 border border-yp-alipay/40 px-4 py-2 rounded-xl">
+                        <i class="fa-brands fa-alipay text-2xl text-yp-alipay"></i>
+                        <div class="text-xs">
+                            <div class="text-gray-300">车队官方支付宝收款账号</div>
+                            <div class="font-black text-white tracking-wider">18513693097 (徐核)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form onsubmit="submitCoachOrder(event)" class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">选择报名组别 *</label>
+                        <select id="coach-tier-select" onchange="updateCoachPrice()" class="w-full rounded-xl bg-gray-800 border border-gray-700 text-white px-3.5 py-3 focus:outline-none focus:border-yp-lime">
+                            <option value="800" data-name="U16组别教练服务">U16 组别 — ¥800 / 月</option>
+                            <option value="1000" data-name="U18组别教练服务">U18 组别 — ¥1,000 / 月</option>
+                            <option value="1200" data-name="U23组别教练服务" selected>U23 组别 — ¥1,200 / 月</option>
+                            <option value="1800" data-name="成人组科学私教服务">成人组 — ¥1,800 / 月</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">学员姓名 *</label>
-                        <input type="text" id="coach-name" required placeholder="您的姓名" class="w-full rounded-xl bg-gray-900 border border-gray-700 text-white px-3.5 py-2.5 focus:outline-none focus:border-yp-lime">
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">报名月数 *</label>
+                        <select id="coach-months" onchange="updateCoachPrice()" class="w-full rounded-xl bg-gray-800 border border-gray-700 text-white px-3.5 py-3 focus:outline-none focus:border-yp-lime">
+                            <option value="1">1个月 (月度体验)</option>
+                            <option value="3">3个月 (季度周期训练)</option>
+                            <option value="6">6个月 (半年度备赛周期)</option>
+                            <option value="12">12个月 (全年系统晋升)</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">联系电话 / 微信 *</label>
-                        <input type="tel" id="coach-phone" required placeholder="手机号" class="w-full rounded-xl bg-gray-900 border border-gray-700 text-white px-3.5 py-2.5 focus:outline-none focus:border-yp-lime">
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">学员真实姓名 *</label>
+                        <input type="text" id="coach-student-name" required placeholder="请输入学员姓名" class="w-full rounded-xl bg-gray-800 border border-gray-700 text-white px-3.5 py-3 focus:outline-none focus:border-yp-lime">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">年龄与当前水平 (FTP/体重)</label>
-                        <input type="text" id="coach-ftp" placeholder="如：19岁 / 62kg / FTP 260W" class="w-full rounded-xl bg-gray-900 border border-gray-700 text-white px-3.5 py-2.5 focus:outline-none focus:border-yp-lime">
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">手机号码 (微信同号) *</label>
+                        <input type="tel" id="coach-student-phone" required placeholder="11位手机号" class="w-full rounded-xl bg-gray-800 border border-gray-700 text-white px-3.5 py-3 focus:outline-none focus:border-yp-lime">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">训练目标 *</label>
-                        <input type="text" id="coach-goal" required placeholder="如：备战U系列锦标赛/大学生赛/提升爬坡" class="w-full rounded-xl bg-gray-900 border border-gray-700 text-white px-3.5 py-2.5 focus:outline-none focus:border-yp-lime">
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">当前年龄 / 体重 / FTP数据</label>
+                        <input type="text" id="coach-student-info" placeholder="如：17岁 / 60kg / FTP 240W" class="w-full rounded-xl bg-gray-800 border border-gray-700 text-white px-3.5 py-3 focus:outline-none focus:border-yp-lime">
                     </div>
-                    <div class="md:col-span-3 pt-2">
-                        <button type="submit" class="w-full md:w-auto px-8 py-3.5 bg-yp-lime text-gray-900 font-black rounded-xl hover:bg-white transition">
-                            提交教练服务预约申请
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">近期训练或参赛目标 *</label>
+                        <input type="text" id="coach-student-goal" required placeholder="如：备战全国U系列赛 / 提升FTP" class="w-full rounded-xl bg-gray-800 border border-gray-700 text-white px-3.5 py-3 focus:outline-none focus:border-yp-lime">
+                    </div>
+
+                    <div class="md:col-span-3 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-800">
+                        <div class="text-sm">
+                            应付教练服务费总计：<span id="coach-total-display" class="text-3xl font-black text-yp-lime ml-1">¥1,200</span>
+                        </div>
+                        <button type="submit" class="w-full sm:w-auto px-8 py-4 bg-yp-alipay hover:bg-blue-600 text-white font-black rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                            <i class="fa-brands fa-alipay text-xl"></i>
+                            <span>提交报名并使用支付宝付款</span>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </section>
 
-    <!-- PART 03 & 04: 赞助商权益与招商合作 -->
-    <section id="sponsorship" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto mb-14">
-            <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">PART 03 & 04 / SPONSORSHIP & PARTNERS</span>
-            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">商业赞助体系与品牌出海赋能</h2>
-            <p class="text-gray-500 text-sm mt-2">
-                车队年度总预算151.5万元（含注册费5万、人员工资及保险115.5万、差旅10万、UCI可退押金21万），为合作伙伴提供全方位全球曝光与销售转化。
-            </p>
-        </div>
-
-        <!-- 五大赞助商核心权益 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-14">
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div class="w-10 h-10 rounded-xl bg-green-100 text-yp-darkGreen flex items-center justify-center font-bold mb-4">
-                    <i class="fa-solid fa-tv"></i>
-                </div>
-                <h4 class="font-black text-gray-900 mb-2">1. 海内外顶级赛事电视转播</h4>
-                <p class="text-xs text-gray-600 leading-relaxed">
-                    南美环哥伦比亚等由哥伦比亚国家电视台（Señal Colombia）及RCN电视网全国直播；欧洲环阿斯图里亚斯由RTPA及Eurosport转播；国内环鄱阳湖、环上海等获省级卫视与CCTV-5、CCTV-13跟踪报道。
+        <!-- ============================================================== -->
+        <!-- 页面 7：商业赞助与招商需求 (sponsorship) -->
+        <!-- ============================================================== -->
+        <div id="page-sponsorship" class="page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">PART 03 & 04 / SPONSORSHIP</span>
+                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">赞助资金用途、招商需求与赞助商权益</h2>
+                <p class="text-gray-500 text-sm mt-2">
+                    所有费用预计总和：151万5千元（注册费5万 + 人员工资及保险115.5万 + 比赛差旅10万 + UCI可退押金21万）。
                 </p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div class="w-10 h-10 rounded-xl bg-green-100 text-yp-darkGreen flex items-center justify-center font-bold mb-4">
-                    <i class="fa-solid fa-video"></i>
-                </div>
-                <h4 class="font-black text-gray-900 mb-2">2. 垂直领域KOL与自媒体矩阵</h4>
-                <p class="text-xs text-gray-600 leading-relaxed">
-                    深度合作B站知名解说UP主<strong>“contayu”</strong>定制解说转播与集锦口播；<strong>骑友网(51bike.com)</strong>国内赛事全覆盖转播；车队官方公众号/抖音/B站/Ins/TikTok每周至少1篇推文+3条短视频，每月1支10分钟长视频，全体队员每周至少发3条带品牌动态。
-                </p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div class="w-10 h-10 rounded-xl bg-green-100 text-yp-darkGreen flex items-center justify-center font-bold mb-4">
-                    <i class="fa-solid fa-store"></i>
-                </div>
-                <h4 class="font-black text-gray-900 mb-2">3. 70个比赛日“流动线下展销会”</h4>
-                <p class="text-xs text-gray-600 leading-relaxed">
-                    在每场比赛起终点准备区及嘉年华陈列赞助商样品，未上场队员与工作人员提供一对一讲解与试戴体验，引导车迷当场扫码下单，实现“看比赛-摸实物-当场买”转化。
-                </p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div class="w-10 h-10 rounded-xl bg-green-100 text-yp-darkGreen flex items-center justify-center font-bold mb-4">
-                    <i class="fa-solid fa-earth-americas"></i>
-                </div>
-                <h4 class="font-black text-gray-900 mb-2">4. 拉美品牌出海“实地推广团队”</h4>
-                <p class="text-xs text-gray-600 leading-relaxed">
-                    依托车队在南美洲（以哥伦比亚为中心）的赛训大本营，全力协助国内优秀自行车品牌同当地实体车店建立密切的海外销售网络。
-                </p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm md:col-span-2">
-                <div class="w-10 h-10 rounded-xl bg-green-100 text-yp-darkGreen flex items-center justify-center font-bold mb-4">
-                    <i class="fa-solid fa-car"></i>
-                </div>
-                <h4 class="font-black text-gray-900 mb-2">5. 职业级功率背书与杭州双基地展示</h4>
-                <p class="text-xs text-gray-600 leading-relaxed">
-                    外籍主力与国内精英提供真实高强度赛训器材反馈；队服、定制拉花队车、营地帐篷、背景板全方位Logo印制；在<strong>杭州余杭区和千岛湖两大常态化训练基地</strong>进行长期实物陈列展出。
-                </p>
-            </div>
-        </div>
-
-        <!-- 招商席位报价与已确定赞助商 -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-gray-900 text-white rounded-3xl p-8 sm:p-10">
-            <div class="lg:col-span-6">
-                <span class="text-yp-lime text-xs font-bold uppercase">SPONSORSHIP TIERS</span>
-                <h3 class="text-2xl font-black mt-1 mb-4">2027 洲际队招商席位需求</h3>
-                <div class="space-y-3 text-sm">
-                    <div class="flex justify-between items-center p-3.5 rounded-xl bg-gray-800 border border-gray-700">
-                        <span class="font-bold">🏆 车队主冠名赞助商</span>
-                        <span class="text-yp-lime font-black">¥120万元/年 <span class="text-xs text-gray-400 font-normal">(合约三年或以上)</span></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3.5 rounded-xl bg-gray-800 border border-gray-700">
-                        <span class="font-bold">🥈 车队副冠名赞助商</span>
-                        <span class="text-yp-lime font-black">¥55万元/年 <span class="text-xs text-gray-400 font-normal">(合约三年或以上)</span></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3.5 rounded-xl bg-gray-800 border border-gray-700">
-                        <span class="font-bold">👕 队服胸前 Logo 席位</span>
-                        <span class="text-yp-lime font-black">¥15万元/年 <span class="text-xs text-gray-400 font-normal">(合约两年或以上)</span></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3.5 rounded-xl bg-gray-800 border border-gray-700">
-                        <span class="font-bold">💪 队服袖子 Logo 席位</span>
-                        <span class="text-yp-lime font-black">¥10万元/年 <span class="text-xs text-gray-400 font-normal">(合约一年或以上)</span></span>
-                    </div>
-                </div>
             </div>
 
-            <div class="lg:col-span-6 border-t lg:border-t-0 lg:border-l border-gray-800 pt-6 lg:pt-0 lg:pl-8">
-                <span class="text-yp-lime text-xs font-bold uppercase">CONFIRMED PARTNERS</span>
-                <h3 class="text-2xl font-black mt-1 mb-4">目前已确定的官方合作伙伴</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div class="p-4 rounded-xl bg-gray-800/80 border border-gray-700">
-                        <div class="font-black text-base text-white mb-1">空力公式</div>
-                        <p class="text-gray-400">提供10万元现金及公路、TT、Gravel共计30台职业车架（总价值约35万元）。</p>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
+                <!-- 招商席位 -->
+                <div class="lg:col-span-5 bg-gray-900 text-white rounded-2xl p-8">
+                    <h3 class="text-xl font-black mb-4 text-yp-lime">招商席位需求</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="p-4 rounded-xl bg-gray-800 border border-gray-700 flex justify-between items-center">
+                            <span class="font-bold">车队主冠名</span>
+                            <span class="text-yp-lime font-black">每年 120万元 <span class="text-xs text-gray-400 font-normal">(三年或以上)</span></span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-gray-800 border border-gray-700 flex justify-between items-center">
+                            <span class="font-bold">车队副冠名</span>
+                            <span class="text-yp-lime font-black">每年 55万元 <span class="text-xs text-gray-400 font-normal">(三年或以上)</span></span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-gray-800 border border-gray-700 flex justify-between items-center">
+                            <span class="font-bold">队服胸前 Logo</span>
+                            <span class="text-yp-lime font-black">每年 15万元 <span class="text-xs text-gray-400 font-normal">(两年或以上)</span></span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-gray-800 border border-gray-700 flex justify-between items-center">
+                            <span class="font-bold">队服袖子 Logo</span>
+                            <span class="text-yp-lime font-black">每年 10万元 <span class="text-xs text-gray-400 font-normal">(一年或以上)</span></span>
+                        </div>
                     </div>
-                    <div class="p-4 rounded-xl bg-gray-800/80 border border-gray-700">
-                        <div class="font-black text-base text-white mb-1">NZSE 骑行服</div>
-                        <p class="text-gray-400">提供夏/秋冬分体服50套、大组/TT连体服100套、雨衣/马甲/颁奖服/队服150套（折合20万元）。</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-gray-800/80 border border-gray-700">
-                        <div class="font-black text-base text-white mb-1">ESSEN 头盔</div>
-                        <p class="text-gray-400">提供公路大组气动盔、爬坡盔、ITT气动盔共计90顶（折合8万元）。</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-gray-800/80 border border-gray-700">
-                        <div class="font-black text-base text-white mb-1">和博 / 卓锐 (ZERAY)</div>
-                        <p class="text-gray-400">提供骑行水壶1000个，卓锐锁踏60副、锁片200副（折合8万元）。</p>
+                    <div class="mt-6 pt-6 border-t border-gray-800 text-xs text-gray-300 space-y-2">
+                        <div class="font-bold text-white">已确定赞助商（截止10月）：</div>
+                        <p>• <strong>空力公式：</strong>提供10万元及公路、TT、Gravel共30台车架（折合25万元）</p>
+                        <p>• <strong>NZSE骑行服：</strong>提供分体服50套、连体服100套、雨衣/马甲/队服150套（折合20万元）</p>
+                        <p>• <strong>ESSEN头盔：</strong>提供大组气动盔、爬坡盔、ITT盔共90顶（折合8万元）</p>
+                        <p>• <strong>和博：</strong>提供水壶1000个、卓锐锁踏60副、锁片200副（折合8万元）</p>
                     </div>
                 </div>
-                <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
-                    <div class="text-xs text-gray-300">
-                        商务合作洽谈联系人：<strong>徐核 (车队经理)</strong>
+
+                <!-- 赞助商权益 -->
+                <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200">
+                        <h4 class="font-black text-gray-900 mb-2">📺 核心赛事电视直播</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed">南美环哥伦比亚由国家电视台（Señal Colombia）及RCN全国直播；欧洲环阿斯图里亚斯由RTPA及Eurosport转播；国内环鄱阳湖、环上海受省级卫视及CCTV-5、CCTV-13报道。</p>
                     </div>
-                    <a href="tel:18513693097" class="px-5 py-2.5 bg-yp-green text-white text-xs font-black rounded-xl hover:bg-yp-darkGreen transition">
-                        <i class="fa-solid fa-phone mr-1.5"></i>致电洽谈：18513693097
-                    </a>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200">
+                        <h4 class="font-black text-gray-900 mb-2">🎬 垂直领域KOL战略合作</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed">B站知名UP主“contayu”专业解说转播与高光集锦植入；骑友网（51bike.com）国内赛事全覆盖转播；官方矩阵与全体队员每周高频更新带Logo动态。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200">
+                        <h4 class="font-black text-gray-900 mb-2">🛍️ 70个比赛日流动线下展销</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed">在每场比赛准备区或嘉年华陈列赞助商样品，工作人员及未上场队员提供一对一讲解与试戴体验，引导车迷当场扫码下单。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200">
+                        <h4 class="font-black text-gray-900 mb-2">🌎 品牌出海与双基地陈列</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed">协助国内品牌同哥伦比亚当地实体车店建立销售网络；并在杭州余杭区和千岛湖亚运村（La Fuga青野·驿）两大基地长期陈列展出。</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+
+    </main>
 
     <!-- 页脚 Footer -->
-    <footer class="bg-gray-950 text-gray-400 py-14 border-t border-gray-800 text-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-            <div class="md:col-span-2">
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="w-10 h-10 rounded-full bg-gray-900 border-2 border-yp-green flex items-center justify-center text-white font-black">
-                        <i class="fa-solid fa-hand-fist text-yp-lime"></i>
-                    </div>
-                    <div>
-                        <div class="text-lg font-black text-white">青年力量发展车队 / 青年力量洲际队</div>
-                        <div class="text-xs text-gray-500">Youth's Power Development Team | team-youthpower.org.cn</div>
-                    </div>
-                </div>
-                <p class="text-xs text-gray-500 leading-relaxed max-w-md mb-4">
-                    不忧门庭多故，而忧所学不能拔俗而入圣；不耻生事之艰，而耻无术以济天下。乱极时站得定，才是有用之学。
-                </p>
-                <div class="flex flex-wrap gap-3 text-xs">
-                    <span class="px-3 py-1 rounded bg-gray-900 border border-gray-800 text-gray-300"><i class="fa-brands fa-bilibili text-pink-400 mr-1"></i>B站：青年力量发展车队 (UID: 4502039)</span>
-                    <span class="px-3 py-1 rounded bg-gray-900 border border-gray-800 text-gray-300"><i class="fa-brands fa-tiktok text-white mr-1"></i>抖音：北京青年力量发展车队 (BJ_YouthPower)</span>
-                </div>
-            </div>
-
+    <footer class="bg-gray-950 text-gray-400 py-10 border-t border-gray-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-                <h4 class="text-white font-bold mb-3">快速通道</h4>
-                <ul class="space-y-2 text-xs">
-                    <li><a href="#about" class="hover:text-yp-lime transition">车队简介与历程</a></li>
-                    <li><a href="#roster" class="hover:text-yp-lime transition">17人国际车手阵容</a></li>
-                    <li><a href="#shop" class="hover:text-yp-lime transition">官方装备网上商城</a></li>
-                    <li><a href="#rides" class="hover:text-yp-lime transition">余杭/千岛湖线下骑游报名</a></li>
-                    <li><a href="#coaching" class="hover:text-yp-lime transition">UCI 2级教练服务与青训报名</a></li>
-                </ul>
+                <span class="text-white font-black text-sm">青年力量洲际队 (team-youthpower.org.cn)</span>
+                <span class="mx-2">|</span>
+                <span>千岛湖亚运村青旅：La Fuga青野·驿</span>
             </div>
-
             <div>
-                <h4 class="text-white font-bold mb-3">联系我们</h4>
-                <ul class="space-y-2 text-xs">
-                    <li><i class="fa-solid fa-user text-yp-green mr-2"></i>负责人：徐核 (经理/体育主管/队长)</li>
-                    <li><i class="fa-solid fa-phone text-yp-green mr-2"></i>电话/微信：18513693097</li>
-                    <li><i class="fa-solid fa-location-dot text-yp-green mr-2"></i>国内基地：杭州市余杭区 / 淳安千岛湖</li>
-                    <li><i class="fa-solid fa-earth-americas text-yp-green mr-2"></i>海外分部：哥伦比亚 (Vladimir López负责)</li>
-                </ul>
+                官方联系与支付宝收款账号：<strong class="text-yp-lime">18513693097 (徐核)</strong>
             </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-600">
-            <div>© 2021-2027 青年力量洲际队 (team-youthpower.org.cn) 版权所有.</div>
-            <div class="mt-2 sm:mt-0">体教结合 · 打通从群众体育到职业体育的上升通道</div>
         </div>
     </footer>
 
@@ -954,31 +865,85 @@
                 <div class="font-black text-lg flex items-center">
                     <i class="fa-solid fa-cart-shopping text-yp-lime mr-2"></i> 官方商城购物车
                 </div>
-                <button onclick="toggleCart()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+                <button onclick="toggleCart()" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
             </div>
             
-            <div id="cart-items" class="flex-1 overflow-y-auto p-5 space-y-4">
-                <!-- 动态渲染购物车商品 -->
-            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
 
             <div class="p-5 border-t border-gray-200 bg-gray-50">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm font-bold text-gray-600">订单总计：</span>
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-sm font-bold text-gray-600">应付总额：</span>
                     <span id="cart-total" class="text-2xl font-black text-yp-darkGreen">¥0</span>
                 </div>
-                <form onsubmit="checkoutOrder(event)" class="space-y-3 text-xs">
-                    <input type="text" id="order-name" required placeholder="收货人姓名 *" class="w-full rounded-lg border border-gray-300 px-3 py-2">
-                    <input type="tel" id="order-phone" required placeholder="联系电话 *" class="w-full rounded-lg border border-gray-300 px-3 py-2">
-                    <select id="order-delivery" class="w-full rounded-lg border border-gray-300 px-3 py-2">
-                        <option value="顺丰快递寄送到家">顺丰快递寄送到家</option>
-                        <option value="杭州余杭/千岛湖训练基地自提">杭州余杭/千岛湖训练基地自提</option>
-                        <option value="比赛日赛场展销区现场提货">比赛日赛场展销区现场提货</option>
-                    </select>
-                    <input type="text" id="order-address" required placeholder="详细收货地址 或 提货备注 *" class="w-full rounded-lg border border-gray-300 px-3 py-2">
-                    <button type="submit" class="w-full py-3 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl text-sm transition">
-                        立即提交订单
+                <form onsubmit="checkoutShopOrder(event)" class="space-y-2.5 text-xs">
+                    <input type="text" id="order-name" required placeholder="收货人姓名 *" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white">
+                    <input type="tel" id="order-phone" required placeholder="手机号码 *" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white">
+                    <input type="text" id="order-address" required placeholder="详细收货地址 及 尺码/颜色备注 *" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white">
+                    <button type="submit" class="w-full py-3.5 bg-yp-alipay hover:bg-blue-600 text-white font-black rounded-xl text-sm transition flex items-center justify-center space-x-2">
+                        <i class="fa-brands fa-alipay text-lg"></i>
+                        <span>提交订单并前往支付宝付款</span>
                     </button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 支付宝官方收银台弹窗 Modal (绑定账号 18513693097) -->
+    <!-- ============================================================== -->
+    <div id="alipay-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div onclick="closeAlipayModal()" class="fixed inset-0 bg-black/70 backdrop-blur-xs"></div>
+        <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative z-10">
+            <!-- 支付宝蓝顶栏 -->
+            <div class="bg-yp-alipay text-white p-6 text-center relative">
+                <button onclick="closeAlipayModal()" class="absolute top-4 right-5 text-white/80 hover:text-white text-2xl">&times;</button>
+                <i class="fa-brands fa-alipay text-5xl mb-2"></i>
+                <h3 class="text-xl font-black">支付宝官方收款通道</h3>
+                <p class="text-xs text-white/90 mt-1">青年力量洲际队官方指定收款账户</p>
+            </div>
+
+            <div class="p-6 space-y-4 text-sm">
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center">
+                    <div class="text-xs text-gray-500">本次应付金额</div>
+                    <div id="alipay-amount" class="text-3xl font-black text-yp-alipay my-1">¥0</div>
+                    <div id="alipay-item-title" class="text-xs font-bold text-gray-700">项目名称</div>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-2.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">收款支付宝账号：</span>
+                        <div class="flex items-center space-x-2">
+                            <span id="alipay-acc" class="font-black text-base text-gray-900 select-all">18513693097</span>
+                            <button type="button" onclick="copyAlipay()" class="px-2.5 py-1 bg-yp-alipay text-white text-xs font-bold rounded-md hover:bg-blue-600 transition">
+                                复制账号
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">收款人实名：</span>
+                        <span class="font-bold text-gray-900">徐核 (青年力量洲际队经理)</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">转账备注请填：</span>
+                        <span id="alipay-memo" class="font-bold text-yp-darkGreen">姓名+手机号</span>
+                    </div>
+                </div>
+
+                <!-- 唤醒支付宝App与确认按钮 -->
+                <div class="space-y-2.5 pt-2">
+                    <a href="alipays://platformapi/startapp?appId=20000116" onclick="copyAlipay()" class="w-full py-3 bg-yp-alipay hover:bg-blue-600 text-white font-black rounded-xl text-center block transition">
+                        <i class="fa-solid fa-mobile-screen-button mr-1.5"></i>一键复制账号并打开支付宝App
+                    </a>
+                    <div class="pt-2 border-t border-gray-100">
+                        <label class="block text-xs font-bold text-gray-600 mb-1.5">已完成转账？请填写您的付款支付宝昵称或后4位确认：</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="alipay-confirm-input" placeholder="如：已转，尾号3097" class="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-xs">
+                            <button type="button" onclick="confirmAlipayPayment()" class="px-4 py-2 bg-yp-darkGreen text-white text-xs font-black rounded-xl hover:bg-yp-green transition">
+                                我已付款
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -989,117 +954,165 @@
         <span id="toast-msg">操作成功</span>
     </div>
 
-    <!-- 交互脚本 -->
+    <!-- 核心脚本 -->
     <script>
-        // 官方商城商品数据（严格对应PDF第15页赞助商器材）
+        // 1. 独立页面切换函数
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            const targetSec = document.getElementById('page-' + pageId);
+            if (targetSec) targetSec.classList.add('active');
+
+            // 更新导航按钮高亮
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.getAttribute('data-target') === pageId) {
+                    btn.classList.add('text-yp-darkGreen', 'bg-green-50');
+                    btn.classList.remove('text-gray-700');
+                } else {
+                    btn.classList.remove('text-yp-darkGreen', 'bg-green-50');
+                    btn.classList.add('text-gray-700');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 2. 官方商城商品数据（严格与淘宝品牌官方店售价一致）
         const products = [
             {
-                id: 1,
-                category: 'frame',
-                brand: '空力公式',
-                name: '空力公式 2027青年力量洲际队版 碳纤维气动公路车架组',
-                desc: '车队征战UCI 2.PRO环赛主力战车，高模量碳纤维打造，兼顾巡航气动与爆发刚性。',
-                price: 8399,
-                badge: '职业队同款',
+                id: 101,
+                category: 'spect',
+                brand: '空力公式 (Spect)',
+                name: '空力公式 Spect Mira 破风气动碳纤维公路车架组',
+                desc: '外置舵管设计 + 抬升一体把套装，T1100+M60高模量碳纤维，淘宝官方同步价。',
+                price: 6999,
+                badge: '淘宝官方同价',
                 icon: 'fa-bicycle'
             },
             {
-                id: 2,
-                category: 'frame',
-                brand: '空力公式',
-                name: '空力公式 洲际队版 Gravel 砾石越野碳纤维车架组',
-                desc: 'UCI Gravel世界杯（哥伦比亚/墨西哥站）及世锦赛指定参赛战车，超强通过性。',
-                price: 7999,
-                badge: '世锦赛战车',
-                icon: 'fa-mountain-sun'
+                id: 102,
+                category: 'spect',
+                brand: '空力公式 (Spect)',
+                name: '空力公式 Spect Strada 超轻量化综合碟刹车架组',
+                desc: '全内走线超轻综合爬坡碟刹车架，兼顾刚性与舒适度，淘宝官方同步价。',
+                price: 3999,
+                badge: '超轻综合架',
+                icon: 'fa-bicycle'
             },
             {
-                id: 3,
-                category: 'apparel',
-                brand: 'NZSE 骑行服',
-                name: 'NZSE × 青年力量洲际队 2027大组气动连体骑行服',
-                desc: '职业车手比赛定制版剪裁，立体导流面料，高密度长距离裤垫。',
-                price: 799,
-                badge: '赛场爆款',
-                icon: 'fa-shirt'
+                id: 103,
+                category: 'elves',
+                brand: 'ELVES (精灵)',
+                name: 'ELVES 精灵 VANYAR 梵雅 UCI认证超轻爬坡碳纤维车架',
+                desc: 'UCI认证超轻爬坡精灵公路车架，多色定制涂装可选，淘宝官方同步价。',
+                price: 5999,
+                badge: 'UCI认证爬坡架',
+                icon: 'fa-mountain'
             },
             {
-                id: 4,
-                category: 'apparel',
-                brand: 'NZSE 骑行服',
-                name: 'NZSE × 青年力量 2027夏季分体骑行服套装',
-                desc: '经典红绿白车队视觉配色，高透气网眼材质，适合日常训练与周末骑游。',
-                price: 599,
-                badge: '车迷必入',
-                icon: 'fa-vest'
+                id: 104,
+                category: 'elves',
+                brand: 'ELVES (精灵)',
+                name: 'ELVES 精灵 FALATH EVO 法拉斯全内走破风碟刹车架组',
+                desc: 'UCI认证全内走线气动破风碟刹公路车架，车队主力同款，淘宝官方同步价。',
+                price: 6998,
+                badge: '破风主力款',
+                icon: 'fa-wind'
             },
             {
-                id: 5,
+                id: 105,
+                category: 'elves',
+                brand: 'ELVES (精灵)',
+                name: 'ELVES 精灵 FALATH EXP 破风碟刹碳纤维公路车架组',
+                desc: '最新升级款法拉斯EXP气动破风车架，高刚性五通设计，淘宝官方同步价。',
+                price: 7180,
+                badge: '旗舰EXP款',
+                icon: 'fa-bolt'
+            },
+            {
+                id: 106,
+                category: 'elves',
+                brand: 'ELVES (精灵)',
+                name: 'ELVES 精灵 MORI 莫瑞 Gravel 砾石越野碳纤维车架组',
+                desc: '专为Gravel碎石越野打造，大胎容高通过性碳纤维瓜车车架，淘宝官方同步价。',
+                price: 6580,
+                badge: 'Gravel瓜车',
+                icon: 'fa-compass'
+            },
+            {
+                id: 107,
+                category: 'pedal',
+                brand: '和博 / 卓锐 (ZERAY)',
+                name: '和博卓锐 ZERAY ZP-115 碳纤维公路自锁脚踏 (兼容LOOK)',
+                desc: '轻量化碳纤维主体自锁脚踏，密封培林润度极佳，兼容LOOK KEO系统，淘宝官方同步价。',
+                price: 169,
+                badge: '淘宝官方同价',
+                icon: 'fa-shoe-prints'
+            },
+            {
+                id: 108,
                 category: 'helmet',
-                brand: 'ESSEN 头盔',
-                name: 'ESSEN 洲际队定制版 公路大组气动头盔 / 爬坡盔',
-                desc: '车队90顶赛训保障同款，风洞优化低风阻设计，轻量化高强度EPS防护。',
-                price: 499,
-                badge: '安全认证',
+                brand: 'ESSEN',
+                name: 'ESSEN 赫拉 (HELA) 气动破风公路车专业骑行头盔',
+                desc: '一体成型气动破风安全帽，约255g轻量化设计，S/M及M/L尺码可选，淘宝官方同步价。',
+                price: 599,
+                badge: '赫拉HELA正品',
                 icon: 'fa-helmet-safety'
             },
             {
-                id: 6,
-                category: 'gear',
-                brand: '和博 / 卓锐',
-                name: '卓锐 (ZERAY) 职业公路自锁脚踏套装 (含锁片)',
-                desc: '和博官方赞助，大踩踏面积高传动效率，附送青年力量车队纪念骑行水壶1个。',
-                price: 329,
-                badge: '赠车队水壶',
-                icon: 'fa-shoe-prints'
+                id: 109,
+                category: 'helmet',
+                brand: 'ESSEN',
+                name: 'TANDELL联名 ESSEN 赫拉 (HELA) 城市公路气动头盔',
+                desc: 'ESSEN赫拉联名款专业气动破风头盔，高透气导流风道，淘宝官方同步价。',
+                price: 499,
+                badge: '联名特惠款',
+                icon: 'fa-helmet-safety'
             }
         ];
 
         let cart = [];
 
-        // 渲染商品列表
         function renderProducts(filter = 'all') {
             const grid = document.getElementById('product-grid');
             const list = filter === 'all' ? products : products.filter(p => p.category === filter);
             grid.innerHTML = list.map(p => `
                 <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="h-44 bg-gradient-to-br from-gray-900 via-gray-800 to-yp-darkGreen relative flex items-center justify-center p-6">
-                            <span class="absolute top-3 left-3 px-2.5 py-1 bg-yp-lime text-gray-900 text-[11px] font-black rounded">${p.badge}</span>
-                            <span class="absolute top-3 right-3 text-xs text-gray-300 font-bold">${p.brand}</span>
-                            <i class="fa-solid ${p.icon} text-6xl text-white/90"></i>
+                        <div class="h-36 bg-gradient-to-br from-gray-900 via-gray-800 to-yp-darkGreen relative flex items-center justify-center p-4">
+                            <span class="absolute top-3 left-3 px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">${p.badge}</span>
+                            <span class="absolute top-3 right-3 text-[11px] text-gray-300 font-bold">${p.brand}</span>
+                            <i class="fa-solid ${p.icon} text-5xl text-white/90"></i>
                         </div>
-                        <div class="p-5">
-                            <h3 class="font-black text-gray-900 text-base leading-snug mb-2">${p.name}</h3>
+                        <div class="p-4">
+                            <h3 class="font-black text-gray-900 text-sm leading-snug mb-1.5">${p.name}</h3>
                             <p class="text-xs text-gray-500 leading-relaxed">${p.desc}</p>
                         </div>
                     </div>
-                    <div class="px-5 pb-5 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <div class="px-4 pb-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                         <div>
-                            <span class="text-xs text-gray-400">官方直售价</span>
-                            <div class="text-xl font-black text-yp-darkGreen">¥${p.price}</div>
+                            <span class="text-[10px] text-gray-400 block">官方同步售价</span>
+                            <div class="text-lg font-black text-yp-darkGreen">¥${p.price}</div>
                         </div>
-                        <button onclick="addToCart(${p.id})" class="px-4 py-2.5 bg-gray-900 hover:bg-yp-darkGreen text-white text-xs font-bold rounded-xl transition flex items-center space-x-1.5">
+                        <button onclick="addToCart(${p.id})" class="px-3.5 py-2 bg-gray-900 hover:bg-yp-alipay text-white text-xs font-bold rounded-xl transition flex items-center space-x-1">
                             <i class="fa-solid fa-cart-plus"></i>
-                            <span>加入购物车</span>
+                            <span>选购</span>
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 切换商城分类
-        function filterShop(cat) {
+        function filterShop(cat, btnEl) {
             document.querySelectorAll('.shop-tab').forEach(btn => {
                 btn.classList.remove('bg-yp-darkGreen', 'text-white');
                 btn.classList.add('bg-white', 'text-gray-700');
             });
-            event.target.classList.remove('bg-white', 'text-gray-700');
-            event.target.classList.add('bg-yp-darkGreen', 'text-white');
+            btnEl.classList.remove('bg-white', 'text-gray-700');
+            btnEl.classList.add('bg-yp-darkGreen', 'text-white');
             renderProducts(cat);
         }
 
-        // 添加到购物车
         function addToCart(id) {
             const product = products.find(p => p.id === id);
             const existing = cart.find(item => item.id === id);
@@ -1109,10 +1122,9 @@
                 cart.push({ ...product, qty: 1 });
             }
             updateCartUI();
-            showToast(`已将「${product.name.substring(0, 12)}...」加入购物车`);
+            showToast(`已加入购物车：${product.name}`);
         }
 
-        // 更新购物车视图
         function updateCartUI() {
             const badge = document.getElementById('cart-badge');
             const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -1122,7 +1134,7 @@
             const totalEl = document.getElementById('cart-total');
 
             if (cart.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-gray-400 text-sm">购物车空空如也，快去选购车队同款装备吧！</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-gray-400 text-xs">购物车暂无器材，快去选购吧！</div>`;
                 totalEl.textContent = '¥0';
                 return;
             }
@@ -1134,7 +1146,7 @@
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
                         <div class="pr-2">
                             <div class="text-xs font-bold text-gray-900">${item.name}</div>
-                            <div class="text-xs text-yp-darkGreen font-black mt-1">¥${item.price} × ${item.qty}</div>
+                            <div class="text-xs text-yp-darkGreen font-black mt-0.5">¥${item.price} × ${item.qty}</div>
                         </div>
                         <div class="flex items-center space-x-2 shrink-0">
                             <button onclick="changeQty(${item.id}, -1)" class="w-6 h-6 rounded bg-gray-200 text-gray-700 font-bold text-xs">-</button>
@@ -1151,65 +1163,99 @@
             const item = cart.find(i => i.id === id);
             if (!item) return;
             item.qty += delta;
-            if (item.qty <= 0) {
-                cart = cart.filter(i => i.id !== id);
-            }
+            if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
             updateCartUI();
         }
 
         function toggleCart() {
-            const drawer = document.getElementById('cart-drawer');
-            drawer.classList.toggle('hidden');
+            document.getElementById('cart-drawer').classList.toggle('hidden');
         }
 
-        function checkoutOrder(e) {
+        // 商城提交并唤起支付宝
+        function checkoutShopOrder(e) {
             e.preventDefault();
             if (cart.length === 0) {
                 showToast('请先添加商品到购物车！');
                 return;
             }
             const name = document.getElementById('order-name').value;
-            const delivery = document.getElementById('order-delivery').value;
+            const phone = document.getElementById('order-phone').value;
+            const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const itemSummary = cart.map(i => `${i.name}x${i.qty}`).join('、');
+
+            toggleCart();
+            openAlipayModal(totalPrice, `器材商城订单：${itemSummary.substring(0, 28)}...`, `商城+${name}+${phone}`);
+        }
+
+        // 3. 教练服务选择与支付宝联动
+        function selectCoachTier(tierName, price) {
+            const select = document.getElementById('coach-tier-select');
+            select.value = String(price);
+            updateCoachPrice();
+            document.getElementById('coach-form-box').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('coach-student-name').focus();
+            showToast(`已选择：${tierName} (¥${price}/月)`);
+        }
+
+        function updateCoachPrice() {
+            const price = parseInt(document.getElementById('coach-tier-select').value, 10);
+            const months = parseInt(document.getElementById('coach-months').value, 10);
+            const total = price * months;
+            document.getElementById('coach-total-display').textContent = `¥${total.toLocaleString()}`;
+        }
+
+        function submitCoachOrder(e) {
+            e.preventDefault();
+            const selectEl = document.getElementById('coach-tier-select');
+            const tierName = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+            const price = parseInt(selectEl.value, 10);
+            const months = parseInt(document.getElementById('coach-months').value, 10);
+            const total = price * months;
+            const name = document.getElementById('coach-student-name').value;
+            const phone = document.getElementById('coach-student-phone').value;
+
+            openAlipayModal(total, `${tierName} (${months}个月)`, `教练报名+${name}+${phone}`);
+        }
+
+        // 4. 青旅登记提交
+        function submitHostelForm(e) {
+            e.preventDefault();
+            const name = document.getElementById('hostel-name').value;
+            const type = document.getElementById('hostel-type').value;
+            e.target.reset();
+            showToast(`登记成功！${name}，千岛湖亚运村「La Fuga青野·驿」工作人员将尽快联系您。`);
+        }
+
+        // 5. 支付宝收银台弹窗逻辑 (账号：18513693097)
+        function openAlipayModal(amount, title, memo) {
+            document.getElementById('alipay-amount').textContent = `¥${amount.toLocaleString()}`;
+            document.getElementById('alipay-item-title').textContent = title;
+            document.getElementById('alipay-memo').textContent = memo;
+            document.getElementById('alipay-modal').classList.remove('hidden');
+        }
+
+        function closeAlipayModal() {
+            document.getElementById('alipay-modal').classList.add('hidden');
+        }
+
+        function copyAlipay() {
+            navigator.clipboard.writeText('18513693097');
+            showToast('已复制支付宝账号：18513693097 (徐核)');
+        }
+
+        function confirmAlipayPayment() {
+            const val = document.getElementById('alipay-confirm-input').value.trim();
+            if (!val) {
+                showToast('请填写您的付款支付宝昵称或手机号后4位以便核对');
+                return;
+            }
             cart = [];
             updateCartUI();
-            toggleCart();
-            e.target.reset();
-            showToast(`感谢 ${name}！您的订单已生成（${delivery}），车队客服将尽快联系您确认发货。`);
+            document.getElementById('alipay-confirm-input').value = '';
+            closeAlipayModal();
+            showToast('提交成功！徐核(18513693097)核实支付宝账单后将第一时间为您安排！');
         }
 
-        // 线下骑游联动选择
-        function selectRide(rideName) {
-            const select = document.getElementById('ride-select');
-            select.value = rideName;
-            document.getElementById('ride-name').focus();
-            showToast(`已选中：${rideName}，请填写右侧报名信息`);
-        }
-
-        function submitRideForm(e) {
-            e.preventDefault();
-            const name = document.getElementById('ride-name').value;
-            const ride = document.getElementById('ride-select').value;
-            e.target.reset();
-            showToast(`报名成功！${name}，您已预约「${ride}」，领队董元将通过微信联系您。`);
-        }
-
-        // 教练服务联动选择
-        function selectCoachCourse(courseName) {
-            const select = document.getElementById('coach-course');
-            select.value = courseName;
-            document.getElementById('coach-name').focus();
-            showToast(`已选择：${courseName}，请完善下方学员登记表`);
-        }
-
-        function submitCoachForm(e) {
-            e.preventDefault();
-            const name = document.getElementById('coach-name').value;
-            const course = document.getElementById('coach-course').value;
-            e.target.reset();
-            showToast(`预约成功！${name}，您报名的「${course}」已登记，徐核教练(18513693097)将尽快与您联系。`);
-        }
-
-        // Toast提示框
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').textContent = msg;
