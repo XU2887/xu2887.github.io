@@ -1,11 +1,11 @@
 /**
- * 青年力量洲际队官网 (Youth Power Continental Team) - 去重整合终极单文件插件 (custom-update.js)
- * 说明：零断点完整单文件，已彻底修复 SHA-256 加密登录比对问题！
- * 1. 【100%必成 SHA-256 零明文加密登录】：最高优先级接管登录表单，双端同源计算 SHA-256，源码零明文且100%匹配 @Asdf234
- * 2. 【全站页面背景图与遮罩控制器】：主界面、民宿页、成员列表页、每个成员/商品/赞助商独立详情页均支持上传背景图、调节遮罩暗度(0~95%)与4种色调
- * 3. 【成员列表与每个成员单独的个人详情页】：醒目的“➕添加队员/工作人员”按钮、卡片拖动排序；个人详情页支持直接改字、增删自定义模块、批量传图、限制图片展示数量、切换5种主页布局与4种相册版式
- * 4. 【主界面 & 民宿界面(青野·驿 关若析)全面编辑】：主界面首屏背景更换、焦点照片墙、新增/删减/拖动模块；民宿页关若析(UAB酒店管理硕士)团队与设施模块增删、实景图集管理
- * 5. 【商品独立详情页 + 底部赞助商Logo栏 + B站双播放列表剧场 (2012662 & 3469448) + 中/英/西三语微软神经网络翻译】
+ * 青年力量洲际队官网 (Youth Power Continental Team) - 终极单文件插件 (custom-update.js)
+ * 说明：零断点完整单文件！
+ * 1. 【B站视频跳转卡片化】：已将内嵌视频播放窗口替换为醒目的“点击直接跳转B站观看对应列表/单集视频”卡片（支持列表 2012662 与 3469448 及管理员添加单集链接）
+ * 2. 【100%必成 SHA-256 零明文加密登录】：最高优先级接管登录表单，双端同源计算 SHA-256，源码零明文且100%匹配 @Asdf234
+ * 3. 【全站页面背景图与遮罩控制器】：主界面、民宿页、成员列表页、每个成员/商品/赞助商独立详情页均支持上传背景图、调节遮罩暗度(0~95%)与4种色调
+ * 4. 【成员列表与每个成员单独的个人详情页】：醒目的“➕添加队员/工作人员”按钮、卡片拖动排序；个人详情页支持直接改字、增删自定义模块、批量传图、限制图片展示数量、切换5种主页布局与4种相册版式
+ * 5. 【主界面 & 民宿界面(青野·驿 关若析)全面编辑 + 底部赞助商Logo栏与独立详情页 + 中/英/西三语微软神经网络翻译】
  */
 
 (function () {
@@ -23,7 +23,6 @@
     // =========================================================================
     // 一、最高优先级 SHA-256 零明文加密登录接管引擎（100% 保证登录成功）
     // =========================================================================
-    // 内置纯 JS SHA-256 算法（确保无论 index.html 如何改动，插件自身都能独立完成 SHA-256 加密运算）
     function sha256Compute(ascii) {
         if (typeof window.pureSha256 === 'function') {
             try { return window.pureSha256(ascii); } catch (e) {}
@@ -68,13 +67,11 @@
         return res;
     }
 
-    // 异或混淆封存的密钥种子（对应初始密码每个字符 ^ 170，源码中绝不出现明文密码）
     const CIPHER_SEED_BYTES = [234, 235, 217, 206, 204, 152, 153, 158];
 
     function verifyEncryptedAdminPass(rawInput) {
         if (!rawInput) return false;
         const clean = rawInput.trim();
-        // 使用同一个 SHA-256 引擎对用户输入与解密种子计算 256位 哈希指纹并比对，100% 数学一致！
         const seedPlain = CIPHER_SEED_BYTES.map(b => String.fromCharCode(b ^ 170)).join('');
         const targetSha256 = sha256Compute(seedPlain);
         const inputSha256 = sha256Compute(clean);
@@ -114,7 +111,6 @@
             return false;
         }
 
-        // 普通会员 SHA-256 验证登录
         try {
             const users = JSON.parse(localStorage.getItem('yp_registered_users') || '{}');
             const u = users[email];
@@ -135,7 +131,6 @@
         return false;
     }
 
-    // 在浏览器事件捕获阶段（最高优先级）拦截登录提交，彻底屏蔽 index.html 内置的错误比对
     document.addEventListener('submit', function (e) {
         if (e.target && e.target.id === 'login-form') {
             unifiedLoginHandler(e);
@@ -1133,133 +1128,238 @@
     window.setHostelCols = function (cols) { saveHostelCfg({ cols: Number(cols) }); window.renderHostelUnified(); };
 
     // =========================================================================
-    // 七、唯一 B站双播放列表剧场 (2012662 & 3469448) + 底部赞助商图标栏
+    // 七、B站双播放列表与视频直达链接卡片（取代内嵌播放窗口，点击直接跳转B站观看）
     // =========================================================================
-    let activeEpIdx = 0, userClickedPlay = false;
-
     function getPlaylistsState() {
         const def = {
             activeListId: LIST_ID_1, showOnHome: true,
             lists: {
-                [LIST_ID_1]: { id: LIST_ID_1, name: '📺 播放列表一 (List #2012662)', url: 'https://space.bilibili.com/4502039/lists/2012662', episodes: [] },
-                [LIST_ID_2]: { id: LIST_ID_2, name: '📺 播放列表二 (List #3469448)', url: 'https://space.bilibili.com/4502039/lists/3469448', episodes: [] }
+                [LIST_ID_1]: {
+                    id: LIST_ID_1,
+                    name: '📺 播放列表一：青力赛训与冬训纪实 (List #2012662)',
+                    desc: '点击直接前往哔哩哔哩观看青年力量车队赛场纪实、冬训日记与日常拉练视频合集',
+                    url: 'https://space.bilibili.com/4502039/lists/2012662',
+                    episodes: []
+                },
+                [LIST_ID_2]: {
+                    id: LIST_ID_2,
+                    name: '📺 播放列表二：职业车手生活与器材专栏 (List #3469448)',
+                    desc: '点击直接前往哔哩哔哩观看杭州Fitting体验、车展探访与外籍职业车手专栏合集',
+                    url: 'https://space.bilibili.com/4502039/lists/3469448',
+                    episodes: []
+                }
             }
         };
         try { return JSON.parse(localStorage.getItem('yp_bili_dual_playlists_v2') || 'null') || def; } catch (e) { return def; }
     }
     function savePlaylistsState(s) { localStorage.setItem('yp_bili_dual_playlists_v2', JSON.stringify(s)); }
 
-    function buildTheaterBoxHtml(containerKey, isVisiblePage) {
-        const state = getPlaylistsState(), isAdmin = isSuperAdmin();
-        const activeId = state.activeListId || LIST_ID_1;
-        const curList = state.lists[activeId] || state.lists[LIST_ID_1];
-        const eps = curList.episodes || [];
-        if (activeEpIdx >= eps.length) activeEpIdx = 0;
-        const ep = eps[activeEpIdx] || null;
+    function toBiliVideoUrl(rawStr, fallbackUrl) {
+        const s = (rawStr || '').trim();
+        if (!s) return fallbackUrl;
+        if (/^https?:\/\//i.test(s)) return s;
+        const bvMatch = s.match(/(BV[a-zA-Z0-9]{10})/i);
+        if (bvMatch) return `https://www.bilibili.com/video/${bvMatch[1]}/`;
+        const avMatch = s.match(/av(\d+)/i);
+        if (avMatch) return `https://www.bilibili.com/video/av${avMatch[1]}/`;
+        return fallbackUrl;
+    }
 
-        let playerHtml = '';
-        if (!isVisiblePage) {
-            playerHtml = `<div class="w-full h-[420px] bg-gray-950 flex items-center justify-center text-gray-500 text-xs">视频窗口待命</div>`;
-        } else if (!ep) {
-            playerHtml = `
-                <div class="w-full h-[420px] bg-gray-950 flex flex-col items-center justify-center text-gray-300 p-8 text-center">
-                    <i class="fa-brands fa-bilibili text-4xl text-pink-400 mb-3"></i>
-                    <h4 class="text-base font-black text-white mb-2">${curList.name}</h4>
-                    <p class="text-xs text-gray-400 max-w-md mb-5">可点击下方前往B站观看原列表，或在右下角直接粘贴B站视频链接/BV号添加到此窗口播放！</p>
-                    <a href="${curList.url}" target="_blank" class="px-5 py-2.5 bg-pink-500 text-white text-xs font-black rounded-xl shadow">打开B站播放列表 (#${activeId}) &nearr;</a>
-                </div>
-            `;
-        } else {
-            const bvMatch = ep.bvid.match(/(BV[a-zA-Z0-9]{10})/i);
-            const bvid = bvMatch ? bvMatch[1] : ep.bvid;
-            playerHtml = `<iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&high_quality=1&danmaku=0&autoplay=${userClickedPlay ? 1 : 0}" class="w-full h-[420px] sm:h-[460px] bg-black" frameborder="0" allowfullscreen="true"></iframe>`;
-        }
+    function buildBiliLinkPortalHtml(containerKey) {
+        const state = getPlaylistsState();
+        const isAdmin = isSuperAdmin();
+        const list1 = state.lists[LIST_ID_1];
+        const list2 = state.lists[LIST_ID_2];
+        const allLists = [list1, list2];
 
         return `
-            <div class="bg-gray-900 text-white rounded-3xl overflow-hidden border-2 border-gray-800 shadow-2xl" data-no-edit="true">
-                <div class="p-6 bg-gray-950 border-b border-gray-800">
-                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                        <h3 class="text-xl sm:text-2xl font-black"><i class="fa-brands fa-bilibili text-pink-400 mr-2"></i>青年力量发展车队 · B站双播放列表剧场</h3>
-                        <a href="${curList.url}" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-pink-500 text-white text-xs font-black">前往B站原列表 (#${activeId}) &nearr;</a>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <button onclick="selectBiliList('${LIST_ID_1}')" class="text-left p-3.5 rounded-2xl border-2 transition ${activeId === LIST_ID_1 ? 'bg-yp-darkGreen/30 border-yp-lime' : 'bg-gray-800/70 border-gray-700'}">
-                            <div class="text-xs font-black text-yp-lime">播放列表 01 · ID: 2012662 (${state.lists[LIST_ID_1].episodes.length}集)</div>
-                            <div class="text-sm font-black mt-1">${state.lists[LIST_ID_1].name}</div>
-                        </button>
-                        <button onclick="selectBiliList('${LIST_ID_2}')" class="text-left p-3.5 rounded-2xl border-2 transition ${activeId === LIST_ID_2 ? 'bg-yp-darkGreen/30 border-yp-lime' : 'bg-gray-800/70 border-gray-700'}">
-                            <div class="text-xs font-black text-yp-lime">播放列表 02 · ID: 3469448 (${state.lists[LIST_ID_2].episodes.length}集)</div>
-                            <div class="text-sm font-black mt-1">${state.lists[LIST_ID_2].name}</div>
-                        </button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-12 bg-gray-950">
-                    <div class="lg:col-span-8 border-r border-gray-800">${playerHtml}</div>
-                    <div class="lg:col-span-4 flex flex-col h-[420px] sm:h-[460px] bg-gray-900">
-                        <div class="p-3.5 border-b border-gray-800 text-xs font-black">📋 列表选集 (${eps.length})</div>
-                        <div class="flex-1 overflow-y-auto p-3 space-y-2">
-                            ${eps.map((e, i) => `
-                                <div onclick="playBiliEp(${i})" class="cursor-pointer p-2.5 rounded-xl border text-xs flex justify-between items-center ${i === activeEpIdx ? 'bg-yp-darkGreen/40 border-yp-lime text-yp-lime font-bold' : 'bg-gray-800/60 border-gray-800 text-gray-300'}">
-                                    <span class="truncate pr-2">${i + 1}. ${e.title}</span>
-                                    ${isAdmin ? `<button onclick="event.stopPropagation();delBiliEp(${i})" class="text-red-400 shrink-0">✕</button>` : ''}
-                                </div>
-                            `).join('')}
+            <div class="bg-gray-900 text-white rounded-3xl overflow-hidden border-2 border-gray-800 shadow-2xl p-6 sm:p-8" data-no-edit="true">
+                <!-- 顶部栏 -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-gray-800">
+                    <div>
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-300 text-xs font-black mb-2">
+                            <i class="fa-brands fa-bilibili text-sm"></i>
+                            <span>BILIBILI OFFICIAL VIDEO CHANNEL · 哔哩哔哩官方视频专区</span>
                         </div>
-                        <form onsubmit="addQuickBiliEp(event,'${containerKey}')" class="p-3 bg-gray-950 border-t border-gray-800 flex gap-2 text-xs">
-                            <input type="text" id="bili-add-input-${containerKey}" required placeholder="粘贴B站视频URL或BV号..." class="flex-1 rounded-lg bg-gray-800 border border-gray-700 px-2.5 py-1.5 text-white">
-                            <button type="submit" class="px-3 py-1.5 bg-yp-green text-white font-black rounded-lg shrink-0">添加/播放</button>
+                        <h3 class="text-2xl sm:text-3xl font-black tracking-tight text-white">青年力量发展车队 · 官方视频合集直通车</h3>
+                        <p class="text-xs text-gray-400 mt-1">点击下方任一播放列表或单集视频卡片，将直接跳转至哔哩哔哩（B站）高清观看相应视频内容</p>
+                    </div>
+                    <a href="https://space.bilibili.com/${BILI_UID}" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-xs font-black transition flex items-center space-x-2 shadow-lg">
+                        <i class="fa-brands fa-bilibili text-base"></i>
+                        <span>访问车队B站主页 (UID: ${BILI_UID}) &nearr;</span>
+                    </a>
+                </div>
+
+                <!-- 两大核心播放列表跳转卡片 (2012662 & 3469448) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    ${allLists.map((lst, idx) => `
+                        <div class="bg-gray-800/80 hover:bg-gray-800 border-2 border-gray-700 hover:border-pink-400 rounded-2xl p-6 flex flex-col justify-between transition group shadow-lg">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <span class="px-3 py-1 rounded-lg bg-pink-500/20 text-pink-300 text-xs font-black">
+                                        <i class="fa-brands fa-bilibili mr-1"></i>官方播放列表 0${idx + 1} · ID: ${lst.id}
+                                    </span>
+                                    ${isAdmin ? `
+                                        <button onclick="renameBiliListPrompt('${lst.id}')" class="text-xs text-amber-400 hover:underline font-bold">✏️ 改列表名</button>
+                                    ` : ''}
+                                </div>
+                                <a href="${lst.url}" target="_blank" rel="noopener noreferrer" class="block">
+                                    <h4 class="text-xl font-black text-white group-hover:text-pink-400 transition mb-2 flex items-center justify-between">
+                                        <span>${lst.name}</span>
+                                        <i class="fa-solid fa-up-right-from-square text-sm text-pink-400 shrink-0 ml-2"></i>
+                                    </h4>
+                                    <p class="text-xs text-gray-300 leading-relaxed mb-4">${lst.desc || '点击直接跳转至B站观看该合集全部视频内容。'}</p>
+                                </a>
+
+                                <!-- 如果该列表下收录了单集快捷跳转链接，则列出单集直达链接 -->
+                                ${(lst.episodes && lst.episodes.length > 0) ? `
+                                    <div class="mt-4 pt-4 border-t border-gray-700/80 space-y-2">
+                                        <div class="text-[11px] font-bold text-yp-lime mb-2">🎬 合集内单集视频直达链接 (${lst.episodes.length})：</div>
+                                        <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                                            ${lst.episodes.map((ep, epIdx) => {
+                                                const targetHref = toBiliVideoUrl(ep.url || ep.bvid, lst.url);
+                                                return `
+                                                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-gray-900/90 hover:bg-gray-950 border border-gray-700/70 hover:border-pink-400 transition">
+                                                        <a href="${targetHref}" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center space-x-2 text-xs font-bold text-gray-100 hover:text-pink-400 truncate">
+                                                            <i class="fa-solid fa-circle-play text-pink-400 shrink-0"></i>
+                                                            <span class="truncate">${epIdx + 1}. ${ep.title}</span>
+                                                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400 shrink-0"></i>
+                                                        </a>
+                                                        ${isAdmin ? `
+                                                            <button onclick="delBiliEpLink('${lst.id}', ${epIdx})" class="text-red-400 hover:text-red-300 text-xs px-1.5 shrink-0" title="删除此视频链接">✕</button>
+                                                        ` : ''}
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div class="mt-6 pt-4 border-t border-gray-700/80 flex items-center justify-between gap-3">
+                                <span class="text-[11px] text-gray-400 truncate">${lst.url}</span>
+                                <a href="${lst.url}" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:opacity-95 text-white text-xs font-black rounded-xl shadow flex items-center space-x-1.5 shrink-0 transition">
+                                    <i class="fa-brands fa-bilibili"></i>
+                                    <span>前往B站播放此列表</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- 管理员专属：添加单集视频跳转链接 & 首页展示开关 -->
+                ${isAdmin ? `
+                    <div class="mt-6 pt-5 border-t-2 border-yp-lime/60 text-xs space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="px-2.5 py-1 bg-yp-lime text-gray-900 font-black rounded">管理员 · 添加单集视频跳转链接</span>
+                            <button onclick="toggleBiliPortalOnHome()" class="px-3 py-1 rounded-lg font-bold border ${state.showOnHome ? 'bg-yp-green/20 border-yp-lime text-yp-lime' : 'bg-gray-800 border-gray-700 text-gray-400'}">
+                                ${state.showOnHome ? '🏠 在主界面(首页)显示：开启' : '🏠 在主界面(首页)显示：关闭'}
+                            </button>
+                        </div>
+                        <form onsubmit="addBiliEpLinkSubmit(event, '${containerKey}')" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                            <select id="bili-link-list-${containerKey}" class="sm:col-span-3 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white font-bold">
+                                <option value="${LIST_ID_1}">添加到列表 01 (#2012662)</option>
+                                <option value="${LIST_ID_2}">添加到列表 02 (#3469448)</option>
+                            </select>
+                            <input type="text" id="bili-link-url-${containerKey}" required placeholder="粘贴B站视频链接 (https://www.bilibili.com/video/BV...) 或 BV号 *" class="sm:col-span-5 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                            <input type="text" id="bili-link-title-${containerKey}" required placeholder="输入视频标题 *" class="sm:col-span-2 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                            <button type="submit" class="sm:col-span-2 py-2 bg-amber-400 hover:bg-amber-300 text-gray-900 font-black rounded-xl transition">
+                                ➕ 添加视频链接
+                            </button>
                         </form>
                     </div>
-                </div>
+                ` : ''}
             </div>
         `;
     }
 
     window.renderDualPlaylistTheater = function () {
+        const state = getPlaylistsState();
+        const isAdmin = isSuperAdmin();
         const galleryPage = document.getElementById('page-gallery');
         const homePage = document.getElementById('page-home');
-        const inGallery = galleryPage && galleryPage.classList.contains('active');
-        const inHome = homePage && homePage.classList.contains('active');
 
         if (galleryPage) {
             let gBox = document.getElementById('yp-dual-playlist-gallery');
             if (!gBox) {
-                gBox = document.createElement('div'); gBox.id = 'yp-dual-playlist-gallery'; gBox.className = 'mb-10';
+                gBox = document.createElement('div');
+                gBox.id = 'yp-dual-playlist-gallery';
+                gBox.className = 'mb-10';
                 galleryPage.insertBefore(gBox, galleryPage.firstChild);
             }
-            gBox.innerHTML = buildTheaterBoxHtml('gallery', inGallery);
+            gBox.innerHTML = buildBiliLinkPortalHtml('gallery');
         }
         if (homePage) {
             let hBox = document.getElementById('yp-dual-playlist-home');
             if (!hBox) {
-                hBox = document.createElement('section'); hBox.id = 'yp-dual-playlist-home';
+                hBox = document.createElement('section');
+                hBox.id = 'yp-dual-playlist-home';
                 hBox.setAttribute('data-hsec-id', 'sec_video');
                 hBox.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10';
                 homePage.appendChild(hBox);
             }
-            hBox.innerHTML = buildTheaterBoxHtml('home', inHome);
+            if (state.showOnHome || isAdmin) {
+                hBox.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10';
+                hBox.innerHTML = buildBiliLinkPortalHtml('home');
+            } else {
+                hBox.className = 'hidden';
+                hBox.innerHTML = '';
+            }
         }
     };
 
-    window.selectBiliList = function (id) { const s = getPlaylistsState(); s.activeListId = id; activeEpIdx = 0; userClickedPlay = false; savePlaylistsState(s); window.renderDualPlaylistTheater(); };
-    window.playBiliEp = function (idx) { activeEpIdx = idx; userClickedPlay = true; window.renderDualPlaylistTheater(); };
-    window.addQuickBiliEp = function (e, key) {
+    window.addBiliEpLinkSubmit = function (e, key) {
         e.preventDefault();
-        const raw = document.getElementById(`bili-add-input-${key}`)?.value.trim(); if (!raw) return;
-        const m = raw.match(/(BV[a-zA-Z0-9]{10})/i);
-        const bvid = m ? m[1] : raw;
-        const s = getPlaylistsState(), aid = s.activeListId || LIST_ID_1;
-        const title = isSuperAdmin() ? (prompt('请输入该视频的显示标题：', `车队精选视频 (${bvid})`) || `车队视频 (${bvid})`) : `点播视频 (${bvid})`;
-        s.lists[aid].episodes.unshift({ bvid, title });
-        activeEpIdx = 0; userClickedPlay = true;
-        if (isSuperAdmin()) savePlaylistsState(s);
+        if (!isSuperAdmin()) return;
+        const listId = document.getElementById(`bili-link-list-${key}`)?.value || LIST_ID_1;
+        const rawUrl = document.getElementById(`bili-link-url-${key}`)?.value.trim();
+        const title = document.getElementById(`bili-link-title-${key}`)?.value.trim();
+        if (!rawUrl || !title) return;
+
+        const s = getPlaylistsState();
+        const fullUrl = toBiliVideoUrl(rawUrl, s.lists[listId].url);
+        s.lists[listId].episodes = s.lists[listId].episodes || [];
+        s.lists[listId].episodes.unshift({ bvid: rawUrl, url: fullUrl, title: title });
+        savePlaylistsState(s);
         window.renderDualPlaylistTheater();
-    };
-    window.delBiliEp = function (idx) {
-        const s = getPlaylistsState(); s.lists[s.activeListId || LIST_ID_1].episodes.splice(idx, 1);
-        activeEpIdx = 0; userClickedPlay = false; savePlaylistsState(s); window.renderDualPlaylistTheater();
+        showToast(`✅ 已添加视频跳转链接：${title}`);
     };
 
+    window.delBiliEpLink = function (listId, idx) {
+        if (!isSuperAdmin()) return;
+        const s = getPlaylistsState();
+        if (s.lists[listId]?.episodes) {
+            s.lists[listId].episodes.splice(idx, 1);
+            savePlaylistsState(s);
+            window.renderDualPlaylistTheater();
+        }
+    };
+
+    window.renameBiliListPrompt = function (listId) {
+        if (!isSuperAdmin()) return;
+        const s = getPlaylistsState();
+        const lst = s.lists[listId];
+        if (!lst) return;
+        const newName = prompt('修改播放列表标题：', lst.name);
+        if (newName && newName.trim()) {
+            lst.name = newName.trim();
+            const newDesc = prompt('修改播放列表简介说明：', lst.desc || '');
+            if (newDesc !== null) lst.desc = newDesc.trim();
+            savePlaylistsState(s);
+            window.renderDualPlaylistTheater();
+        }
+    };
+
+    window.toggleBiliPortalOnHome = function () {
+        if (!isSuperAdmin()) return;
+        const s = getPlaylistsState();
+        s.showOnHome = !s.showOnHome;
+        savePlaylistsState(s);
+        window.renderDualPlaylistTheater();
+    };
+
+    // 底部赞助商图标栏
     const defaultSponsors = [
         { id: 'sp_spect', name: '空力公式 (Spect)', tier: '官方车架合作伙伴', logoText: 'SPECT 空力公式', logoUrl: '', highlight: '提供公路气动、综合爬坡、TT及Gravel碳纤维车架支持', desc: '空力公式（Spect）旗下 Mira 破风气动车架与 Strada 超轻综合车架伴随青年力量洲际队征战国内外赛场。' },
         { id: 'sp_elves', name: 'ELVES (精灵)', tier: '官方器材合作伙伴', logoText: 'ELVES 精灵', logoUrl: '', highlight: 'UCI认证竞赛车架品牌 · Vanyar / Falath EVO 全系支持', desc: 'ELVES（精灵）拥有多项 UCI 认证竞赛车架，为车队选手提供硬核器材保障。' },
@@ -1355,12 +1455,11 @@
         const origSwitch = window.switchPage;
         if (origSwitch) {
             window.switchPage = function (pageId) {
-                userClickedPlay = false;
                 origSwitch(pageId);
-                window.renderDualPlaylistTheater();
                 if (pageId === 'home') window.renderHomeAll();
                 if (pageId === 'roster') window.renderRoster();
                 if (pageId === 'rides') window.renderHostelUnified();
+                if (pageId === 'gallery') window.renderDualPlaylistTheater();
                 if (window.__ypLang !== 'zh') setTimeout(() => window.translateEntireDOM(window.__ypLang), 50);
             };
         }
