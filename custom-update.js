@@ -1,19 +1,21 @@
 /**
- * 青年力量洲际队官网 (Youth Power Continental Team) - 终极版扩展插件 (custom-update.js)
- * 本次核心升级：
- * 1. 【个人独立主页：全方位可视化编辑】：支持在队员独立主页内直接编辑姓名、职务、年龄、高光、长篇传记、自定义附加模块及每张照片的图注，并同步回总列表
- * 2. 【个人独立主页：大图作为背景功能】：支持一键将任意相册照片或上传新图设为“全屏沉浸式背景壁纸”，支持调节背景遮罩浓度与毛玻璃效果
- * 3. 【个人独立主页：5种主体排版 + 4种多图相册布局】：新增“⑤ 全屏大图背景悬浮排版”，相册支持“网格平铺”、“首图巨幅焦点”、“电影感全宽巨幕”、“错落画报流”
- * 4. 【全站丝滑拖拽排序 + 100%中/英/西精译词库与微软神经网络翻译兜底】
+ * 青年力量洲际队官网 (Youth Power Continental Team) - 全能旗舰版扩展插件 (custom-update.js)
+ * 完整包含：
+ * 1. 【队员 & 商品 & 赞助商 独立详情主页三合一引擎】：均支持 5种主体排版、大图设为全屏背景壁纸、多图上传、4种相册版式、拖拽排图、页面内文字直接编辑
+ * 2. 【随时增加/删除队员 & 随时增加/删除独立页面】：顶部与底部双入口可视化操作
+ * 3. 【La Fuga 青野·驿 升级】：新增主理人「关若析（巴塞罗那自治大学酒店管理硕士）」专栏 + 青旅实景多图上传与排版编辑
+ * 4. 【媒体中心 B站/URL 视频播放器】：支持直接粘贴哔哩哔哩链接、BV号或MP4 URL在线播放与保存复用
+ * 5. 【全局底部赞助商 Logo 图标栏 + 独立赞助商名录页 + 可点击进入的赞助商详情主页】
+ * 6. 【全站中/英/西三语精译词库 + 微软(Microsoft Edge/Bing)神经网络实时翻译引擎】
  */
 
 (function () {
     'use strict';
 
     window.__ypLang = 'zh';
-    let isRiderSubpageEditing = false;
+    let isSubpageEditing = false;
 
-    // 注入全局拖拽与个人主页编辑样式
+    // 注入全局拖拽与可视化编辑样式
     const customStyle = document.createElement('style');
     customStyle.innerHTML = `
         .yp-draggable-card {
@@ -35,7 +37,7 @@
             outline: 3px solid #76c729 !important;
             transform: scale(1.02);
         }
-        .rider-editable-field[contenteditable="true"] {
+        .yp-editable-field[contenteditable="true"] {
             outline: 2px dashed #76c729 !important;
             outline-offset: 3px;
             background-color: rgba(118, 199, 41, 0.15) !important;
@@ -43,9 +45,9 @@
             padding: 2px 6px;
             cursor: text;
         }
-        .rider-editable-field[contenteditable="true"]:focus {
+        .yp-editable-field[contenteditable="true"]:focus {
             outline: 2px solid #1db954 !important;
-            background-color: rgba(17, 24, 39, 0.85) !important;
+            background-color: rgba(17, 24, 39, 0.9) !important;
             color: #ffffff !important;
         }
     `;
@@ -81,37 +83,35 @@
     }
 
     // =========================================================================
-    // 二、队员多图相册 & 个人独立主页排版/背景大图配置存储系统
+    // 二、通用多图相册 & 独立主页排版配置系统（同时支持：队员 / 商品 / 赞助商）
     // =========================================================================
-    function getRiderAlbum(riderId) {
+    function getEntityAlbum(entityKey) {
         try {
-            const allAlbums = JSON.parse(localStorage.getItem('yp_rider_multi_albums') || '{}');
-            return Array.isArray(allAlbums[riderId]) ? allAlbums[riderId] : [];
+            const allAlbums = JSON.parse(localStorage.getItem('yp_entity_multi_albums') || '{}');
+            // 兼容旧版队员相册存储
+            if (entityKey.startsWith('rider_')) {
+                const rawId = entityKey.replace('rider_', '');
+                const oldAlbums = JSON.parse(localStorage.getItem('yp_rider_multi_albums') || '{}');
+                if (!allAlbums[entityKey] && Array.isArray(oldAlbums[rawId])) {
+                    return oldAlbums[rawId];
+                }
+            }
+            return Array.isArray(allAlbums[entityKey]) ? allAlbums[entityKey] : [];
         } catch (e) { return []; }
     }
 
-    function saveRiderAlbum(riderId, photosArray) {
+    function saveEntityAlbum(entityKey, photosArray) {
         try {
-            const allAlbums = JSON.parse(localStorage.getItem('yp_rider_multi_albums') || '{}');
-            allAlbums[riderId] = photosArray;
-            localStorage.setItem('yp_rider_multi_albums', JSON.stringify(allAlbums));
+            const allAlbums = JSON.parse(localStorage.getItem('yp_entity_multi_albums') || '{}');
+            allAlbums[entityKey] = photosArray;
+            localStorage.setItem('yp_entity_multi_albums', JSON.stringify(allAlbums));
         } catch (e) {}
     }
 
-    /**
-     * 队员个人主页独立排版配置：
-     * - layout: 'classic'(左图右文) | 'magazine'(杂志巨幕) | 'reverse'(左文右图) | 'gallery_first'(画廊置顶) | 'hero_bg'(大图作为背景悬浮)
-     * - albumMode: 'grid'(标准平铺) | 'featured'(首图巨幅焦点+平铺) | 'cinematic'(全宽电影画幅) | 'masonry'(错落画报流)
-     * - albumCols: 2 | 3 | 4
-     * - bgUrl: 自定义背景大图URL（可由相册一键设置或单独上传）
-     * - fullPageBg: true | false （是否将大图同时铺满整个独立主页底色背景）
-     * - bgDarkness: '40' | '65' | '85' （背景大图遮罩暗度百分比）
-     * - extraSection: 队员主页自定义扩展段落 HTML
-     */
-    function getRiderLayoutConfig(riderId) {
+    function getEntityLayoutConfig(entityKey) {
         const defaults = {
-            layout: 'classic',
-            albumMode: 'grid',
+            layout: 'classic',      // 'classic' | 'magazine' | 'reverse' | 'gallery_first' | 'hero_bg'
+            albumMode: 'grid',      // 'grid' | 'featured' | 'cinematic' | 'masonry'
             albumCols: 3,
             bgUrl: '',
             fullPageBg: false,
@@ -119,23 +119,30 @@
             extraSection: ''
         };
         try {
-            const allCfg = JSON.parse(localStorage.getItem('yp_rider_page_layouts') || '{}');
-            return { ...defaults, ...(allCfg[riderId] || {}) };
+            const allCfg = JSON.parse(localStorage.getItem('yp_entity_page_layouts') || '{}');
+            if (entityKey.startsWith('rider_')) {
+                const rawId = entityKey.replace('rider_', '');
+                const oldCfg = JSON.parse(localStorage.getItem('yp_rider_page_layouts') || '{}');
+                if (!allCfg[entityKey] && oldCfg[rawId]) {
+                    return { ...defaults, ...oldCfg[rawId] };
+                }
+            }
+            return { ...defaults, ...(allCfg[entityKey] || {}) };
         } catch (e) {
             return defaults;
         }
     }
 
-    function saveRiderLayoutConfig(riderId, cfg) {
+    function saveEntityLayoutConfig(entityKey, cfg) {
         try {
-            const allCfg = JSON.parse(localStorage.getItem('yp_rider_page_layouts') || '{}');
-            allCfg[riderId] = { ...getRiderLayoutConfig(riderId), ...cfg };
-            localStorage.setItem('yp_rider_page_layouts', JSON.stringify(allCfg));
+            const allCfg = JSON.parse(localStorage.getItem('yp_entity_page_layouts') || '{}');
+            allCfg[entityKey] = { ...getEntityLayoutConfig(entityKey), ...cfg };
+            localStorage.setItem('yp_entity_page_layouts', JSON.stringify(allCfg));
         } catch (e) {}
     }
 
     // =========================================================================
-    // 三、通用丝滑拖拽排序引擎（支持队员卡片、商城卡片、队员主页相册图片）
+    // 三、通用丝滑拖拽排序引擎 (Live DOM Swap)
     // =========================================================================
     function bindLiveSortableGrid(gridEl, itemSelector, idAttr, onOrderChanged) {
         if (!gridEl || !isStrictAdmin()) return;
@@ -148,7 +155,7 @@
             item.querySelectorAll('img, a').forEach(img => img.setAttribute('draggable', 'false'));
 
             item.ondragstart = function (e) {
-                if (isRiderSubpageEditing) {
+                if (isSubpageEditing) {
                     e.preventDefault();
                     return;
                 }
@@ -194,444 +201,670 @@
     }
 
     // =========================================================================
-    // 四、全站多语言完整精译数据库（队员介绍、商业赞助、骑游青旅、商城、赛历）
+    // 四、赞助商名录与底部 Logo 图标栏数据系统
     // =========================================================================
-    const rosterTranslations = {
-        xuhe: {
-            en: {
-                role: 'Team Manager / Sports Director / Captain',
-                ageSpec: '1997.10 (Age 28) · Shaanxi · Sprinter',
-                highlight: 'UCI Level 2 Coach (Level 3 Full Scholarship) | PhD Candidate at UCM Madrid | Spanish C1',
-                bio: `<strong>[Education & Academic Background]</strong> PhD Candidate in Moral Philosophy at Complutense University of Madrid (UCM, 2026.10-), M.A. in Advanced Philosophical Studies (UCM, 2023-2025), M.A. in Journalism - Discourse & Communication (UCM, 2019-2021); B.A. in Spanish from Macau University of Science and Technology; Alumni of Tsinghua University High School Zhixin. Visiting Lecturer of Spanish at Zhejiang International Studies University; former Marketing Assistant at RE Cycling; Contracted Writer for Biketo.com (2020 Author of the Year).<br>
-                      <strong>[Racing & Coaching Career]</strong> Raced for Salchi Cycling (U23), Avimosa Chozas Team (U23), Huansheng Sports, Guangzhou Fenglei Continental, Wuzhishan 1867 Continental, Kamen Pazin-Kiwi Atlántico Continental, and Sidi Ali Unlock Continental Team. Won Best Young Rider at 2018 Tour of Duolun, 8th in Trofeo de Madrid, 9th in Trofeo de Cosalda, 3rd Team GC at 2021 Tour of Ya'an, and 2nd Elite Men at the 50th Anniversary of China-Spain Diplomatic Relations Race. Trained under Spanish pro coach <strong>Raúl Celdrán (current Red Bull - BORA - hansgrohe coach)</strong> since 2021.`
-            },
-            es: {
-                role: 'Director General / Director Deportivo / Capitán',
-                ageSpec: '1997.10 (28 años) · Shaanxi · Esprínter',
-                highlight: 'Entrenador UCI Nivel 2 (Beca completa Nivel 3) | Doctorando en la UCM Madrid | Español C1',
-                bio: `<strong>[Formación Académica y Profesional]</strong> Doctorando en Filosofía Moral en la Universidad Complutense de Madrid (UCM, 2026.10-), Máster en Estudios Avanzados en Filosofía (UCM, 2023-2025), Máster en Periodismo: Discurso y Comunicación (UCM, 2019-2021); Grado en Español por la MUST. Profesor de español en la Universidad de Estudios Internacionales de Zhejiang; ex asistente de marketing en RE Cycling y articulista premiado en Biketo.com.<br>
-                      <strong>[Trayectoria Deportiva y como Entrenador]</strong> Compitió en Salchi Cycling (Sub-23), Avimosa Chozas Team (Sub-23), Huansheng, Guangzhou Fenglei Continental, Wuzhishan 1867 Continental, Kamen Pazin-Kiwi Atlántico y Sidi Ali Unlock Continental. Mejor Joven en el Tour de Duolun 2018, 8º en Trofeo de Madrid, 9º en Trofeo de Cosalda, y Subcampeón Élite en el 50º Aniversario de Relaciones China-España. Desde 2021 se forma junto al entrenador profesional español <strong>Raúl Celdrán (actual entrenador del Red Bull - BORA - hansgrohe)</strong>.`
-            }
+    const defaultSponsors = [
+        {
+            id: 'sp_spect',
+            name: '空力公式 (Spect)',
+            tier: '官方车架合作伙伴',
+            logoText: 'SPECT 空力公式',
+            logoUrl: '',
+            website: '',
+            highlight: '提供公路气动、综合爬坡、TT及Gravel专业碳纤维车架支持',
+            desc: '空力公式（Spect）致力于高性能碳纤维自行车架研发，旗下 Mira 破风气动车架与 Strada 超轻综合车架伴随青年力量洲际队征战国内外高级别职业赛场。'
         },
-        dongyuan: {
-            en: {
-                role: 'Team Leader / Coach / Head Mechanic',
-                ageSpec: 'Age 26 · Co-Founder',
-                highlight: 'Senior Team Coach & Pro Mechanic | Leading Race Operations & Equipment Since 2023',
-                bio: 'Competed in elite adult events such as the China Cycling League Alishan Station and Tour of Duolun before retiring due to injuries. As one of the co-founders of Youth Power Team, he has led the team at national races since early 2023, providing comprehensive training guidance and professional mechanical support.'
-            },
-            es: {
-                role: 'Jefe de Equipo / Entrenador / Mecánico Jefe',
-                ageSpec: '26 años · Cofundador',
-                highlight: 'Entrenador Senior y Mecánico Profesional | Responsable Técnico y de Competición desde 2023',
-                bio: 'Participó en pruebas élite como la Liga China de Ciclismo en Alishan y el Tour de Duolun antes de retirarse por lesiones. Como cofundador de Youth Power, dirige al equipo en competiciones nacionales desde principios de 2023, brindando asistencia integral en entrenamiento y mecánica.'
-            }
+        {
+            id: 'sp_elves',
+            name: 'ELVES (精灵)',
+            tier: '官方器材合作伙伴',
+            logoText: 'ELVES 精灵',
+            logoUrl: '',
+            website: '',
+            highlight: 'UCI认证专业竞赛车架品牌 · Vanyar / Falath EVO / Mori 全系支持',
+            desc: 'ELVES（精灵）拥有多项 UCI 国际自盟认证竞赛车架，为车队选手在高山爬坡、平路冲刺与 Gravel 世锦赛赛场提供硬核器材保障。'
         },
-        zhangbowen: {
-            en: {
-                role: 'Vice Captain / Assistant',
-                ageSpec: 'Age 20 · Youth Team Captain',
-                highlight: 'Team Co-Founder | Defeated Hengxiang Pro Riders in a Breakaway Win at 2023 Shangyi Race',
-                bio: 'One of the co-founders of Youth Power Team and long-time captain of the youth squad. Multiple-time U18 champion in the Beijing and Hebei Leagues. In summer 2023 at the Shangyi Stage race, he went head-to-head against professional riders from Hengxiang Continental Team and won via a decisive breakaway.'
-            },
-            es: {
-                role: 'Subcapitán / Asistente',
-                ageSpec: '20 años · Capitán del Equipo Juvenil',
-                highlight: 'Cofundador del Equipo | Victoria en Fuga ante Profesionales de Hengxiang en Shangyi 2023',
-                bio: 'Uno de los fundadores de Youth Power y capitán de la escuadra juvenil. Múltiple campeón Sub-18 en las ligas de Pekín y Hebei. En el verano de 2023, en la prueba de Shangyi, derrotó directamente a los corredores profesionales del equipo continental Hengxiang culminando una fuga victoriosa.'
-            }
+        {
+            id: 'sp_essen',
+            name: 'ESSEN 头盔',
+            tier: '官方安全护具合作伙伴',
+            logoText: 'ESSEN',
+            logoUrl: '',
+            website: '',
+            highlight: '赫拉 (HELA) 气动破风头盔、爬坡盔及 ITT 计时盔官方赞助商',
+            desc: 'ESSEN 深耕骑行安全领域，为青年力量洲际队提供全方位风洞优化的大组气动盔、超轻爬坡盔及个人计时赛头盔。'
         },
-        vladimir: {
-            en: {
-                role: 'Foreign Leader / Americas Director / Vice Captain',
-                ageSpec: 'Age 37 (1988) · 170cm / 58kg · GC All-Rounder',
-                highlight: 'Former Team Ukyo & Bank of Gansu Pro | Multiple Top-10 GC Finishes in UCI Stage Races',
-                bio: 'A highly experienced GC all-rounder who previously raced for UCI Continental teams such as Team Ukyo and Bank of Gansu, achieving numerous Top-10 General Classification finishes. He brings invaluable mentorship to our young riders and serves as Head of our Americas Division.'
-            },
-            es: {
-                role: 'Líder Extranjero / Director División América / Subcapitán',
-                ageSpec: '37 años (1988) · 170cm / 58kg · Corredor Completo de Clasificación General (GC)',
-                highlight: 'Ex corredor de Team Ukyo y Bank of Gansu | Múltiples Top-10 en la General de Vueltas UCI',
-                bio: 'Corredor colombiano con amplia experiencia internacional en equipos continentales como Team Ukyo y Bank of Gansu con múltiples Top-10 en clasificaciones generales. Aporta experiencia clave para nuestros jóvenes y lidera la división americana del equipo.'
-            }
+        {
+            id: 'sp_zeray',
+            name: '和博 / 卓锐 (ZERAY)',
+            tier: '官方配件与传动合作伙伴',
+            logoText: 'ZERAY 卓锐',
+            logoUrl: '',
+            website: '',
+            highlight: 'ZP-115 碳纤维公路自锁脚踏及职业竞赛水壶官方赞助商',
+            desc: '和博旗下卓锐（ZERAY）品牌为车队提供高传动效率的轻量化碳纤维自锁脚踏、锁片及赛训补给水壶。'
         },
-        gabriel: {
-            en: {
-                role: 'Foreign Lead Climber (KOM)',
-                ageSpec: 'Age 24 · Spain · Lead Climber',
-                highlight: '1-Hour Power-to-Weight > 6.2 W/kg | Vuelta a Madrid KOM & Best Madrid Rider Winner',
-                bio: 'An explosive Spanish climber boasting a 1-hour power-to-weight ratio exceeding 6.2 watt/kg. He previously raced for Spanish squads Caja Rural and Gsport, winning the King of the Mountains (KOM) and Best Madrid Rider jerseys at Vuelta a Madrid.'
-            },
-            es: {
-                role: 'Escalador Principal Extranjero (Líder de Montaña)',
-                ageSpec: '24 años · España · Jefe de Filas en Montaña',
-                highlight: 'Relación peso-potencia en 1 hora > 6.2 W/kg | Ganador de la Montaña en la Vuelta a Madrid',
-                bio: 'Escalador español de altísimo nivel con una relación potencia-peso superior a 6.2 W/kg durante una hora. Ha militado en equipos como Caja Rural y Gsport, conquistando el maillot de la Montaña y Mejor Madrileño en la Vuelta a Madrid.'
-            }
-        },
-        zhanghaoyang: {
-            en: {
-                role: 'Chinese U23 Rouleur & ITT Specialist',
-                ageSpec: 'Age 21 · Mature Rouleur & Time Trialist',
-                highlight: '2026 National Open (Zhijiang) Collegiate Champion | Selected for Shanghai Cycling Team',
-                bio: 'A mature flat-stage rouleur who finished 5th in the National U-Series Championship and won multiple Elite ITT titles. Winner of the Collegiate Category at the 2026 National Open Race (Zhijiang). Trained in Spain with Team Cycling Galicia in 2024. Officially selected for the Shanghai Cycling Team.'
-            },
-            es: {
-                role: 'Rodador Sub-23 y Especialista en Contrarreloj (CRI)',
-                ageSpec: '21 años · Rodador y Especialista CRI',
-                highlight: 'Campeón Universitario del Abierto Nacional 2026 (Zhijiang) | Seleccionado por el Equipo de Shanghái',
-                bio: 'Rodador consolidado, 5º en el Campeonato Nacional Sub y múltiple campeón en contrarreloj élite. Campeón universitario en el Abierto Nacional de Zhijiang 2026. Entrenó en España con el Team Cycling Galicia en 2024 y ha sido seleccionado por el Equipo de Ciclismo de Shanghái.'
-            }
-        },
-        gongjiayao: {
-            en: {
-                role: 'Chinese Breakaway & All-Rounder',
-                ageSpec: 'Age 25 · Breakaway Specialist',
-                highlight: 'Multiple Team GC Winner & Podium Finisher | 6th at Tour of Hainan (Amateur Stage 1)',
-                bio: 'A versatile breakaway rider capable of attacking, defending, and leading out sprints. Helped his squads secure numerous team titles (2024 Wanmei Landscape, 2024 Tour of Chongming Island Elite, 2025 Grand Canal Haian). Placed 5th at 2024 Grand Canal Zhenjiang and 6th on Stage 1 of 2025 Tour of Hainan (Amateur).'
-            },
-            es: {
-                role: 'Especialista en Fugas y Todoterreno',
-                ageSpec: '25 años · Corredor Completo de Fugas',
-                highlight: 'Múltiple Campeón por Equipos | 6º en Etapa 1 del Tour de Hainan (Amateur) y 5º en Gran Canal',
-                bio: 'Corredor todoterreno especializado en fugas y lanzamiento de esprints. Pieza clave en múltiples victorias por equipos (Wanmei 2024, Isla Chongming Élite 2024). Individualmente logró el 5º puesto en Zhenjiang 2024 y 6º en la Etapa 1 del Tour de Hainan 2025 (Amateur).'
-            }
-        },
-        jiangwendi: {
-            en: {
-                role: 'Chinese U23 Climbing Talent',
-                ageSpec: 'Age 19 · Promising Young Climber',
-                highlight: 'Multiple Top-5 Finishes in Elite Hill Climbs | Strong Contender for Best Young Rider White Jersey',
-                bio: 'A promising young climbing talent who competed extensively in elite hill climb races during his junior years, consistently finishing in the Top 5. Key contender for the Best Young Rider (White Jersey) in 2027.'
-            },
-            es: {
-                role: 'Joven Promesa Escalador Sub-23',
-                ageSpec: '19 años · Escalador de Proyección',
-                highlight: 'Múltiples Top-5 en Escaladas Élite | Firme Candidato al Maillot Blanco de Mejor Joven',
-                bio: 'Joven escalador con gran proyección que ha logrado múltiples puestos dentro del Top-5 en competiciones élite de montaña. Principal aspirante al maillot blanco de Mejor Joven en 2027.'
-            }
-        },
-        jinluoxi: {
-            en: {
-                role: 'Chinese U23 Sprint Prospect',
-                ageSpec: 'Age 20 · Explosive Sprinter',
-                highlight: 'FTP Increased by 60W+ in Just 5 Months | 1450W Peak Sprint Power (Projected 1850W)',
-                bio: 'An extraordinarily gifted sprint prospect who began structured road cycling training in March 2026. Within just 5 months, his FTP surged by over 60W, reaching a peak sprint power of ~1450W with a projected ceiling of 1850W.'
-            },
-            es: {
-                role: 'Promesa del Esprint Sub-23',
-                ageSpec: '20 años · Esprínter Explosivo',
-                highlight: 'Aumento de +60W en FTP en solo 5 meses | Pico de potencia de 1450W (Proyección 1850W)',
-                bio: 'Esprínter de enorme potencial que inició el entrenamiento estructurado en marzo de 2026. En apenas 5 meses incrementó su FTP en más de 60W, alcanzando picos de esprint de 1450W con proyección a 1850W.'
-            }
+        {
+            id: 'sp_jingteng',
+            name: '静藤轮组 (Jingteng)',
+            tier: '品牌出海战略合作伙伴',
+            logoText: 'JINGTENG 静藤',
+            logoUrl: '',
+            website: '',
+            highlight: '依托车队哥伦比亚与西班牙赛训网络，共同开拓拉美与欧洲车店市场',
+            desc: '青年力量洲际队不仅在赛场使用静藤高性能碳纤维轮组，更作为其海外实地推广团队，成功将产品引入哥伦比亚和西班牙实体车店网络。'
         }
-    };
+    ];
 
-    const productTranslations = {
-        101: {
-            en: { brand: 'Spect', name: 'Spect Mira Aero Carbon Road Frame Set', desc: 'External steerer + integrated aero bar, T1100+M60 high-modulus carbon. Official store price.', badge: 'Official Price' },
-            es: { brand: 'Spect', name: 'Cuadro de Ruta Carbono Aero Spect Mira', desc: 'Tubo de dirección externo + manillar integrado, carbono T1100+M60. Precio oficial.', badge: 'Precio Oficial' }
-        },
-        102: {
-            en: { brand: 'Spect', name: 'Spect Strada Ultralight All-Round Disc Frame Set', desc: 'Fully internal cable routing ultralight climbing & all-round disc frame.', badge: 'Ultralight All-Round' },
-            es: { brand: 'Spect', name: 'Cuadro Ultraligero de Disco Spect Strada', desc: 'Cableado totalmente interno, cuadro escalador ultraligero de freno de disco.', badge: 'Ultraligero' }
-        },
-        103: {
-            en: { brand: 'ELVES', name: 'ELVES VANYAR UCI-Approved Ultralight Climbing Frame', desc: 'UCI-certified superlight carbon climbing frameset with custom paint options.', badge: 'UCI Climber' },
-            es: { brand: 'ELVES', name: 'Cuadro Escalador Ultraligero ELVES VANYAR (UCI)', desc: 'Cuadro de carbono superligero certificado por la UCI para alta montaña.', badge: 'Escalador UCI' }
-        },
-        104: {
-            en: { brand: 'ELVES', name: 'ELVES FALATH EVO Aero Disc Carbon Road Frame Set', desc: 'UCI-certified aero road disc frameset used by our team riders.', badge: 'Pro Aero Frame' },
-            es: { brand: 'ELVES', name: 'Cuadro Aero de Disco ELVES FALATH EVO (UCI)', desc: 'Cuadro aerodinámico certificado por la UCI con cableado integrado.', badge: 'Aero Pro' }
-        },
-        105: {
-            en: { brand: 'ELVES', name: 'ELVES FALATH EXP Flagship Aero Disc Carbon Frame Set', desc: 'Latest flagship Falath EXP aerodynamic carbon frameset with ultra-stiff BB.', badge: 'Flagship EXP' },
-            es: { brand: 'ELVES', name: 'Cuadro Carbono Aero ELVES FALATH EXP', desc: 'Última evolución del cuadro aerodinámico Falath EXP de máxima rigidez.', badge: 'Insignia EXP' }
-        },
-        106: {
-            en: { brand: 'ELVES', name: 'ELVES MORI Carbon Gravel Frame Set', desc: 'Built for UCI Gravel World Series racing with wide tire clearance.', badge: 'Gravel Race' },
-            es: { brand: 'ELVES', name: 'Cuadro de Carbono Gravel ELVES MORI', desc: 'Diseñado para la Copa del Mundo UCI Gravel con amplio paso de rueda.', badge: 'Gravel Pro' }
-        },
-        107: {
-            en: { brand: 'ZERAY', name: 'ZERAY ZP-115 Carbon Road Clipless Pedals (LOOK KEO)', desc: 'Lightweight carbon body road pedals, smooth sealed bearings, LOOK KEO compatible.', badge: 'Official Price' },
-            es: { brand: 'ZERAY', name: 'Pedales Automáticos de Carbono ZERAY ZP-115 (LOOK)', desc: 'Cuerpo ligero de fibra de carbono, rodamientos sellados, compatibles con LOOK KEO.', badge: 'Precio Oficial' }
-        },
-        108: {
-            en: { brand: 'ESSEN', name: 'ESSEN HELA Aero Pro Road Cycling Helmet', desc: 'In-mold aerodynamic helmet (~255g lightweight protection), official team issue.', badge: 'Genuine HELA' },
-            es: { brand: 'ESSEN', name: 'Casco Aerodinámico de Ciclismo ESSEN HELA', desc: 'Casco aerodinámico ultraligero (~255g) de competición, equipamiento oficial.', badge: 'HELA Oficial' }
-        }
-    };
-
-    // =========================================================================
-    // 五、队员列表 (Roster) 与 商城商品 (Products) 拖拽排序 & 列数控制
-    // =========================================================================
-    function getRosterGridCols() { return localStorage.getItem('yp_roster_grid_cols') || '3'; }
-    function getShopGridCols() { return localStorage.getItem('yp_shop_grid_cols') || '4'; }
-
-    window.setRosterGridCols = function (cols) {
-        if (!isStrictAdmin()) return;
-        localStorage.setItem('yp_roster_grid_cols', String(cols));
-        window.renderRoster();
-        if (typeof showToast === 'function') showToast(`队员列表已切换为：每行 ${cols} 列`);
-    };
-
-    window.setShopGridCols = function (cols) {
-        if (!isStrictAdmin()) return;
-        localStorage.setItem('yp_shop_grid_cols', String(cols));
-        window.renderProducts('all');
-        if (typeof showToast === 'function') showToast(`商城商品已切换为：每行 ${cols} 列`);
-    };
-
-    window.moveRosterStep = function (id, dir) {
-        if (!isStrictAdmin()) return;
-        const list = getSavedRosterData();
-        const idx = list.findIndex(r => String(r.id) === String(id));
-        if (idx === -1) return;
-        const targetIdx = idx + dir;
-        if (targetIdx < 0 || targetIdx >= list.length) return;
-        const temp = list[idx];
-        list[idx] = list[targetIdx];
-        list[targetIdx] = temp;
-        localStorage.setItem('yp_roster_custom_data', JSON.stringify(list));
-        window.renderRoster();
-        if (typeof showToast === 'function') showToast('已移动队员档案顺序');
-    };
-
-    function getOrderedProducts(filter = 'all') {
-        if (typeof products === 'undefined') return [];
+    function getSponsorsList() {
         try {
-            const savedOrder = JSON.parse(localStorage.getItem('yp_shop_order_ids') || '[]');
-            if (savedOrder.length > 0) {
-                products.sort((a, b) => {
-                    const ia = savedOrder.indexOf(String(a.id));
-                    const ib = savedOrder.indexOf(String(b.id));
-                    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-                });
-            }
-        } catch (e) {}
-        return filter === 'all' ? products : products.filter(p => p.category === filter);
+            const saved = localStorage.getItem('yp_sponsors_data');
+            return saved ? JSON.parse(saved) : defaultSponsors;
+        } catch (e) { return defaultSponsors; }
     }
 
-    window.moveProductStep = function (id, dir) {
-        if (!isStrictAdmin() || typeof products === 'undefined') return;
-        getOrderedProducts('all');
-        const idx = products.findIndex(p => String(p.id) === String(id));
-        if (idx === -1) return;
-        const targetIdx = idx + dir;
-        if (targetIdx < 0 || targetIdx >= products.length) return;
-        const temp = products[idx];
-        products[idx] = products[targetIdx];
-        products[targetIdx] = temp;
-        localStorage.setItem('yp_shop_order_ids', JSON.stringify(products.map(p => String(p.id))));
-        window.renderProducts('all');
-        if (typeof showToast === 'function') showToast('已移动商城商品排序');
-    };
-
-    function injectAdminRosterLayoutBar() {
-        const rosterPage = document.querySelector('#page-roster .max-w-7xl');
-        if (!rosterPage) return;
-        let bar = document.getElementById('admin-roster-layout-bar');
-        if (!isStrictAdmin()) {
-            if (bar) bar.remove();
-            return;
-        }
-        if (!bar) {
-            bar = document.createElement('div');
-            bar.id = 'admin-roster-layout-bar';
-            bar.setAttribute('data-no-edit', 'true');
-            bar.className = 'mb-6 p-4 rounded-2xl bg-gray-800 border-2 border-yp-lime flex flex-wrap items-center justify-between gap-4 text-xs';
-            bar.innerHTML = `
-                <div class="flex items-center space-x-2 text-yp-lime font-bold">
-                    <i class="fa-solid fa-up-down-left-right text-base"></i>
-                    <span>管理员排版已启用：直接按住下方任意队员卡片【拖动】或点卡片上的【◀ ▶】即可调整先后顺序！点击队员可进入【个人独立主页】定制背景大图与多图排版。</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-gray-300 font-bold">每行排版列数：</span>
-                    <button onclick="setRosterGridCols(2)" class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-yp-green text-white font-bold transition">每行 2 人</button>
-                    <button onclick="setRosterGridCols(3)" class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-yp-green text-white font-bold transition">每行 3 人</button>
-                    <button onclick="setRosterGridCols(4)" class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-yp-green text-white font-bold transition">每行 4 人</button>
-                </div>
-            `;
-            const grid = document.getElementById('roster-grid');
-            if (grid) rosterPage.insertBefore(bar, grid);
-        }
+    function saveSponsorsList(list) {
+        localStorage.setItem('yp_sponsors_data', JSON.stringify(list));
     }
 
-    function injectAdminShopLayoutBar() {
-        const shopPage = document.getElementById('page-shop');
-        if (!shopPage) return;
-        let bar = document.getElementById('admin-shop-layout-bar');
-        if (!isStrictAdmin()) {
-            if (bar) bar.remove();
-            return;
+    // 注入全站底部「赞助商 Logo 图标栏」与「独立赞助商名录页面」
+    function initSponsorsBarAndPage() {
+        // 1. 注入底部全局赞助商图标栏（位于 footer 上方）
+        const footer = document.querySelector('footer');
+        if (footer && !document.getElementById('global-sponsor-bar')) {
+            const bar = document.createElement('section');
+            bar.id = 'global-sponsor-bar';
+            bar.className = 'bg-gray-900 border-t border-gray-800 py-10 px-4 sm:px-6 lg:px-8';
+            footer.parentNode.insertBefore(bar, footer);
         }
-        if (!bar) {
-            bar = document.createElement('div');
-            bar.id = 'admin-shop-layout-bar';
-            bar.setAttribute('data-no-edit', 'true');
-            bar.className = 'mb-6 p-4 rounded-2xl bg-gray-900 text-white border-2 border-yp-lime flex flex-wrap items-center justify-between gap-4 text-xs';
-            bar.innerHTML = `
-                <div class="flex items-center space-x-2 text-yp-lime font-bold">
-                    <i class="fa-solid fa-up-down-left-right text-base"></i>
-                    <span>管理员商城排版：直接按住下方任意器材商品卡片【拖动】或点击【◀ ▶】即可调整商品展示顺序！</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-gray-300 font-bold">每行商品列数：</span>
-                    <button onclick="setShopGridCols(2)" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-yp-green text-white font-bold transition">2 列</button>
-                    <button onclick="setShopGridCols(3)" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-yp-green text-white font-bold transition">3 列</button>
-                    <button onclick="setShopGridCols(4)" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-yp-green text-white font-bold transition">4 列</button>
-                </div>
-            `;
-            const grid = document.getElementById('product-grid');
-            if (grid) shopPage.insertBefore(bar, grid);
+
+        // 2. 注入独立「合作伙伴与赞助商名录」页面 (page-partners)
+        const main = document.getElementById('editable-main');
+        if (main && !document.getElementById('page-partners')) {
+            const sec = document.createElement('div');
+            sec.id = 'page-partners';
+            sec.className = 'page-section py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
+            main.appendChild(sec);
         }
+
+        renderSponsorsEverywhere();
     }
 
-    window.renderRoster = function () {
-        const rosterData = typeof getSavedRosterData === 'function' ? getSavedRosterData() : [];
-        const savedPhotos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
+    window.renderSponsorsEverywhere = function () {
+        const list = getSponsorsList();
         const isAdmin = isStrictAdmin();
-        const lang = window.__ypLang || 'zh';
-        const grid = document.getElementById('roster-grid');
-        if (!grid) return;
 
-        const cols = getRosterGridCols();
-        grid.className = `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${cols} gap-7`;
-        injectAdminRosterLayoutBar();
-
-        grid.innerHTML = rosterData.map(m => {
-            const tr = (lang !== 'zh' && rosterTranslations[m.id] && rosterTranslations[m.id][lang]) ? rosterTranslations[m.id][lang] : null;
-            const roleText = tr ? tr.role : (lang === 'en' ? (m.role_en || m.role_zh) : (lang === 'es' ? (m.role_es || m.role_zh) : m.role_zh));
-            const ageText = tr ? tr.ageSpec : m.ageSpec;
-            const highText = tr ? tr.highlight : m.highlight;
-            const bioText = tr ? tr.bio : m.bio;
-            const album = getRiderAlbum(m.id);
-            const photoUrl = savedPhotos[m.id] || m.photo || (album.length > 0 ? album[0].url : '');
-
-            const slotLabel = lang === 'en' ? '2027 Official Portrait Slot' : (lang === 'es' ? 'Espacio para Foto Oficial 2027' : '2027赛季官方定妆照预留位');
-            const viewProfileLabel = lang === 'en' ? 'Enter Personal Page & Gallery' : (lang === 'es' ? 'Entrar a Página Personal y Galería' : `进入个人独立主页 (${album.length}图)`);
-            const delLabel = lang === 'en' ? 'Delete' : (lang === 'es' ? 'Eliminar' : '删除');
-
-            return `
-                <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 flex flex-col justify-between hover:border-yp-lime transition group relative" data-roster-id="${m.id}">
-                    <div>
-                        <div class="relative h-60 bg-gray-900 border-b border-gray-700 flex flex-col items-center justify-center overflow-hidden">
-                            ${photoUrl ? `<img src="${photoUrl}" alt="${m.name}" draggable="false" class="w-full h-full object-cover">` : `
-                                <div class="text-center p-6">
-                                    <div class="w-16 h-16 rounded-full bg-gray-800 border border-dashed border-gray-600 flex items-center justify-center mx-auto mb-2 text-gray-500">
-                                        <i class="fa-solid fa-user-astronaut text-2xl"></i>
-                                    </div>
-                                    <span class="text-xs text-gray-500 font-bold block">${slotLabel}</span>
-                                    <span class="text-[11px] text-gray-600">${m.name}</span>
-                                </div>
-                            `}
-                            <span class="roster-role absolute top-3 left-3 px-2.5 py-1 bg-gray-900/90 border border-gray-700 text-yp-lime text-xs font-bold rounded">${roleText}</span>
-                            <span class="absolute top-3 right-3 text-lg">${m.flag || '🇨🇳'}</span>
+        // 渲染底部全局图标栏
+        const bar = document.getElementById('global-sponsor-bar');
+        if (bar) {
+            bar.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-1.5 h-5 bg-yp-lime rounded-full"></span>
+                            <h4 class="text-sm font-black tracking-wider text-white uppercase">OFFICIAL PARTNERS & SPONSORS · 官方合作伙伴与赞助商（点击标志查看详情）</h4>
+                        </div>
+                        <div class="flex items-center space-x-2" data-no-edit="true">
+                            <button onclick="switchPage('partners')" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-yp-green text-yp-lime hover:text-white text-xs font-bold transition">
+                                查看全部赞助商名录 &rarr;
+                            </button>
                             ${isAdmin ? `
-                                <div data-no-edit="true" class="absolute bottom-3 left-3 flex items-center space-x-1">
-                                    <span class="px-2 py-1 bg-amber-400 text-gray-900 text-[11px] font-black rounded shadow cursor-grab flex items-center">
-                                        <i class="fa-solid fa-grip-vertical mr-1"></i>按住拖动
-                                    </span>
-                                    <button onclick="moveRosterStep('${m.id}', -1)" class="w-7 h-7 bg-gray-900/90 hover:bg-yp-green text-white text-xs font-black rounded shadow" title="向前移动">◀</button>
-                                    <button onclick="moveRosterStep('${m.id}', 1)" class="w-7 h-7 bg-gray-900/90 hover:bg-yp-green text-white text-xs font-black rounded shadow" title="向后移动">▶</button>
-                                </div>
-                                <button onclick="triggerMemberPhotoUpload('${m.id}')" data-no-edit="true" class="absolute bottom-3 right-3 px-2.5 py-1 bg-yp-red hover:bg-red-700 text-white text-[11px] font-black rounded-lg shadow-lg flex items-center space-x-1">
-                                    <i class="fa-solid fa-camera"></i>
-                                    <span>换封面</span>
+                                <button onclick="openAdminStudioModal('sponsor')" class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-gray-900 text-xs font-black transition">
+                                    ➕ 添加赞助商Logo
                                 </button>
                             ` : ''}
                         </div>
-                        <div class="p-6">
-                            <div class="roster-agespec text-xs text-gray-400 mb-1">${ageText}</div>
-                            <h3 onclick="openEntitySubpage('rider', '${m.id}')" class="roster-name text-2xl font-black text-white hover:text-yp-lime cursor-pointer mb-2">${m.name}</h3>
-                            <div class="roster-highlight p-2.5 rounded-lg bg-gray-900/80 border border-gray-700 text-xs text-yp-lime font-bold mb-3">${highText}</div>
-                            <div class="roster-bio text-xs text-gray-300 leading-relaxed space-y-1.5">${bioText}</div>
-                        </div>
                     </div>
-                    <div data-no-edit="true" class="px-6 py-3 bg-gray-900/70 border-t border-gray-700 flex items-center justify-between text-xs">
-                        <button onclick="openEntitySubpage('rider', '${m.id}')" class="text-yp-lime font-bold hover:underline flex items-center">
-                            <i class="fa-solid fa-id-card-clip mr-1.5"></i><span>${viewProfileLabel}</span> <i class="fa-solid fa-arrow-right ml-1"></i>
-                        </button>
-                        ${isAdmin ? `<button onclick="deleteRosterMember('${m.id}')" class="text-red-400 hover:text-red-300 font-bold"><i class="fa-solid fa-trash mr-1"></i>${delLabel}</button>` : ''}
+                    <div id="footer-sponsor-logos" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                        ${list.map(sp => `
+                            <div onclick="openEntitySubpage('sponsor', '${sp.id}')" data-sponsor-id="${sp.id}" class="cursor-pointer group bg-gray-800/90 hover:bg-gray-800 border border-gray-700 hover:border-yp-lime rounded-2xl p-4 h-24 flex flex-col items-center justify-center relative transition shadow-xs">
+                                ${sp.logoUrl ? `
+                                    <img src="${sp.logoUrl}" alt="${sp.name}" draggable="false" class="max-h-12 max-w-[140px] object-contain group-hover:scale-105 transition">
+                                ` : `
+                                    <div class="text-base font-black text-white group-hover:text-yp-lime tracking-wider text-center">${sp.logoText || sp.name}</div>
+                                    <div class="text-[10px] text-gray-400 mt-1">${sp.tier}</div>
+                                `}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
-        }).join('');
+        }
 
-        bindLiveSortableGrid(grid, '[data-roster-id]', 'data-roster-id', (newIds) => {
-            const currentList = getSavedRosterData();
-            const reordered = newIds.map(id => currentList.find(r => String(r.id) === String(id))).filter(Boolean);
-            if (reordered.length === currentList.length) {
-                localStorage.setItem('yp_roster_custom_data', JSON.stringify(reordered));
-                if (typeof showToast === 'function') showToast('✅ 队员档案顺序已实时保存！');
+        // 渲染独立「合作伙伴名录」页面 (page-partners)
+        const pagePartners = document.getElementById('page-partners');
+        if (pagePartners) {
+            pagePartners.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+                    <div>
+                        <span class="text-yp-darkGreen font-black tracking-widest text-sm uppercase">OFFICIAL SPONSORS DIRECTORY</span>
+                        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">官方赞助商与合作伙伴名录</h2>
+                        <p class="text-gray-600 text-sm mt-1">点击任意赞助商标志，即可进入该品牌的专属独立详情主页（支持多图展示与产品介绍）。</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex flex-wrap gap-2" data-no-edit="true">
+                        <button onclick="switchPage('sponsorship')" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl transition">
+                            查看招商报价方案
+                        </button>
+                        ${isAdmin ? `
+                            <button onclick="openAdminStudioModal('sponsor')" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-gray-900 text-xs font-black rounded-xl shadow transition">
+                                ➕ 新增赞助商标志与主页
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div id="partners-directory-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                    ${list.map(sp => `
+                        <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-yp-green transition flex flex-col justify-between relative" data-partner-card-id="${sp.id}">
+                            <div>
+                                <div onclick="openEntitySubpage('sponsor', '${sp.id}')" class="h-48 bg-gray-900 flex flex-col items-center justify-center p-6 cursor-pointer relative group overflow-hidden">
+                                    ${sp.logoUrl ? `
+                                        <img src="${sp.logoUrl}" alt="${sp.name}" draggable="false" class="max-h-28 max-w-[220px] object-contain group-hover:scale-105 transition duration-300">
+                                    ` : `
+                                        <div class="text-2xl font-black text-white group-hover:text-yp-lime tracking-widest">${sp.logoText || sp.name}</div>
+                                    `}
+                                    <span class="absolute top-3 left-3 px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">${sp.tier}</span>
+                                </div>
+                                <div class="p-6">
+                                    <h3 onclick="openEntitySubpage('sponsor', '${sp.id}')" class="text-xl font-black text-gray-900 hover:text-yp-darkGreen cursor-pointer mb-2">${sp.name}</h3>
+                                    <div class="p-2.5 rounded-xl bg-green-50 text-yp-darkGreen text-xs font-bold mb-3">${sp.highlight}</div>
+                                    <p class="text-xs text-gray-600 leading-relaxed line-clamp-3">${sp.desc}</p>
+                                </div>
+                            </div>
+                            <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs" data-no-edit="true">
+                                <button onclick="openEntitySubpage('sponsor', '${sp.id}')" class="text-yp-darkGreen font-black hover:underline flex items-center">
+                                    <span>进入品牌独立详情页</span> <i class="fa-solid fa-arrow-right ml-1.5"></i>
+                                </button>
+                                ${isAdmin ? `
+                                    <button onclick="deleteSponsorItem('${sp.id}')" class="text-red-500 hover:underline font-bold">🗑️ 删除</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // 支持管理员拖拽调整赞助商顺序
+            const dirGrid = document.getElementById('partners-directory-grid');
+            if (dirGrid) {
+                bindLiveSortableGrid(dirGrid, '[data-partner-card-id]', 'data-partner-card-id', (newIds) => {
+                    const current = getSponsorsList();
+                    const reordered = newIds.map(id => current.find(s => String(s.id) === String(id))).filter(Boolean);
+                    if (reordered.length === current.length) {
+                        saveSponsorsList(reordered);
+                        window.renderSponsorsEverywhere();
+                        if (typeof showToast === 'function') showToast('✅ 赞助商展示顺序已保存！');
+                    }
+                });
             }
-        });
+        }
+
+        // 在商业赞助页 (page-sponsorship) 顶部也加入跳转按钮
+        const spPage = document.getElementById('page-sponsorship');
+        if (spPage && !document.getElementById('btn-jump-partners-dir')) {
+            const topCenter = spPage.querySelector('.text-center');
+            if (topCenter) {
+                const jumpDiv = document.createElement('div');
+                jumpDiv.id = 'btn-jump-partners-dir';
+                jumpDiv.setAttribute('data-no-edit', 'true');
+                jumpDiv.className = 'mt-4 flex justify-center gap-3';
+                jumpDiv.innerHTML = `
+                    <button onclick="switchPage('partners')" class="px-5 py-2.5 bg-yp-darkGreen hover:bg-yp-green text-white text-xs font-black rounded-xl shadow transition">
+                        <i class="fa-solid fa-handshake mr-1.5"></i> 查看官方合作伙伴 Logo 墙与品牌详情页
+                    </button>
+                `;
+                topCenter.appendChild(jumpDiv);
+            }
+        }
     };
 
-    window.renderProducts = function (filter = 'all') {
-        const grid = document.getElementById('product-grid');
-        if (!grid || typeof products === 'undefined') return;
-        const lang = window.__ypLang || 'zh';
-        const isAdmin = isStrictAdmin();
-        const cols = getShopGridCols();
-        grid.className = `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cols} gap-6`;
-        injectAdminShopLayoutBar();
-
-        const list = getOrderedProducts(filter);
-        const priceLabel = lang === 'en' ? 'Official Store Price' : (lang === 'es' ? 'Precio Oficial' : '官方同步售价');
-        const buyLabel = lang === 'en' ? 'Add to Cart' : (lang === 'es' ? 'Añadir' : '选购');
-
-        grid.innerHTML = list.map(p => {
-            const tr = (lang !== 'zh' && productTranslations[p.id] && productTranslations[p.id][lang]) ? productTranslations[p.id][lang] : null;
-            const brand = tr ? tr.brand : p.brand;
-            const name = tr ? tr.name : p.name;
-            const desc = tr ? tr.desc : p.desc;
-            const badge = tr ? tr.badge : p.badge;
-
-            return `
-                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between relative" data-product-id="${p.id}">
-                    <div>
-                        <div class="h-40 bg-gradient-to-br from-gray-900 via-gray-800 to-yp-darkGreen relative flex items-center justify-center p-4 overflow-hidden">
-                            ${p.imgUrl ? `<img src="${p.imgUrl}" draggable="false" class="w-full h-full object-cover">` : `<i class="fa-solid ${p.icon || 'fa-bicycle'} text-5xl text-white/90"></i>`}
-                            <span class="absolute top-3 left-3 px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">${badge}</span>
-                            <span class="absolute top-3 right-3 text-[11px] text-gray-300 font-bold">${brand}</span>
-                            ${isAdmin ? `
-                                <div data-no-edit="true" class="absolute bottom-2 left-2 flex items-center space-x-1">
-                                    <span class="px-2 py-0.5 bg-amber-400 text-gray-900 text-[10px] font-black rounded shadow cursor-grab">
-                                        <i class="fa-solid fa-grip-vertical mr-1"></i>拖动排序
-                                    </span>
-                                    <button onclick="moveProductStep('${p.id}', -1)" class="w-6 h-6 bg-gray-900/90 hover:bg-yp-green text-white text-[10px] font-black rounded">◀</button>
-                                    <button onclick="moveProductStep('${p.id}', 1)" class="w-6 h-6 bg-gray-900/90 hover:bg-yp-green text-white text-[10px] font-black rounded">▶</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div class="p-4">
-                            <h3 onclick="openEntitySubpage('product', '${p.id}')" class="font-black text-gray-900 hover:text-yp-darkGreen cursor-pointer text-sm leading-snug mb-1.5">${name}</h3>
-                            <p class="text-xs text-gray-500 leading-relaxed">${desc}</p>
-                        </div>
-                    </div>
-                    <div class="px-4 pb-4 pt-3 border-t border-gray-100 flex items-center justify-between" data-no-edit="true">
-                        <div>
-                            <span class="text-[10px] text-gray-400 block">${priceLabel}</span>
-                            <div class="text-lg font-black text-yp-darkGreen">¥${p.price}</div>
-                        </div>
-                        <button onclick="addToCart(${p.id})" class="px-3.5 py-2 bg-gray-900 hover:bg-yp-alipay text-white text-xs font-bold rounded-xl transition flex items-center space-x-1">
-                            <i class="fa-solid fa-cart-plus"></i>
-                            <span>${buyLabel}</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        bindLiveSortableGrid(grid, '[data-product-id]', 'data-product-id', (newIds) => {
-            localStorage.setItem('yp_shop_order_ids', JSON.stringify(newIds));
-            if (typeof showToast === 'function') showToast('✅ 商城器材展示顺序已实时保存！');
-        });
+    window.deleteSponsorItem = function (id) {
+        if (!isStrictAdmin() || !confirm('确定要删除该赞助商吗？')) return;
+        saveSponsorsList(getSponsorsList().filter(s => String(s.id) !== String(id)));
+        window.renderSponsorsEverywhere();
+        if (typeof showToast === 'function') showToast('已删除该赞助商');
     };
 
     // =========================================================================
-    // 六、队员个人独立主页：全方位编辑 + 大图背景壁纸 + 5种主体排版 + 4种多图画廊
+    // 五、升级「La Fuga 青野·驿」页面：加入主理人【关若析】介绍 + 青旅多图相册编辑
+    // =========================================================================
+    const defaultHostelData = {
+        managerName: '关若析 (Guan Ruoxi)',
+        managerRole: 'La Fuga 青野·驿 主要负责人 / 主理人',
+        managerEdu: '毕业于西班牙巴塞罗那自治大学 (Universitat Autònoma de Barcelona, UAB) · 酒店管理专业硕士',
+        managerBio: '拥有系统的欧洲高等酒店管理学术背景与丰富的国际化接待运营经验。全权负责青年力量洲际队千岛湖亚运村基地「La Fuga 青野·驿」青年旅舍的日常运营、骑友社群接待、赛训后勤保障及食宿标准管理，致力于为全国各地骑行爱好者提供专业、温馨的驿站体验。',
+        managerPhoto: '',
+        photos: [
+            {
+                id: 'hp_1',
+                url: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80',
+                caption: '千岛湖亚运村 La Fuga 青野·驿 舒适骑友住宿空间'
+            },
+            {
+                id: 'hp_2',
+                url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80',
+                caption: '毗邻千岛湖环湖经典骑行路线与车队常态化训练大本营'
+            }
+        ],
+        cols: 2
+    };
+
+    function getHostelData() {
+        try {
+            const saved = localStorage.getItem('yp_lafuga_hostel_data');
+            return saved ? { ...defaultHostelData, ...JSON.parse(saved) } : defaultHostelData;
+        } catch (e) { return defaultHostelData; }
+    }
+
+    function saveHostelData(data) {
+        localStorage.setItem('yp_lafuga_hostel_data', JSON.stringify(data));
+    }
+
+    window.renderHostelCustomSection = function () {
+        const ridesPage = document.getElementById('page-rides');
+        if (!ridesPage) return;
+        let container = document.getElementById('lafuga-enhanced-box');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'lafuga-enhanced-box';
+            container.className = 'mb-10 space-y-8';
+            const postListParent = document.getElementById('ride-posts-list')?.parentElement;
+            if (postListParent) {
+                ridesPage.insertBefore(container, postListParent);
+            } else {
+                ridesPage.appendChild(container);
+            }
+        }
+
+        const data = getHostelData();
+        const isAdmin = isStrictAdmin();
+        const lang = window.__ypLang || 'zh';
+
+        const mgrRole = lang === 'en' ? 'General Manager of La Fuga Youth Hostel' : (lang === 'es' ? 'Directora Principal de La Fuga Youth Hostel' : data.managerRole);
+        const mgrEdu = lang === 'en' ? 'M.S. in Hotel Management, Autonomous University of Barcelona (UAB, Spain)' : (lang === 'es' ? 'Máster en Dirección Hotelera por la Universidad Autónoma de Barcelona (UAB, España)' : data.managerEdu);
+        const mgrBio = lang === 'en' ? 'Graduated with a Master’s degree in Hotel Management from Universitat Autònoma de Barcelona (UAB). She leads the operations, cyclist hospitality, and team training camp logistics at La Fuga Youth Hostel in the Qiandao Lake Asian Games Village.' : (lang === 'es' ? 'Graduada con un Máster en Dirección Hotelera por la Universidad Autónoma de Barcelona (UAB). Dirige integralmente la gestión, hospitalidad ciclista y logística de entrenamientos en el albergue La Fuga de la Villa Asiática del Lago Qiandao.' : data.managerBio);
+
+        container.innerHTML = `
+            <!-- 青野·驿主要负责人：关若析 介绍卡片 -->
+            <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-lg border border-gray-800 grid grid-cols-1 md:grid-cols-12">
+                <div class="md:col-span-4 bg-gray-800 min-h-[260px] relative flex flex-col items-center justify-center overflow-hidden">
+                    ${data.managerPhoto ? `
+                        <img src="${data.managerPhoto}" alt="${data.managerName}" class="w-full h-full object-cover">
+                    ` : `
+                        <div class="p-6 text-center">
+                            <div class="w-16 h-16 rounded-full bg-gray-700 border border-dashed border-gray-500 flex items-center justify-center mx-auto mb-2 text-yp-lime">
+                                <i class="fa-solid fa-user-tie text-2xl"></i>
+                            </div>
+                            <div class="text-xs font-bold text-gray-300">青野·驿主理人照片位</div>
+                            <div class="text-[11px] text-gray-500 mt-0.5">关若析 (Guan Ruoxi)</div>
+                        </div>
+                    `}
+                    <span class="absolute top-3 left-3 px-2.5 py-1 bg-yp-green text-white text-xs font-bold rounded">青野·驿主要负责人</span>
+                    ${isAdmin ? `
+                        <label data-no-edit="true" class="cursor-pointer absolute bottom-3 right-3 px-3 py-1.5 bg-yp-red hover:bg-red-700 text-white text-xs font-black rounded-lg shadow flex items-center space-x-1">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>上传/更换负责人照片</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleHostelManagerPhoto(event)">
+                        </label>
+                    ` : ''}
+                </div>
+                <div class="md:col-span-8 p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="text-xs text-yp-lime font-bold uppercase tracking-wider">${mgrRole}</div>
+                        <h3 class="text-2xl sm:text-3xl font-black mt-1 mb-2">${data.managerName}</h3>
+                        <div class="p-3 rounded-xl bg-gray-800 border border-gray-700 text-xs text-amber-400 font-bold mb-4">
+                            <i class="fa-solid fa-graduation-cap mr-1.5"></i>${mgrEdu}
+                        </div>
+                        <p class="text-sm text-gray-300 leading-relaxed">${mgrBio}</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-800 flex flex-wrap justify-between items-center text-xs text-gray-400">
+                        <span>📍 地址：杭州千岛湖亚运村 · La Fuga 青野·驿</span>
+                        <span>欢迎全国骑友与俱乐部前来入住集训</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 青野·驿 实景图片画廊与管理员图片编辑中心 -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                        <span class="text-yp-darkGreen font-black text-xs uppercase">LA FUGA HOSTEL GALLERY</span>
+                        <h3 class="text-2xl font-black text-gray-900 mt-0.5">🏨 La Fuga 青野·驿 · 基地与青旅实景图集</h3>
+                    </div>
+                    ${isAdmin ? `
+                        <div class="flex flex-wrap items-center gap-2 text-xs" data-no-edit="true">
+                            <label class="cursor-pointer px-3.5 py-2 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl shadow flex items-center space-x-1.5">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>➕ 批量上传青野·驿实景图片</span>
+                                <input type="file" accept="image/*" multiple class="hidden" onchange="handleHostelPhotosUpload(event)">
+                            </label>
+                            <button onclick="setHostelCols(2)" class="px-2.5 py-1.5 rounded-lg ${data.cols == 2 ? 'bg-gray-900 text-white font-bold' : 'bg-gray-100 text-gray-700'}">2列大图</button>
+                            <button onclick="setHostelCols(3)" class="px-2.5 py-1.5 rounded-lg ${data.cols == 3 ? 'bg-gray-900 text-white font-bold' : 'bg-gray-100 text-gray-700'}">3列标准</button>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${isAdmin ? `
+                    <form onsubmit="handleHostelPhotoUrlAdd(event)" data-no-edit="true" class="mb-6 p-4 rounded-2xl bg-gray-50 border border-gray-200 flex flex-wrap sm:flex-nowrap gap-2 text-xs">
+                        <input type="url" id="hostel-img-url" required placeholder="管理员也可直接粘贴青旅图片外链 URL https://..." class="flex-1 rounded-xl border border-gray-300 px-3 py-2 bg-white">
+                        <input type="text" id="hostel-img-cap" placeholder="图片说明文字 (如：青旅外观 / 技师车房)" class="w-56 rounded-xl border border-gray-300 px-3 py-2 bg-white">
+                        <button type="submit" class="px-4 py-2 bg-gray-900 text-yp-lime font-black rounded-xl shrink-0">添加图片</button>
+                    </form>
+                ` : ''}
+
+                <div id="hostel-photos-grid" class="grid grid-cols-1 md:grid-cols-${data.cols || 2} gap-6">
+                    ${data.photos.map(p => `
+                        <div class="bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 shadow-xs group relative" data-hostel-photo-id="${p.id}">
+                            <div class="h-64 overflow-hidden bg-black">
+                                <img src="${p.url}" alt="${p.caption}" draggable="false" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            </div>
+                            <div class="p-3.5 bg-white flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-gray-800">${p.caption || 'La Fuga 青野·驿'}</span>
+                                ${isAdmin ? `
+                                    <div class="flex items-center space-x-1 shrink-0" data-no-edit="true">
+                                        <button onclick="editHostelPhotoCaption('${p.id}')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold rounded">改说明</button>
+                                        <button onclick="deleteHostelPhoto('${p.id}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-yp-red text-[11px] font-bold rounded">删除</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // 绑定青旅图片拖拽排序
+        const hGrid = document.getElementById('hostel-photos-grid');
+        if (hGrid) {
+            bindLiveSortableGrid(hGrid, '[data-hostel-photo-id]', 'data-hostel-photo-id', (newIds) => {
+                const cur = getHostelData();
+                cur.photos = newIds.map(id => cur.photos.find(x => String(x.id) === String(id))).filter(Boolean);
+                saveHostelData(cur);
+                if (typeof showToast === 'function') showToast('✅ 青野·驿图片顺序已保存！');
+            });
+        }
+    };
+
+    window.handleHostelManagerPhoto = function (event) {
+        if (!isStrictAdmin()) return;
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            const d = getHostelData();
+            d.managerPhoto = ev.target.result;
+            saveHostelData(d);
+            window.renderHostelCustomSection();
+            if (typeof showToast === 'function') showToast('✅ 已更新关若析主理人照片！');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.handleHostelPhotosUpload = function (event) {
+        if (!isStrictAdmin()) return;
+        const files = Array.from(event.target.files || []);
+        if (files.length === 0) return;
+        const d = getHostelData();
+        let count = 0;
+        files.forEach(f => {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                d.photos.push({ id: 'hp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), url: ev.target.result, caption: f.name.replace(/\.[^/.]+$/, '') });
+                count++;
+                if (count === files.length) {
+                    saveHostelData(d);
+                    window.renderHostelCustomSection();
+                    if (typeof showToast === 'function') showToast(`✅ 已成功添加 ${files.length} 张青野·驿图片！`);
+                }
+            };
+            reader.readAsDataURL(f);
+        });
+    };
+
+    window.handleHostelPhotoUrlAdd = function (e) {
+        e.preventDefault();
+        if (!isStrictAdmin()) return;
+        const url = document.getElementById('hostel-img-url').value.trim();
+        const cap = document.getElementById('hostel-img-cap').value.trim() || 'La Fuga 青野·驿实景';
+        if (!url) return;
+        const d = getHostelData();
+        d.photos.push({ id: 'hp_' + Date.now(), url, caption: cap });
+        saveHostelData(d);
+        window.renderHostelCustomSection();
+        if (typeof showToast === 'function') showToast('✅ 青旅图片已添加！');
+    };
+
+    window.editHostelPhotoCaption = function (photoId) {
+        if (!isStrictAdmin()) return;
+        const d = getHostelData();
+        const item = d.photos.find(p => String(p.id) === String(photoId));
+        if (!item) return;
+        const newCap = prompt('请输入新的图片说明文字：', item.caption || '');
+        if (newCap !== null) {
+            item.caption = newCap.trim();
+            saveHostelData(d);
+            window.renderHostelCustomSection();
+        }
+    };
+
+    window.deleteHostelPhoto = function (photoId) {
+        if (!isStrictAdmin()) return;
+        const d = getHostelData();
+        d.photos = d.photos.filter(p => String(p.id) !== String(photoId));
+        saveHostelData(d);
+        window.renderHostelCustomSection();
+        if (typeof showToast === 'function') showToast('已删除该张青旅图片');
+    };
+
+    window.setHostelCols = function (cols) {
+        if (!isStrictAdmin()) return;
+        const d = getHostelData();
+        d.cols = cols;
+        saveHostelData(d);
+        window.renderHostelCustomSection();
+    };
+
+    // =========================================================================
+    // 六、媒体中心（Gallery）：加入「URL / 哔哩哔哩 (Bilibili) 视频播放与复用中心」
+    // =========================================================================
+    function parseVideoEmbedHtml(rawInput, heightClass = 'h-64') {
+        const str = (rawInput || '').trim();
+        if (!str) return '';
+        // 1. 识别 B站 BV号 或 bilibili.com 链接
+        const bvMatch = str.match(/(BV[a-zA-Z0-9]{10})/i);
+        if (bvMatch) {
+            const bvid = bvMatch[1];
+            return `<iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&high_quality=1&danmaku=0" class="w-full ${heightClass} bg-black" frameborder="0" allowfullscreen="true" sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"></iframe>`;
+        }
+        // 2. 识别 B站 aid
+        const avMatch = str.match(/av(\d+)/i);
+        if (avMatch) {
+            return `<iframe src="https://player.bilibili.com/player.html?aid=${avMatch[1]}&high_quality=1&danmaku=0" class="w-full ${heightClass} bg-black" frameborder="0" allowfullscreen="true"></iframe>`;
+        }
+        // 3. 识别直接粘贴的 <iframe ...> 代码
+        if (str.startsWith('<iframe')) {
+            return str.replace(/class="[^"]*"/i, '').replace('<iframe', `<iframe class="w-full ${heightClass} bg-black"`);
+        }
+        // 4. 默认作为 MP4 / WebM 视频直链播放
+        return `<video src="${str}" controls class="w-full ${heightClass} object-cover bg-black"></video>`;
+    }
+
+    window.previewUrlVideoNow = function (e) {
+        if (e) e.preventDefault();
+        const input = document.getElementById('bili-quick-url-input');
+        const stage = document.getElementById('bili-quick-player-stage');
+        if (!input || !stage) return;
+        const val = input.value.trim();
+        if (!val) return;
+        stage.innerHTML = parseVideoEmbedHtml(val, 'h-[420px]');
+        if (typeof showToast === 'function') showToast('🎬 视频加载成功！正在播放');
+    };
+
+    window.saveUrlVideoToCollection = function () {
+        if (!isStrictAdmin()) {
+            if (typeof showToast === 'function') showToast('请先登录管理员账号以保存视频到合集');
+            return;
+        }
+        const input = document.getElementById('bili-quick-url-input');
+        const titleInput = document.getElementById('bili-quick-title-input');
+        const val = input ? input.value.trim() : '';
+        if (!val) {
+            if (typeof showToast === 'function') showToast('请先输入B站视频URL/BV号或视频链接！');
+            return;
+        }
+        const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : '哔哩哔哩 (Bilibili) 车队精选视频';
+        const isBili = /BV[a-zA-Z0-9]+|bilibili\.com/i.test(val);
+
+        const list = getCollections();
+        list.unshift({
+            id: 'col_' + Date.now(),
+            title: title,
+            type: isBili ? 'bilibili' : 'video',
+            category: 'B站精选复用',
+            mediaUrl: val,
+            cover: '',
+            desc: '复用自青年力量发展车队官方哔哩哔哩频道视频内容'
+        });
+        saveCollections(list);
+        window.renderCollectionsGrid('all');
+        if (titleInput) titleInput.value = '';
+        if (typeof showToast === 'function') showToast('✅ 已将该视频永久保存至下方「车队视频合集」！');
+    };
+
+    const defaultCollections = [
+        {
+            id: 'col_1',
+            title: '2026赛季夺冠与冲刺高光集锦',
+            type: 'video',
+            category: '赛事视频合集',
+            cover: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80',
+            mediaUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+            desc: '记录青年力量车队在全国U系列锦标赛及公开赛赛场的精彩突围与冲刺瞬间。'
+        },
+        {
+            id: 'col_2',
+            title: '千岛湖与余杭基地冬训纪实图集',
+            type: 'image',
+            category: '日常训练合集',
+            cover: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=900&q=80',
+            mediaUrl: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=1200&q=80',
+            desc: '车队青训队员与主力车手高强度功率拉练、Fitting测试及团队生活掠影。'
+        }
+    ];
+
+    function getCollections() {
+        try { return JSON.parse(localStorage.getItem('yp_media_collections') || 'null') || defaultCollections; }
+        catch (e) { return defaultCollections; }
+    }
+    function saveCollections(list) { localStorage.setItem('yp_media_collections', JSON.stringify(list)); }
+
+    function injectGalleryCollectionsUI() {
+        const galleryPage = document.getElementById('page-gallery');
+        if (!galleryPage) return;
+
+        let colWrapper = document.getElementById('collections-section');
+        if (!colWrapper) {
+            colWrapper = document.createElement('div');
+            colWrapper.id = 'collections-section';
+            colWrapper.className = 'mb-14 pb-10 border-b border-gray-200 space-y-8';
+            const galleryGrid = document.getElementById('gallery-grid');
+            if (galleryGrid) galleryPage.insertBefore(colWrapper, galleryGrid);
+        }
+
+        const isAdmin = isStrictAdmin();
+        colWrapper.innerHTML = `
+            <!-- URL / 哔哩哔哩视频直接播放与复用入口 -->
+            <div class="bg-gray-900 text-white rounded-3xl p-6 sm:p-8 border border-gray-800 shadow-xl" data-no-edit="true">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                        <span class="px-2.5 py-0.5 bg-pink-500 text-white text-[11px] font-black rounded"><i class="fa-brands fa-bilibili mr-1"></i>BILIBILI & URL VIDEO PLAYER</span>
+                        <h3 class="text-xl sm:text-2xl font-black mt-1">📺 哔哩哔哩 (B站) 与 URL 视频展播中心</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">支持直接输入 B站视频链接、BV号（如 BV1xx...）或 MP4 视频 URL 在线播放，直接复用车队 B站频道内容！</p>
+                    </div>
+                    <a href="https://space.bilibili.com/4502039" target="_blank" class="px-3.5 py-2 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-300 text-xs font-bold rounded-xl transition">
+                        访问车队B站主页 (UID: 4502039) &nearr;
+                    </a>
+                </div>
+
+                <form onsubmit="previewUrlVideoNow(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5 text-xs">
+                    <input type="text" id="bili-quick-url-input" required placeholder="在此粘贴B站视频链接 (https://www.bilibili.com/video/BV...)、BV号 或 MP4视频URL..." class="md:col-span-6 rounded-xl bg-gray-800 border border-gray-700 px-3.5 py-2.5 text-white">
+                    <input type="text" id="bili-quick-title-input" placeholder="视频标题 (管理员保存至合集时使用)" class="md:col-span-3 rounded-xl bg-gray-800 border border-gray-700 px-3.5 py-2.5 text-white">
+                    <div class="md:col-span-3 flex gap-2">
+                        <button type="submit" class="flex-1 py-2.5 bg-yp-green hover:bg-yp-darkGreen text-white font-black rounded-xl transition">
+                            ▶ 立即播放
+                        </button>
+                        ${isAdmin ? `
+                            <button type="button" onclick="saveUrlVideoToCollection()" class="px-3.5 py-2.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-black rounded-xl transition shrink-0" title="永久保存到下方视频合集">
+                                💾 存入合集
+                            </button>
+                        ` : ''}
+                    </div>
+                </form>
+
+                <div id="bili-quick-player-stage" class="rounded-2xl overflow-hidden bg-black border border-gray-800"></div>
+            </div>
+
+            <!-- 车队图片与视频主题合集 -->
+            <div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <span class="px-2.5 py-0.5 bg-yp-green/15 text-yp-darkGreen text-xs font-black rounded">PHOTO & VIDEO COLLECTIONS</span>
+                        <h3 class="text-2xl font-black text-gray-900 mt-1">🎬 车队图片与视频主题合集</h3>
+                    </div>
+                    <div class="flex flex-wrap gap-2" data-no-edit="true">
+                        <button onclick="renderCollectionsGrid('all')" class="px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg">全部合集</button>
+                        <button onclick="renderCollectionsGrid('video')" class="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-bold rounded-lg">🎬 视频/B站合集</button>
+                        <button onclick="renderCollectionsGrid('image')" class="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-bold rounded-lg">📸 图片合集</button>
+                        ${isAdmin ? `<button onclick="openAdminStudioModal('collection')" class="px-3 py-1.5 bg-amber-400 text-gray-900 text-xs font-black rounded-lg">➕ 新增合集</button>` : ''}
+                    </div>
+                </div>
+                <div id="collections-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+        `;
+        window.renderCollectionsGrid('all');
+    }
+
+    window.renderCollectionsGrid = function (filterType = 'all') {
+        const grid = document.getElementById('collections-grid');
+        if (!grid) return;
+        const isAdmin = isStrictAdmin();
+        let list = getCollections();
+        if (filterType === 'video') list = list.filter(c => c.type === 'video' || c.type === 'bilibili');
+        if (filterType === 'image') list = list.filter(c => c.type === 'image');
+
+        grid.innerHTML = list.map(col => {
+            let mediaHtml = '';
+            if (col.type === 'video' || col.type === 'bilibili') {
+                mediaHtml = parseVideoEmbedHtml(col.mediaUrl, 'h-64');
+            } else {
+                mediaHtml = `<img src="${col.mediaUrl || col.cover}" alt="${col.title}" class="w-full h-64 object-cover">`;
+            }
+            return `
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="relative bg-gray-900">
+                            ${mediaHtml}
+                            <span class="absolute top-3 left-3 px-2.5 py-1 bg-gray-900/85 text-yp-lime text-xs font-bold rounded">${col.category || '官方合集'}</span>
+                            ${isAdmin ? `<button onclick="deleteCollectionItem('${col.id}')" data-no-edit="true" class="absolute top-3 right-3 px-2.5 py-1 bg-yp-red text-white text-xs font-bold rounded shadow">删除合集</button>` : ''}
+                        </div>
+                        <div class="p-5">
+                            <h4 class="font-black text-gray-900 text-lg">${col.title}</h4>
+                            <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">${col.desc || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    };
+
+    window.deleteCollectionItem = function (id) {
+        if (!isStrictAdmin()) return;
+        saveCollections(getCollections().filter(c => String(c.id) !== String(id)));
+        window.renderCollectionsGrid('all');
+    };
+
+    // =========================================================================
+    // 七、队员 / 商品 / 赞助商 通用独立详情页（5种排版 + 大图背景壁纸 + 多图相册 + 直接文字编辑）
     // =========================================================================
     function initDynamicSubpageContainer() {
         const main = document.getElementById('editable-main');
@@ -643,223 +876,117 @@
         main.appendChild(detailSec);
     }
 
-    // 切换个人独立主页的整体排版风格（新增 hero_bg 大图背景悬浮模式）
-    window.changeRiderDetailLayout = function (riderId, layoutType) {
+    window.changeEntityDetailLayout = function (type, id, layoutType) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, { layout: layoutType });
-        window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast('✨ 个人独立主页排版已切换并保存！');
+        saveEntityLayoutConfig(`${type}_${id}`, { layout: layoutType });
+        window.openEntitySubpage(type, id);
+        if (typeof showToast === 'function') showToast('✨ 独立主页排版已切换并保存！');
     };
 
-    // 切换个人独立主页相册的展示模式（平铺 / 首图巨幅焦点 / 全宽电影巨幕 / 错落画报）
-    window.changeRiderAlbumMode = function (riderId, mode) {
+    window.changeEntityAlbumMode = function (type, id, mode) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, { albumMode: mode });
-        window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast('📸 个人相册展示版式已更新！');
+        saveEntityLayoutConfig(`${type}_${id}`, { albumMode: mode });
+        window.openEntitySubpage(type, id);
+        if (typeof showToast === 'function') showToast('📸 相册展示版式已更新！');
     };
 
-    window.changeRiderAlbumCols = function (riderId, cols) {
+    window.changeEntityAlbumCols = function (type, id, cols) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, { albumCols: cols, albumMode: 'grid' });
-        window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast(`📸 个人相册已切换为每行 ${cols} 张平铺`);
+        saveEntityLayoutConfig(`${type}_${id}`, { albumCols: cols, albumMode: 'grid' });
+        window.openEntitySubpage(type, id);
     };
 
-    // 设置或上传大图作为个人独立主页的背景（Hero Backdrop / Full-Page Wallpaper）
-    window.setRiderHeroBgImage = function (riderId, bgUrl, enableFullPage = true) {
+    window.setEntityHeroBgImage = function (type, id, bgUrl, enableFullPage = true) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, {
-            bgUrl: bgUrl,
-            fullPageBg: enableFullPage,
-            layout: 'hero_bg'
-        });
-        window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast('🌌 已将该大图设为队员个人主页背景！');
+        saveEntityLayoutConfig(`${type}_${id}`, { bgUrl: bgUrl, fullPageBg: enableFullPage, layout: 'hero_bg' });
+        window.openEntitySubpage(type, id);
+        if (typeof showToast === 'function') showToast('🌌 已将该大图设为当前独立主页背景！');
     };
 
-    window.handleRiderBgFileUpload = function (event, riderId) {
+    window.handleEntityBgFileUpload = function (event, type, id) {
         if (!isStrictAdmin()) return;
         const file = (event.target.files || [])[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = function (ev) {
-            window.setRiderHeroBgImage(riderId, ev.target.result, true);
-        };
+        reader.onload = ev => window.setEntityHeroBgImage(type, id, ev.target.result, true);
         reader.readAsDataURL(file);
     };
 
-    window.toggleRiderFullPageBg = function (riderId) {
+    window.toggleEntityFullPageBg = function (type, id) {
         if (!isStrictAdmin()) return;
-        const cfg = getRiderLayoutConfig(riderId);
-        saveRiderLayoutConfig(riderId, { fullPageBg: !cfg.fullPageBg });
-        window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast(!cfg.fullPageBg ? '🌅 已开启整页全屏大图壁纸背景！' : '已切换为卡片局部大图背景');
+        const key = `${type}_${id}`;
+        const cfg = getEntityLayoutConfig(key);
+        saveEntityLayoutConfig(key, { fullPageBg: !cfg.fullPageBg });
+        window.openEntitySubpage(type, id);
     };
 
-    window.changeRiderBgDarkness = function (riderId, darkness) {
+    window.changeEntityBgDarkness = function (type, id, darkness) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, { bgDarkness: String(darkness) });
-        window.openEntitySubpage('rider', riderId);
+        saveEntityLayoutConfig(`${type}_${id}`, { bgDarkness: String(darkness) });
+        window.openEntitySubpage(type, id);
     };
 
-    window.clearRiderBgImage = function (riderId) {
+    window.clearEntityBgImage = function (type, id) {
         if (!isStrictAdmin()) return;
-        saveRiderLayoutConfig(riderId, { bgUrl: '', fullPageBg: false, layout: 'classic' });
-        window.openEntitySubpage('rider', riderId);
-        if (typeof showToast === 'function') showToast('已清除背景大图并恢复标准排版');
+        saveEntityLayoutConfig(`${type}_${id}`, { bgUrl: '', fullPageBg: false, layout: 'classic' });
+        window.openEntitySubpage(type, id);
     };
 
-    // 开启/关闭个人独立主页内的直接文字编辑模式
-    window.toggleRiderSubpageEdit = function (riderId) {
-        if (!isStrictAdmin()) return;
-        isRiderSubpageEditing = !isRiderSubpageEditing;
-        const editableEls = document.querySelectorAll('#subdetail-content .rider-editable-field');
-        editableEls.forEach(el => {
-            el.setAttribute('contenteditable', isRiderSubpageEditing ? 'true' : 'false');
-        });
-        const btnEdit = document.getElementById('btn-rider-sub-edit');
-        const btnSave = document.getElementById('btn-rider-sub-save');
-        if (isRiderSubpageEditing) {
-            if (btnEdit) btnEdit.innerHTML = '<i class="fa-solid fa-xmark mr-1"></i>取消编辑';
-            if (btnSave) btnSave.classList.remove('hidden');
-            if (typeof showToast === 'function') showToast('✏️ 个人主页编辑已开启！请直接点击下方带绿框的文字或图片说明进行修改。');
-        } else {
-            window.openEntitySubpage('rider', riderId);
-        }
-    };
-
-    // 保存个人独立主页内的所有文字修改（同步回总列表 + 保存相册图注 + 保存附加模块）
-    window.saveRiderSubpageEdits = function (riderId) {
-        if (!isStrictAdmin()) return;
-        const list = getSavedRosterData();
-        const item = list.find(r => String(r.id) === String(riderId));
-        if (!item) return;
-
-        const roleEl = document.getElementById('sub-edit-role');
-        const flagEl = document.getElementById('sub-edit-flag');
-        const nameEl = document.getElementById('sub-edit-name');
-        const ageEl = document.getElementById('sub-edit-age');
-        const highEl = document.getElementById('sub-edit-high');
-        const bioEl = document.getElementById('sub-edit-bio');
-        const extraEl = document.getElementById('sub-edit-extra');
-
-        const lang = window.__ypLang || 'zh';
-        if (roleEl) {
-            if (lang === 'en') item.role_en = roleEl.innerHTML.trim();
-            else if (lang === 'es') item.role_es = roleEl.innerHTML.trim();
-            else item.role_zh = roleEl.innerHTML.trim();
-        }
-        if (flagEl) item.flag = flagEl.textContent.trim();
-        if (nameEl) item.name = nameEl.innerHTML.trim();
-        if (ageEl) item.ageSpec = ageEl.innerHTML.trim();
-        if (highEl) item.highlight = highEl.innerHTML.trim();
-        if (bioEl) item.bio = bioEl.innerHTML.trim();
-
-        // 若在英文/西文模式下编辑了内置翻译车手，同步更新内置词典缓存
-        if (lang !== 'zh' && rosterTranslations[riderId] && rosterTranslations[riderId][lang]) {
-            if (roleEl) rosterTranslations[riderId][lang].role = roleEl.innerHTML.trim();
-            if (ageEl) rosterTranslations[riderId][lang].ageSpec = ageEl.innerHTML.trim();
-            if (highEl) rosterTranslations[riderId][lang].highlight = highEl.innerHTML.trim();
-            if (bioEl) rosterTranslations[riderId][lang].bio = bioEl.innerHTML.trim();
-        }
-
-        localStorage.setItem('yp_roster_custom_data', JSON.stringify(list));
-
-        // 保存自定义附加图文模块
-        if (extraEl) {
-            saveRiderLayoutConfig(riderId, { extraSection: extraEl.innerHTML.trim() });
-        }
-
-        // 保存每张相册图片的图注说明修改
-        const album = getRiderAlbum(riderId);
-        document.querySelectorAll('[data-edit-caption-id]').forEach(capNode => {
-            const pid = capNode.getAttribute('data-edit-caption-id');
-            const targetPhoto = album.find(p => String(p.id) === String(pid));
-            if (targetPhoto) {
-                targetPhoto.caption = capNode.innerHTML.trim();
-            }
-        });
-        saveRiderAlbum(riderId, album);
-
-        isRiderSubpageEditing = false;
-        window.openEntitySubpage('rider', riderId);
-        window.renderRoster();
-        if (typeof showToast === 'function') showToast('✅ 个人独立主页所有文字与图注修改已永久保存！');
-    };
-
-    // 批量上传多张照片到队员个人相册
-    window.handleRiderMultiPhotosUpload = function (event, riderId) {
+    window.handleEntityMultiPhotosUpload = function (event, type, id) {
         if (!isStrictAdmin()) return;
         const files = Array.from(event.target.files || []);
         if (files.length === 0) return;
-
-        const album = getRiderAlbum(riderId);
+        const key = `${type}_${id}`;
+        const album = getEntityAlbum(key);
         let loadedCount = 0;
 
         files.forEach(file => {
             const reader = new FileReader();
             reader.onload = function (ev) {
                 album.push({
-                    id: 'rp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                    id: 'ep_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
                     url: ev.target.result,
                     caption: file.name.replace(/\.[^/.]+$/, '')
                 });
                 loadedCount++;
                 if (loadedCount === files.length) {
-                    saveRiderAlbum(riderId, album);
-                    window.openEntitySubpage('rider', riderId);
-                    window.renderRoster();
-                    if (typeof showToast === 'function') showToast(`✅ 已成功为该队员添加 ${files.length} 张新照片！`);
+                    saveEntityAlbum(key, album);
+                    window.openEntitySubpage(type, id);
+                    if (type === 'rider') window.renderRoster();
+                    if (type === 'product') window.renderProducts('all');
+                    if (type === 'sponsor') window.renderSponsorsEverywhere();
+                    if (typeof showToast === 'function') showToast(`✅ 已成功添加 ${files.length} 张新图片！`);
                 }
             };
             reader.readAsDataURL(file);
         });
     };
 
-    window.handleRiderUrlPhotoAdd = function (e, riderId) {
+    window.handleEntityUrlPhotoAdd = function (e, type, id) {
         e.preventDefault();
         if (!isStrictAdmin()) return;
-        const urlInput = document.getElementById('rider-extra-photo-url');
-        const capInput = document.getElementById('rider-extra-photo-cap');
-        const url = urlInput ? urlInput.value.trim() : '';
-        const caption = capInput ? capInput.value.trim() : '';
+        const url = document.getElementById('entity-extra-photo-url')?.value.trim();
+        const caption = document.getElementById('entity-extra-photo-cap')?.value.trim() || '官方展示图';
         if (!url) return;
-
-        const album = getRiderAlbum(riderId);
-        album.push({
-            id: 'rp_' + Date.now(),
-            url,
-            caption: caption || '队员赛场风采'
-        });
-        saveRiderAlbum(riderId, album);
-        window.openEntitySubpage('rider', riderId);
-        window.renderRoster();
-        if (typeof showToast === 'function') showToast('✅ 已添加新照片至队员相册！');
+        const key = `${type}_${id}`;
+        const album = getEntityAlbum(key);
+        album.push({ id: 'ep_' + Date.now(), url, caption });
+        saveEntityAlbum(key, album);
+        window.openEntitySubpage(type, id);
+        if (typeof showToast === 'function') showToast('✅ 图片已添加至相册！');
     };
 
-    window.deleteRiderAlbumPhoto = function (riderId, photoId) {
+    window.deleteEntityAlbumPhoto = function (type, id, photoId) {
         if (!isStrictAdmin()) return;
-        const album = getRiderAlbum(riderId).filter(p => String(p.id) !== String(photoId));
-        saveRiderAlbum(riderId, album);
-        window.openEntitySubpage('rider', riderId);
-        window.renderRoster();
-        if (typeof showToast === 'function') showToast('已从相册移除该照片');
+        const key = `${type}_${id}`;
+        saveEntityAlbum(key, getEntityAlbum(key).filter(p => String(p.id) !== String(photoId)));
+        window.openEntitySubpage(type, id);
     };
 
-    window.setRiderMainCoverFromAlbum = function (riderId, photoUrl) {
+    window.moveEntityAlbumPhotoStep = function (type, id, photoId, dir) {
         if (!isStrictAdmin()) return;
-        const savedPhotos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
-        savedPhotos[riderId] = photoUrl;
-        localStorage.setItem('yp_member_photos', JSON.stringify(savedPhotos));
-        window.openEntitySubpage('rider', riderId);
-        window.renderRoster();
-        if (typeof showToast === 'function') showToast('⭐ 已将该照片设为队员档案主封面！');
-    };
-
-    window.moveRiderAlbumPhotoStep = function (riderId, photoId, dir) {
-        if (!isStrictAdmin()) return;
-        const album = getRiderAlbum(riderId);
+        const key = `${type}_${id}`;
+        const album = getEntityAlbum(key);
         const idx = album.findIndex(p => String(p.id) === String(photoId));
         if (idx === -1) return;
         const targetIdx = idx + dir;
@@ -867,11 +994,127 @@
         const temp = album[idx];
         album[idx] = album[targetIdx];
         album[targetIdx] = temp;
-        saveRiderAlbum(riderId, album);
-        window.openEntitySubpage('rider', riderId);
+        saveEntityAlbum(key, album);
+        window.openEntitySubpage(type, id);
     };
 
-    // 核心渲染：打开队员或商品的个人独立主页
+    window.setEntityMainCoverFromAlbum = function (type, id, photoUrl) {
+        if (!isStrictAdmin()) return;
+        if (type === 'rider') {
+            const savedPhotos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
+            savedPhotos[id] = photoUrl;
+            localStorage.setItem('yp_member_photos', JSON.stringify(savedPhotos));
+            window.renderRoster();
+        } else if (type === 'product' && typeof products !== 'undefined') {
+            const p = products.find(x => String(x.id) === String(id));
+            if (p) p.imgUrl = photoUrl;
+            const customProds = JSON.parse(localStorage.getItem('yp_custom_products') || '[]');
+            const cp = customProds.find(x => String(x.id) === String(id));
+            if (cp) cp.imgUrl = photoUrl;
+            localStorage.setItem('yp_custom_products', JSON.stringify(customProds));
+            localStorage.setItem('yp_product_covers', JSON.stringify({ ...JSON.parse(localStorage.getItem('yp_product_covers') || '{}'), [id]: photoUrl }));
+            window.renderProducts('all');
+        } else if (type === 'sponsor') {
+            const sps = getSponsorsList();
+            const sp = sps.find(x => String(x.id) === String(id));
+            if (sp) {
+                sp.logoUrl = photoUrl;
+                saveSponsorsList(sps);
+                window.renderSponsorsEverywhere();
+            }
+        }
+        window.openEntitySubpage(type, id);
+        if (typeof showToast === 'function') showToast('⭐ 已设为该主页主图/封面！');
+    };
+
+    window.toggleEntitySubpageEdit = function (type, id) {
+        if (!isStrictAdmin()) return;
+        isSubpageEditing = !isSubpageEditing;
+        document.querySelectorAll('#subdetail-content .yp-editable-field').forEach(el => {
+            el.setAttribute('contenteditable', isSubpageEditing ? 'true' : 'false');
+        });
+        const btnEdit = document.getElementById('btn-entity-sub-edit');
+        const btnSave = document.getElementById('btn-entity-sub-save');
+        if (isSubpageEditing) {
+            if (btnEdit) btnEdit.innerHTML = '<i class="fa-solid fa-xmark mr-1"></i>取消编辑';
+            if (btnSave) btnSave.classList.remove('hidden');
+            if (typeof showToast === 'function') showToast('✏️ 主页直接编辑已开启！请点击带绿色虚线框的文字或价格直接修改。');
+        } else {
+            window.openEntitySubpage(type, id);
+        }
+    };
+
+    window.saveEntitySubpageEdits = function (type, id) {
+        if (!isStrictAdmin()) return;
+        const key = `${type}_${id}`;
+        const tagEl = document.getElementById('sub-edit-tag');
+        const titleEl = document.getElementById('sub-edit-title');
+        const subEl = document.getElementById('sub-edit-sub');
+        const highEl = document.getElementById('sub-edit-high');
+        const bioEl = document.getElementById('sub-edit-bio');
+        const extraEl = document.getElementById('sub-edit-extra');
+        const priceEl = document.getElementById('sub-edit-price');
+
+        if (type === 'rider') {
+            const list = getSavedRosterData();
+            const item = list.find(r => String(r.id) === String(id));
+            if (item) {
+                if (tagEl) item.role_zh = tagEl.innerHTML.trim();
+                if (titleEl) item.name = titleEl.innerHTML.trim();
+                if (subEl) item.ageSpec = subEl.innerHTML.trim();
+                if (highEl) item.highlight = highEl.innerHTML.trim();
+                if (bioEl) item.bio = bioEl.innerHTML.trim();
+                localStorage.setItem('yp_roster_custom_data', JSON.stringify(list));
+                window.renderRoster();
+            }
+        } else if (type === 'product' && typeof products !== 'undefined') {
+            const p = products.find(x => String(x.id) === String(id));
+            if (p) {
+                if (tagEl) p.brand = tagEl.innerText.trim();
+                if (titleEl) p.name = titleEl.innerText.trim();
+                if (highEl) p.badge = highEl.innerText.trim();
+                if (bioEl) p.desc = bioEl.innerHTML.trim();
+                if (priceEl) {
+                    const num = parseInt(priceEl.innerText.replace(/[^0-9]/g, ''), 10);
+                    if (!isNaN(num)) p.price = num;
+                }
+                const overrides = JSON.parse(localStorage.getItem('yp_product_text_overrides') || '{}');
+                overrides[id] = { brand: p.brand, name: p.name, badge: p.badge, desc: p.desc, price: p.price };
+                localStorage.setItem('yp_product_text_overrides', JSON.stringify(overrides));
+                window.renderProducts('all');
+            }
+        } else if (type === 'sponsor') {
+            const sps = getSponsorsList();
+            const sp = sps.find(x => String(x.id) === String(id));
+            if (sp) {
+                if (tagEl) sp.tier = tagEl.innerText.trim();
+                if (titleEl) sp.name = titleEl.innerText.trim();
+                if (subEl) sp.logoText = subEl.innerText.trim();
+                if (highEl) sp.highlight = highEl.innerHTML.trim();
+                if (bioEl) sp.desc = bioEl.innerHTML.trim();
+                saveSponsorsList(sps);
+                window.renderSponsorsEverywhere();
+            }
+        }
+
+        if (extraEl) {
+            saveEntityLayoutConfig(key, { extraSection: extraEl.innerHTML.trim() });
+        }
+
+        const album = getEntityAlbum(key);
+        document.querySelectorAll('[data-edit-caption-id]').forEach(capNode => {
+            const pid = capNode.getAttribute('data-edit-caption-id');
+            const targetPhoto = album.find(p => String(p.id) === String(pid));
+            if (targetPhoto) targetPhoto.caption = capNode.innerHTML.trim();
+        });
+        saveEntityAlbum(key, album);
+
+        isSubpageEditing = false;
+        window.openEntitySubpage(type, id);
+        if (typeof showToast === 'function') showToast('✅ 独立主页所有内容与图片说明修改已永久保存！');
+    };
+
+    // 打开任意实体（rider / product / sponsor）的专属独立详情主页
     window.openEntitySubpage = function (type, id) {
         initDynamicSubpageContainer();
         const container = document.getElementById('subdetail-content');
@@ -879,328 +1122,631 @@
         if (!container || !backdropWrapper) return;
         const lang = window.__ypLang || 'zh';
         const isAdmin = isStrictAdmin();
-        isRiderSubpageEditing = false;
+        isSubpageEditing = false;
 
-        if (type === 'rider' && typeof getSavedRosterData === 'function') {
+        const key = `${type}_${id}`;
+        const cfg = getEntityLayoutConfig(key);
+        const album = getEntityAlbum(key);
+
+        let backPage = 'roster';
+        let backLabel = '返回 2027 队员介绍列表';
+        let tagText = '';
+        let titleText = '';
+        let subText = '';
+        let highText = '';
+        let bioText = '';
+        let mainImg = '';
+        let rightBadge = '';
+        let actionBtnsHtml = '';
+
+        if (type === 'rider') {
             const list = getSavedRosterData();
             const photos = typeof getSavedMemberPhotos === 'function' ? getSavedMemberPhotos() : {};
             const m = list.find(r => String(r.id) === String(id));
             if (!m) return;
-
             const tr = (lang !== 'zh' && rosterTranslations[m.id] && rosterTranslations[m.id][lang]) ? rosterTranslations[m.id][lang] : null;
-            const roleText = tr ? tr.role : m.role_zh;
-            const ageText = tr ? tr.ageSpec : m.ageSpec;
-            const highText = tr ? tr.highlight : m.highlight;
-            const bioText = tr ? tr.bio : m.bio;
-
-            const album = getRiderAlbum(m.id);
-            const mainImg = photos[m.id] || m.photo || (album.length > 0 ? album[0].url : 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80');
-            const cfg = getRiderLayoutConfig(m.id);
-            const bgHeroUrl = cfg.bgUrl || mainImg;
-            const darkPct = cfg.bgDarkness || '65';
-            const darkRgba = darkPct === '40' ? 'rgba(17,24,39,0.45)' : (darkPct === '85' ? 'rgba(17,24,39,0.88)' : 'rgba(17,24,39,0.68)');
-
-            // 判断是否开启“整页全屏大图壁纸背景”
-            if (cfg.fullPageBg && bgHeroUrl) {
-                backdropWrapper.style.backgroundImage = `linear-gradient(180deg, ${darkRgba} 0%, rgba(17,24,39,0.92) 100%), url('${bgHeroUrl}')`;
-                backdropWrapper.style.backgroundSize = 'cover';
-                backdropWrapper.style.backgroundPosition = 'center';
-                backdropWrapper.style.backgroundAttachment = 'fixed';
-            } else {
-                backdropWrapper.style.backgroundImage = '';
-                backdropWrapper.style.backgroundSize = '';
-                backdropWrapper.style.backgroundPosition = '';
-                backdropWrapper.style.backgroundAttachment = '';
+            tagText = tr ? tr.role : m.role_zh;
+            titleText = m.name;
+            subText = tr ? tr.ageSpec : m.ageSpec;
+            highText = tr ? tr.highlight : m.highlight;
+            bioText = tr ? tr.bio : m.bio;
+            rightBadge = m.flag || '🇨🇳';
+            mainImg = photos[m.id] || m.photo || (album.length > 0 ? album[0].url : 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80');
+            if (isAdmin) {
+                actionBtnsHtml = `<button onclick="deleteRosterMember('${m.id}');switchPage('roster');" class="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold rounded-xl">🗑️ 删除此队员档案</button>`;
             }
-
-            // 管理员专属：个人独立主页编辑 + 排版定义 + 大图背景设置工作台
-            const adminToolbarHtml = isAdmin ? `
-                <div data-no-edit="true" class="mb-8 p-6 rounded-3xl bg-gray-900/95 backdrop-blur-md text-white border-2 border-yp-lime shadow-2xl space-y-5">
-                    <!-- 第一排：直接编辑个人主页文字按钮 -->
-                    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-800">
-                        <div>
-                            <span class="px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">SUPER ADMIN · 个人独立主页编辑器</span>
-                            <h4 class="text-base font-black mt-1">当前主页：${m.name} — 支持直接修改主页文字、设置大图背景及切换多图排版</h4>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button id="btn-rider-sub-edit" onclick="toggleRiderSubpageEdit('${m.id}')" class="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-gray-900 text-xs font-black rounded-xl shadow flex items-center space-x-1.5 transition">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                <span>✏️ 开启主页文字与图注直接编辑</span>
-                            </button>
-                            <button id="btn-rider-sub-save" onclick="saveRiderSubpageEdits('${m.id}')" class="hidden px-5 py-2 bg-yp-green hover:bg-yp-darkGreen text-white text-xs font-black rounded-xl shadow flex items-center space-x-1.5 transition animate-pulse">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                <span>💾 保存个人主页全部修改</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 第二排：5种主页主体排版 + 大图背景设置 -->
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center pb-4 border-b border-gray-800 text-xs">
-                        <div class="lg:col-span-7 flex flex-wrap items-center gap-1.5">
-                            <span class="text-yp-lime font-bold mr-1"><i class="fa-solid fa-table-columns mr-1"></i>主页主体排版：</span>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'classic')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'classic' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">① 左图右文</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'magazine')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'magazine' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">② 杂志巨幕</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'reverse')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'reverse' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">③ 左文右图</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'gallery_first')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'gallery_first' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">④ 画廊置顶</button>
-                            <button onclick="changeRiderDetailLayout('${m.id}', 'hero_bg')" class="px-3 py-1.5 rounded-lg font-black ${cfg.layout === 'hero_bg' ? 'bg-purple-600 text-white ring-2 ring-purple-300' : 'bg-purple-900/60 text-purple-200 hover:bg-purple-800'}">⑤ 🌌 大图作为背景悬浮</button>
-                        </div>
-
-                        <div class="lg:col-span-5 flex flex-wrap items-center justify-end gap-2">
-                            <label class="cursor-pointer px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg flex items-center space-x-1 shadow">
-                                <i class="fa-solid fa-image"></i>
-                                <span>上传专属背景大图</span>
-                                <input type="file" accept="image/*" class="hidden" onchange="handleRiderBgFileUpload(event, '${m.id}')">
-                            </label>
-                            <button onclick="toggleRiderFullPageBg('${m.id}')" class="px-3 py-1.5 rounded-lg font-bold border ${cfg.fullPageBg ? 'bg-yp-lime text-gray-900 border-yp-lime' : 'bg-gray-800 text-gray-300 border-gray-700'}">
-                                ${cfg.fullPageBg ? '🌅 整页壁纸背景：已开启' : '🌅 开启整页壁纸背景'}
-                            </button>
-                            <select onchange="changeRiderBgDarkness('${m.id}', this.value)" class="rounded-lg bg-gray-800 border border-gray-700 px-2 py-1.5 text-white">
-                                <option value="40" ${darkPct === '40' ? 'selected' : ''}>背景遮罩：明亮 (40%)</option>
-                                <option value="65" ${darkPct === '65' ? 'selected' : ''}>背景遮罩：标准 (65%)</option>
-                                <option value="85" ${darkPct === '85' ? 'selected' : ''}>背景遮罩：深邃 (85%)</option>
-                            </select>
-                            ${(cfg.bgUrl || cfg.fullPageBg) ? `<button onclick="clearRiderBgImage('${m.id}')" class="text-red-400 hover:underline px-1">清除背景</button>` : ''}
-                        </div>
-                    </div>
-
-                    <!-- 第三排：批量添加多张图片 -->
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center text-xs">
-                        <div class="lg:col-span-5">
-                            <label class="cursor-pointer w-full py-2.5 px-4 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl flex items-center justify-center space-x-2 shadow transition">
-                                <i class="fa-solid fa-images text-base"></i>
-                                <span>➕ 批量上传多张本地照片到个人主页</span>
-                                <input type="file" accept="image/*" multiple class="hidden" onchange="handleRiderMultiPhotosUpload(event, '${m.id}')">
-                            </label>
-                        </div>
-                        <form onsubmit="handleRiderUrlPhotoAdd(event, '${m.id}')" class="lg:col-span-7 flex flex-wrap sm:flex-nowrap gap-2">
-                            <input type="url" id="rider-extra-photo-url" required placeholder="或粘贴图片外链 URL https://..." class="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
-                            <input type="text" id="rider-extra-photo-cap" placeholder="图片说明文字(选填)" class="w-36 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
-                            <button type="submit" class="px-4 py-2 bg-amber-400 text-gray-900 font-black rounded-xl hover:bg-amber-300 shrink-0">添加图片</button>
-                        </form>
-                    </div>
-                </div>
-            ` : '';
-
-            // 构建相册内单张图片卡片的通用辅助函数（支持设为封面、设为背景大图、拖动排图、编辑图注）
-            const renderAlbumCard = (p, extraClass = '', imgHeightClass = 'h-64') => `
-                <div class="bg-gray-900 rounded-2xl overflow-hidden border border-gray-700/60 shadow-md group relative flex flex-col justify-between ${extraClass}" data-album-photo-id="${p.id}">
-                    <div class="${imgHeightClass} w-full overflow-hidden bg-black flex items-center justify-center relative">
-                        <img src="${p.url}" alt="${p.caption || m.name}" draggable="false" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        ${isAdmin ? `
-                            <div data-no-edit="true" class="absolute top-2.5 left-2.5 flex items-center space-x-1">
-                                <span class="px-2 py-1 bg-amber-400 text-gray-900 text-[10px] font-black rounded shadow cursor-grab">
-                                    <i class="fa-solid fa-grip-vertical mr-1"></i>拖动排图
-                                </span>
-                                <button onclick="moveRiderAlbumPhotoStep('${m.id}', '${p.id}', -1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">◀</button>
-                                <button onclick="moveRiderAlbumPhotoStep('${m.id}', '${p.id}', 1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">▶</button>
-                            </div>
-                            <div data-no-edit="true" class="absolute top-2.5 right-2.5 flex flex-wrap items-center justify-end gap-1">
-                                <button onclick="setRiderMainCoverFromAlbum('${m.id}', '${p.url}')" class="px-2 py-1 bg-yp-green hover:bg-yp-darkGreen text-white text-[10px] font-bold rounded shadow">设为封面</button>
-                                <button onclick="setRiderHeroBgImage('${m.id}', '${p.url}', true)" class="px-2 py-1 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded shadow">🌌 设为背景</button>
-                                <button onclick="deleteRiderAlbumPhoto('${m.id}', '${p.id}')" class="w-6 h-6 bg-yp-red text-white text-[10px] font-bold rounded shadow">✕</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="p-3.5 bg-gray-900 text-xs font-bold text-gray-200 border-t border-gray-800">
-                        <div class="rider-editable-field" data-edit-caption-id="${p.id}">${p.caption || '点击上方开启编辑可修改此图片说明'}</div>
-                    </div>
-                </div>
-            `;
-
-            // 根据 albumMode 渲染 4 种不同的多图排版（网格平铺 / 首图巨幅焦点 / 全宽电影巨幕 / 错落画报）
-            let albumGridHtml = '';
-            if (album.length === 0) {
-                albumGridHtml = `
-                    <div class="text-center py-12 bg-gray-900/40 rounded-2xl border border-dashed border-gray-600 text-gray-400 text-xs">
-                        暂未上传更多个人相册图片。${isAdmin ? '管理员请点击上方「➕ 批量上传多张本地照片」按钮添加！' : ''}
-                    </div>
-                `;
-            } else if (cfg.albumMode === 'featured') {
-                // 首图巨幅焦点（第1张图跨2列全宽大图，其余平铺）
-                albumGridHtml = `
-                    <div id="rider-album-sortable-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        ${album.map((p, idx) => idx === 0
-                            ? renderAlbumCard(p, 'md:col-span-2', 'h-[420px]')
-                            : renderAlbumCard(p, '', 'h-72')
-                        ).join('')}
-                    </div>
-                `;
-            } else if (cfg.albumMode === 'cinematic') {
-                // 全宽电影巨幕流（每张图独占一行超大画幅）
-                albumGridHtml = `
-                    <div id="rider-album-sortable-grid" class="space-y-8">
-                        ${album.map(p => renderAlbumCard(p, 'w-full', 'h-[460px]')).join('')}
-                    </div>
-                `;
-            } else if (cfg.albumMode === 'masonry') {
-                // 错落杂志画报流
-                albumGridHtml = `
-                    <div id="rider-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                        ${album.map((p, idx) => renderAlbumCard(p, '', idx % 2 === 0 ? 'h-80' : 'h-60')).join('')}
-                    </div>
-                `;
-            } else {
-                // 标准多列平铺 (2列 / 3列 / 4列)
-                albumGridHtml = `
-                    <div id="rider-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cfg.albumCols || 3} gap-5">
-                        ${album.map(p => renderAlbumCard(p, '', 'h-64')).join('')}
-                    </div>
-                `;
-            }
-
-            const albumSectionHtml = `
-                <div class="mt-10 ${cfg.fullPageBg ? 'bg-gray-900/80 backdrop-blur-md text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'} rounded-3xl p-6 sm:p-8 border shadow-xl">
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div>
-                            <span class="text-yp-lime font-black text-xs uppercase">PERSONAL PHOTO GALLERY & LAYOUT</span>
-                            <h3 class="text-xl font-black mt-0.5">📸 ${m.name} · 个人赛事与风采相册 (${album.length}张)</h3>
-                        </div>
-                        ${isAdmin ? `
-                            <div class="flex flex-wrap items-center gap-1.5 text-xs" data-no-edit="true">
-                                <span class="text-gray-400 font-bold mr-1">相册图片排版：</span>
-                                <button onclick="changeRiderAlbumCols('${m.id}', 2)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 2 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">2列平铺</button>
-                                <button onclick="changeRiderAlbumCols('${m.id}', 3)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 3 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">3列平铺</button>
-                                <button onclick="changeRiderAlbumCols('${m.id}', 4)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 4 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">4列平铺</button>
-                                <button onclick="changeRiderAlbumMode('${m.id}', 'featured')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'featured' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🌟 首图巨幅焦点</button>
-                                <button onclick="changeRiderAlbumMode('${m.id}', 'cinematic')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'cinematic' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🎞️ 全宽电影巨幕</button>
-                                <button onclick="changeRiderAlbumMode('${m.id}', 'masonry')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'masonry' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🧱 错落画报流</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    ${albumGridHtml}
-                </div>
-            `;
-
-            // 可编辑核心字段公共区块
-            const editableInfoBlock = `
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span id="sub-edit-role" class="rider-editable-field px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">${roleText}</span>
-                        <span id="sub-edit-flag" class="rider-editable-field text-2xl">${m.flag || '🇨🇳'}</span>
-                    </div>
-                    <h2 id="sub-edit-name" class="rider-editable-field text-3xl sm:text-4xl font-black mb-1">${m.name}</h2>
-                    <p id="sub-edit-age" class="rider-editable-field text-xs text-gray-300 mb-4">${ageText}</p>
-                    <div id="sub-edit-high" class="rider-editable-field p-3.5 rounded-xl bg-gray-800/90 border border-gray-700 text-xs text-yp-lime font-bold mb-5">${highText}</div>
-                    <div id="sub-edit-bio" class="rider-editable-field text-sm text-gray-100 leading-relaxed space-y-2">${bioText}</div>
-                    <div id="sub-edit-extra" class="rider-editable-field mt-6 pt-5 border-t border-gray-700/80 text-sm text-gray-300 leading-relaxed">${cfg.extraSection || (isAdmin ? '【管理员可编辑扩展区】点击顶部“开启主页文字直接编辑”后，可在此处添加该队员的功率数据、战车配置或个人格言...' : '')}</div>
-                </div>
-            `;
-
-            // 根据 5 种页面主体排版生成个人主页布局（重点支持 ⑤ 沉浸式大图作为背景 hero_bg）
-            let profileCardHtml = '';
-            if (cfg.layout === 'hero_bg') {
-                // ⑤ 大图直接作为整个人物档案区的全屏背景，文字采用毛玻璃悬浮其上
-                profileCardHtml = `
-                    <div class="rounded-3xl overflow-hidden shadow-2xl border border-gray-700 relative min-h-[540px] flex items-end"
-                         style="background: linear-gradient(105deg, rgba(17,24,39,0.92) 0%, ${darkRgba} 55%, rgba(17,24,39,0.4) 100%), url('${bgHeroUrl}') center/cover no-repeat;">
-                        <div class="p-8 sm:p-14 w-full max-w-4xl text-white backdrop-blur-[2px]">
-                            <div class="inline-block px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[10px] font-black rounded mb-3">HERO BACKDROP PROFILE</div>
-                            ${editableInfoBlock}
-                        </div>
-                    </div>
-                    ${albumSectionHtml}
-                `;
-            } else if (cfg.layout === 'magazine') {
-                profileCardHtml = `
-                    <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800">
-                        <div class="h-96 w-full bg-gray-800 relative">
-                            <img src="${mainImg}" alt="${m.name}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent"></div>
-                        </div>
-                        <div class="p-8 sm:p-12 max-w-4xl mx-auto -mt-16 relative z-10">
-                            ${editableInfoBlock}
-                        </div>
-                    </div>
-                    ${albumSectionHtml}
-                `;
-            } else if (cfg.layout === 'reverse') {
-                profileCardHtml = `
-                    <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800 grid grid-cols-1 md:grid-cols-12">
-                        <div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-between">
-                            ${editableInfoBlock}
-                        </div>
-                        <div class="md:col-span-5 bg-gray-800 min-h-[360px]">
-                            <img src="${mainImg}" alt="${m.name}" class="w-full h-full object-cover">
-                        </div>
-                    </div>
-                    ${albumSectionHtml}
-                `;
-            } else if (cfg.layout === 'gallery_first') {
-                profileCardHtml = `
-                    ${albumSectionHtml}
-                    <div class="mt-8 bg-gray-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-gray-800">
-                        ${editableInfoBlock}
-                    </div>
-                `;
-            } else {
-                // 默认 ① 经典左图右文
-                profileCardHtml = `
-                    <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800 grid grid-cols-1 md:grid-cols-12">
-                        <div class="md:col-span-5 bg-gray-800 min-h-[360px]">
-                            <img src="${mainImg}" alt="${m.name}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-between">
-                            ${editableInfoBlock}
-                            <div class="mt-8 pt-4 border-t border-gray-800 text-xs text-gray-400">Youth Power Continental Team · Official Rider Profile</div>
-                        </div>
-                    </div>
-                    ${albumSectionHtml}
-                `;
-            }
-
-            container.innerHTML = `
-                <div class="flex items-center justify-between mb-6" data-no-edit="true">
-                    <button onclick="switchPage('roster')" class="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900/80 text-yp-lime text-xs font-bold hover:bg-gray-900 transition shadow">
-                        <i class="fa-solid fa-arrow-left mr-1.5"></i> 返回 2027 队员介绍总列表
-                    </button>
-                </div>
-                ${adminToolbarHtml}
-                ${profileCardHtml}
-            `;
-
-            // 绑定相册内图片拖拽排序
-            const albumGrid = document.getElementById('rider-album-sortable-grid');
-            if (albumGrid) {
-                bindLiveSortableGrid(albumGrid, '[data-album-photo-id]', 'data-album-photo-id', (newPhotoIds) => {
-                    const currentAlbum = getRiderAlbum(m.id);
-                    const reordered = newPhotoIds.map(pid => currentAlbum.find(x => String(x.id) === String(pid))).filter(Boolean);
-                    if (reordered.length === currentAlbum.length) {
-                        saveRiderAlbum(m.id, reordered);
-                        if (typeof showToast === 'function') showToast('✅ 队员个人主页图片顺序已保存！');
-                    }
-                });
-            }
-
-        } else if (type === 'product' && typeof products !== 'undefined') {
-            backdropWrapper.style.backgroundImage = '';
+        } else if (type === 'product') {
+            backPage = 'shop';
+            backLabel = '返回官方器材商城';
             const p = products.find(x => String(x.id) === String(id));
             if (!p) return;
+            const savedCovers = JSON.parse(localStorage.getItem('yp_product_covers') || '{}');
             const tr = (lang !== 'zh' && productTranslations[p.id] && productTranslations[p.id][lang]) ? productTranslations[p.id][lang] : null;
-            container.innerHTML = `
-                <button onclick="switchPage('shop')" class="mb-6 inline-flex items-center text-xs font-bold text-yp-darkGreen hover:underline">
-                    <i class="fa-solid fa-arrow-left mr-1.5"></i> 返回官方器材商城
-                </button>
-                <div class="bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                    <div class="md:col-span-5 h-72 rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-yp-darkGreen flex items-center justify-center">
-                        <i class="fa-solid ${p.icon || 'fa-bicycle'} text-7xl text-white/90"></i>
+            tagText = tr ? tr.brand : p.brand;
+            titleText = tr ? tr.name : p.name;
+            subText = `官方同步直售价`;
+            highText = tr ? tr.badge : p.badge;
+            bioText = tr ? tr.desc : p.desc;
+            mainImg = savedCovers[p.id] || p.imgUrl || (album.length > 0 ? album[0].url : 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1200&q=80');
+            actionBtnsHtml = `
+                <div class="mt-6 pt-5 border-t border-gray-700/80 flex flex-wrap items-center justify-between gap-4" data-no-edit="true">
+                    <div>
+                        <span class="text-xs text-gray-400 block">官方同步售价 (开启编辑后可点击价格修改)</span>
+                        <span id="sub-edit-price" class="yp-editable-field text-3xl font-black text-yp-lime">¥${p.price}</span>
                     </div>
-                    <div class="md:col-span-7">
-                        <span class="px-3 py-1 bg-green-100 text-yp-darkGreen text-xs font-black rounded">${tr ? tr.brand : p.brand}</span>
-                        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 mt-3 mb-3">${tr ? tr.name : p.name}</h2>
-                        <div class="text-3xl font-black text-yp-darkGreen mb-4">¥${p.price}</div>
-                        <p class="text-sm text-gray-600 leading-relaxed mb-6">${tr ? tr.desc : p.desc}</p>
-                        <button onclick="addToCart(${p.id})" class="px-6 py-3.5 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl text-sm transition">
-                            <i class="fa-solid fa-cart-plus mr-1.5"></i> 加入购物车
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="addToCart(${p.id})" class="px-6 py-3.5 bg-yp-green hover:bg-yp-darkGreen text-white font-black rounded-xl text-sm shadow transition">
+                            <i class="fa-solid fa-cart-plus mr-1.5"></i>加入购物车
+                        </button>
+                        <button onclick="openAlipayModal(${p.price}, '直购：${p.name}', '商城直购')" class="px-6 py-3.5 bg-yp-alipay hover:bg-blue-600 text-white font-black rounded-xl text-sm shadow transition">
+                            <i class="fa-brands fa-alipay mr-1.5"></i>支付宝立即购买
                         </button>
                     </div>
                 </div>
             `;
+        } else if (type === 'sponsor') {
+            backPage = 'partners';
+            backLabel = '返回赞助商与合作伙伴名录';
+            const sp = getSponsorsList().find(x => String(x.id) === String(id));
+            if (!sp) return;
+            tagText = sp.tier;
+            titleText = sp.name;
+            subText = sp.logoText || sp.name;
+            highText = sp.highlight;
+            bioText = sp.desc;
+            mainImg = sp.logoUrl || (album.length > 0 ? album[0].url : 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=1200&q=80');
         }
+
+        const bgHeroUrl = cfg.bgUrl || mainImg;
+        const darkPct = cfg.bgDarkness || '65';
+        const darkRgba = darkPct === '40' ? 'rgba(17,24,39,0.45)' : (darkPct === '85' ? 'rgba(17,24,39,0.88)' : 'rgba(17,24,39,0.68)');
+
+        if (cfg.fullPageBg && bgHeroUrl) {
+            backdropWrapper.style.backgroundImage = `linear-gradient(180deg, ${darkRgba} 0%, rgba(17,24,39,0.93) 100%), url('${bgHeroUrl}')`;
+            backdropWrapper.style.backgroundSize = 'cover';
+            backdropWrapper.style.backgroundPosition = 'center';
+            backdropWrapper.style.backgroundAttachment = 'fixed';
+        } else {
+            backdropWrapper.style.backgroundImage = '';
+        }
+
+        const typeLabel = type === 'rider' ? '队员个人主页' : (type === 'product' ? '商品独立详情页' : '赞助商独立主页');
+
+        // 管理员控制栏（队员 / 商品 / 赞助商 详情页通用）
+        const adminToolbarHtml = isAdmin ? `
+            <div data-no-edit="true" class="mb-8 p-6 rounded-3xl bg-gray-900/95 backdrop-blur-md text-white border-2 border-yp-lime shadow-2xl space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-800">
+                    <div>
+                        <span class="px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[11px] font-black rounded">SUPER ADMIN · ${typeLabel}可视化编辑器</span>
+                        <h4 class="text-base font-black mt-1">当前编辑：${titleText} — 支持直接修改文字/价格、上传多张图片、将大图设为背景及切换5种排版</h4>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="btn-entity-sub-edit" onclick="toggleEntitySubpageEdit('${type}', '${id}')" class="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-gray-900 text-xs font-black rounded-xl shadow flex items-center space-x-1.5 transition">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>✏️ 开启本页文字直接编辑</span>
+                        </button>
+                        <button id="btn-entity-sub-save" onclick="saveEntitySubpageEdits('${type}', '${id}')" class="hidden px-5 py-2 bg-yp-green hover:bg-yp-darkGreen text-white text-xs font-black rounded-xl shadow flex items-center space-x-1.5 transition animate-pulse">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>💾 保存本页全部修改</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5种页面主体排版 + 大图背景设置 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center pb-4 border-b border-gray-800 text-xs">
+                    <div class="lg:col-span-7 flex flex-wrap items-center gap-1.5">
+                        <span class="text-yp-lime font-bold mr-1">主页主体排版：</span>
+                        <button onclick="changeEntityDetailLayout('${type}', '${id}', 'classic')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'classic' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300'}">① 左图右文</button>
+                        <button onclick="changeEntityDetailLayout('${type}', '${id}', 'magazine')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'magazine' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300'}">② 杂志巨幕</button>
+                        <button onclick="changeEntityDetailLayout('${type}', '${id}', 'reverse')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'reverse' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300'}">③ 左文右图</button>
+                        <button onclick="changeEntityDetailLayout('${type}', '${id}', 'gallery_first')" class="px-2.5 py-1.5 rounded-lg font-bold ${cfg.layout === 'gallery_first' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300'}">④ 画廊置顶</button>
+                        <button onclick="changeEntityDetailLayout('${type}', '${id}', 'hero_bg')" class="px-3 py-1.5 rounded-lg font-black ${cfg.layout === 'hero_bg' ? 'bg-purple-600 text-white ring-2 ring-purple-300' : 'bg-purple-900/60 text-purple-200'}">⑤ 🌌 大图作为背景悬浮</button>
+                    </div>
+                    <div class="lg:col-span-5 flex flex-wrap items-center justify-end gap-2">
+                        <label class="cursor-pointer px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-image"></i>
+                            <span>上传背景大图</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleEntityBgFileUpload(event, '${type}', '${id}')">
+                        </label>
+                        <button onclick="toggleEntityFullPageBg('${type}', '${id}')" class="px-3 py-1.5 rounded-lg font-bold border ${cfg.fullPageBg ? 'bg-yp-lime text-gray-900 border-yp-lime' : 'bg-gray-800 text-gray-300 border-gray-700'}">
+                            ${cfg.fullPageBg ? '🌅 整页壁纸：开启' : '🌅 开启整页壁纸'}
+                        </button>
+                        <select onchange="changeEntityBgDarkness('${type}', '${id}', this.value)" class="rounded-lg bg-gray-800 border border-gray-700 px-2 py-1.5 text-white">
+                            <option value="40" ${darkPct === '40' ? 'selected' : ''}>遮罩 40%</option>
+                            <option value="65" ${darkPct === '65' ? 'selected' : ''}>遮罩 65%</option>
+                            <option value="85" ${darkPct === '85' ? 'selected' : ''}>遮罩 85%</option>
+                        </select>
+                        ${(cfg.bgUrl || cfg.fullPageBg) ? `<button onclick="clearEntityBgImage('${type}', '${id}')" class="text-red-400 hover:underline">清除背景</button>` : ''}
+                    </div>
+                </div>
+
+                <!-- 批量上传多张图片 -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center text-xs">
+                    <div class="lg:col-span-5">
+                        <label class="cursor-pointer w-full py-2.5 px-4 bg-yp-darkGreen hover:bg-yp-green text-white font-black rounded-xl flex items-center justify-center space-x-2 shadow transition">
+                            <i class="fa-solid fa-images text-base"></i>
+                            <span>➕ 批量上传多张图片到本页相册</span>
+                            <input type="file" accept="image/*" multiple class="hidden" onchange="handleEntityMultiPhotosUpload(event, '${type}', '${id}')">
+                        </label>
+                    </div>
+                    <form onsubmit="handleEntityUrlPhotoAdd(event, '${type}', '${id}')" class="lg:col-span-7 flex flex-wrap sm:flex-nowrap gap-2">
+                        <input type="url" id="entity-extra-photo-url" required placeholder="或粘贴图片外链 URL https://..." class="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                        <input type="text" id="entity-extra-photo-cap" placeholder="图片说明文字(选填)" class="w-36 rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white">
+                        <button type="submit" class="px-4 py-2 bg-amber-400 text-gray-900 font-black rounded-xl hover:bg-amber-300 shrink-0">添加图片</button>
+                    </form>
+                </div>
+            </div>
+        ` : '';
+
+        // 单张相册图渲染
+        const renderAlbumCard = (p, extraClass = '', imgHeightClass = 'h-64') => `
+            <div class="bg-gray-900 rounded-2xl overflow-hidden border border-gray-700/60 shadow-md group relative flex flex-col justify-between ${extraClass}" data-album-photo-id="${p.id}">
+                <div class="${imgHeightClass} w-full overflow-hidden bg-black flex items-center justify-center relative">
+                    <img src="${p.url}" alt="${p.caption || titleText}" draggable="false" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    ${isAdmin ? `
+                        <div data-no-edit="true" class="absolute top-2.5 left-2.5 flex items-center space-x-1">
+                            <span class="px-2 py-1 bg-amber-400 text-gray-900 text-[10px] font-black rounded shadow cursor-grab"><i class="fa-solid fa-grip-vertical mr-1"></i>拖动排图</span>
+                            <button onclick="moveEntityAlbumPhotoStep('${type}', '${id}', '${p.id}', -1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">◀</button>
+                            <button onclick="moveEntityAlbumPhotoStep('${type}', '${id}', '${p.id}', 1)" class="w-6 h-6 bg-gray-900/90 text-white text-[10px] font-bold rounded">▶</button>
+                        </div>
+                        <div data-no-edit="true" class="absolute top-2.5 right-2.5 flex flex-wrap items-center justify-end gap-1">
+                            <button onclick="setEntityMainCoverFromAlbum('${type}', '${id}', '${p.url}')" class="px-2 py-1 bg-yp-green text-white text-[10px] font-bold rounded shadow">设为主图</button>
+                            <button onclick="setEntityHeroBgImage('${type}', '${id}', '${p.url}', true)" class="px-2 py-1 bg-purple-600 text-white text-[10px] font-bold rounded shadow">🌌 设为背景</button>
+                            <button onclick="deleteEntityAlbumPhoto('${type}', '${id}', '${p.id}')" class="w-6 h-6 bg-yp-red text-white text-[10px] font-bold rounded shadow">✕</button>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="p-3.5 bg-gray-900 text-xs font-bold text-gray-200 border-t border-gray-800">
+                    <div class="yp-editable-field" data-edit-caption-id="${p.id}">${p.caption || '点击顶部“开启文字直接编辑”可修改此图片说明'}</div>
+                </div>
+            </div>
+        `;
+
+        let albumGridHtml = '';
+        if (album.length === 0) {
+            albumGridHtml = `<div class="text-center py-12 bg-gray-900/30 rounded-2xl border border-dashed border-gray-500 text-gray-400 text-xs">暂未上传更多图集。${isAdmin ? '管理员请点击上方「➕ 批量上传多张图片」按钮添加！' : ''}</div>`;
+        } else if (cfg.albumMode === 'featured') {
+            albumGridHtml = `<div id="entity-album-sortable-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">${album.map((p, idx) => idx === 0 ? renderAlbumCard(p, 'md:col-span-2', 'h-[420px]') : renderAlbumCard(p, '', 'h-72')).join('')}</div>`;
+        } else if (cfg.albumMode === 'cinematic') {
+            albumGridHtml = `<div id="entity-album-sortable-grid" class="space-y-8">${album.map(p => renderAlbumCard(p, 'w-full', 'h-[460px]')).join('')}</div>`;
+        } else if (cfg.albumMode === 'masonry') {
+            albumGridHtml = `<div id="entity-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">${album.map((p, idx) => renderAlbumCard(p, '', idx % 2 === 0 ? 'h-80' : 'h-60')).join('')}</div>`;
+        } else {
+            albumGridHtml = `<div id="entity-album-sortable-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cfg.albumCols || 3} gap-5">${album.map(p => renderAlbumCard(p, '', 'h-64')).join('')}</div>`;
+        }
+
+        const albumSectionHtml = `
+            <div class="mt-10 ${cfg.fullPageBg ? 'bg-gray-900/80 backdrop-blur-md text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'} rounded-3xl p-6 sm:p-8 border shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                        <span class="text-yp-lime font-black text-xs uppercase">MULTI-PHOTO GALLERY & LAYOUT</span>
+                        <h3 class="text-xl font-black mt-0.5">📸 ${titleText} · 高清细节与风采图集 (${album.length}张)</h3>
+                    </div>
+                    ${isAdmin ? `
+                        <div class="flex flex-wrap items-center gap-1.5 text-xs" data-no-edit="true">
+                            <span class="text-gray-400 font-bold mr-1">相册图片排版：</span>
+                            <button onclick="changeEntityAlbumCols('${type}', '${id}', 2)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 2 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">2列平铺</button>
+                            <button onclick="changeEntityAlbumCols('${type}', '${id}', 3)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 3 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">3列平铺</button>
+                            <button onclick="changeEntityAlbumCols('${type}', '${id}', 4)" class="px-2.5 py-1 rounded ${cfg.albumMode === 'grid' && cfg.albumCols == 4 ? 'bg-yp-green text-white font-bold' : 'bg-gray-800 text-gray-300'}">4列平铺</button>
+                            <button onclick="changeEntityAlbumMode('${type}', '${id}', 'featured')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'featured' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🌟 首图巨幅焦点</button>
+                            <button onclick="changeEntityAlbumMode('${type}', '${id}', 'cinematic')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'cinematic' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🎞️ 全宽电影巨幕</button>
+                            <button onclick="changeEntityAlbumMode('${type}', '${id}', 'masonry')" class="px-2.5 py-1 rounded ${cfg.albumMode === 'masonry' ? 'bg-amber-400 text-gray-900 font-black' : 'bg-gray-800 text-gray-300'}">🧱 错落画报流</button>
+                        </div>
+                    ` : ''}
+                </div>
+                ${albumGridHtml}
+            </div>
+        `;
+
+        const editableInfoBlock = `
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span id="sub-edit-tag" class="yp-editable-field px-3 py-1 bg-yp-green/20 text-yp-lime text-xs font-bold rounded">${tagText}</span>
+                    <span class="text-2xl">${rightBadge}</span>
+                </div>
+                <h2 id="sub-edit-title" class="yp-editable-field text-3xl sm:text-4xl font-black mb-1">${titleText}</h2>
+                <p id="sub-edit-sub" class="yp-editable-field text-xs text-gray-300 mb-4">${subText}</p>
+                <div id="sub-edit-high" class="yp-editable-field p-3.5 rounded-xl bg-gray-800/90 border border-gray-700 text-xs text-yp-lime font-bold mb-5">${highText}</div>
+                <div id="sub-edit-bio" class="yp-editable-field text-sm text-gray-100 leading-relaxed space-y-2">${bioText}</div>
+                <div id="sub-edit-extra" class="yp-editable-field mt-6 pt-5 border-t border-gray-700/80 text-sm text-gray-300 leading-relaxed">${cfg.extraSection || (isAdmin ? '【管理员可编辑扩展区】点击顶部“开启本页文字直接编辑”后，可在此处添加更多参数表、几何图或详细故事...' : '')}</div>
+                ${actionBtnsHtml}
+            </div>
+        `;
+
+        let profileCardHtml = '';
+        if (cfg.layout === 'hero_bg') {
+            profileCardHtml = `
+                <div class="rounded-3xl overflow-hidden shadow-2xl border border-gray-700 relative min-h-[520px] flex items-end"
+                     style="background: linear-gradient(105deg, rgba(17,24,39,0.93) 0%, ${darkRgba} 55%, rgba(17,24,39,0.4) 100%), url('${bgHeroUrl}') center/cover no-repeat;">
+                    <div class="p-8 sm:p-14 w-full max-w-4xl text-white backdrop-blur-[2px]">
+                        <div class="inline-block px-2.5 py-0.5 bg-yp-lime text-gray-900 text-[10px] font-black rounded mb-3">HERO BACKDROP LAYOUT</div>
+                        ${editableInfoBlock}
+                    </div>
+                </div>
+                ${albumSectionHtml}
+            `;
+        } else if (cfg.layout === 'magazine') {
+            profileCardHtml = `
+                <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800">
+                    <div class="h-96 w-full bg-gray-800 relative">
+                        <img src="${mainImg}" alt="${titleText}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent"></div>
+                    </div>
+                    <div class="p-8 sm:p-12 max-w-4xl mx-auto -mt-16 relative z-10">${editableInfoBlock}</div>
+                </div>
+                ${albumSectionHtml}
+            `;
+        } else if (cfg.layout === 'reverse') {
+            profileCardHtml = `
+                <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800 grid grid-cols-1 md:grid-cols-12">
+                    <div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-between">${editableInfoBlock}</div>
+                    <div class="md:col-span-5 bg-gray-800 min-h-[360px] flex items-center justify-center"><img src="${mainImg}" alt="${titleText}" class="w-full h-full object-cover"></div>
+                </div>
+                ${albumSectionHtml}
+            `;
+        } else if (cfg.layout === 'gallery_first') {
+            profileCardHtml = `
+                ${albumSectionHtml}
+                <div class="mt-8 bg-gray-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-gray-800">${editableInfoBlock}</div>
+            `;
+        } else {
+            profileCardHtml = `
+                <div class="bg-gray-900 text-white rounded-3xl overflow-hidden shadow-xl border border-gray-800 grid grid-cols-1 md:grid-cols-12">
+                    <div class="md:col-span-5 bg-gray-800 min-h-[360px] flex items-center justify-center"><img src="${mainImg}" alt="${titleText}" class="w-full h-full object-cover"></div>
+                    <div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-between">${editableInfoBlock}</div>
+                </div>
+                ${albumSectionHtml}
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="flex items-center justify-between mb-6" data-no-edit="true">
+                <button onclick="switchPage('${backPage}')" class="inline-flex items-center px-4 py-2 rounded-xl bg-gray-900/85 text-yp-lime text-xs font-bold hover:bg-gray-900 transition shadow">
+                    <i class="fa-solid fa-arrow-left mr-1.5"></i> ${backLabel}
+                </button>
+            </div>
+            ${adminToolbarHtml}
+            ${profileCardHtml}
+        `;
+
+        const albumGrid = document.getElementById('entity-album-sortable-grid');
+        if (albumGrid) {
+            bindLiveSortableGrid(albumGrid, '[data-album-photo-id]', 'data-album-photo-id', (newPhotoIds) => {
+                const currentAlbum = getEntityAlbum(key);
+                const reordered = newPhotoIds.map(pid => currentAlbum.find(x => String(x.id) === String(pid))).filter(Boolean);
+                if (reordered.length === currentAlbum.length) {
+                    saveEntityAlbum(key, reordered);
+                    if (typeof showToast === 'function') showToast('✅ 相册图片顺序已实时保存！');
+                }
+            });
+        }
+
         window.switchPage('subdetail');
     };
 
     // =========================================================================
-    // 七、全站词典 + 微软翻译 (Microsoft Edge/Bing) 引擎
+    // 八、管理员「➕ 增加/删除队员、增加/删除页面、增加商品/合集/赞助商」工作台
+    // =========================================================================
+    function getCustomProducts() { try { return JSON.parse(localStorage.getItem('yp_custom_products') || '[]'); } catch (e) { return []; } }
+    function getCustomPages() { try { return JSON.parse(localStorage.getItem('yp_custom_pages') || '[]'); } catch (e) { return []; } }
+
+    window.deleteRosterMember = function (id) {
+        if (!isStrictAdmin() || !confirm('确定要从车队名单中删除该成员吗？')) return;
+        const list = getSavedRosterData().filter(r => String(r.id) !== String(id));
+        localStorage.setItem('yp_roster_custom_data', JSON.stringify(list));
+        window.renderRoster();
+        if (typeof showToast === 'function') showToast('🗑️ 已删除该队员档案');
+    };
+
+    window.deleteCustomPage = function (id) {
+        if (!isStrictAdmin() || !confirm('确定要删除这个自定义页面吗？')) return;
+        localStorage.setItem('yp_custom_pages', JSON.stringify(getCustomPages().filter(p => String(p.id) !== String(id))));
+        window.renderAllCustomPages();
+        window.switchPage('home');
+        if (typeof showToast === 'function') showToast('🗑️ 已删除该页面');
+    };
+
+    window.renderAllCustomPages = function () {
+        const pages = getCustomPages();
+        const desktopNav = document.querySelector('header nav.hidden.xl\\:flex');
+        const mobileNav = document.querySelector('header div.xl\\:hidden.flex');
+        const mainContainer = document.getElementById('editable-main');
+        const isAdmin = isStrictAdmin();
+
+        document.querySelectorAll('.custom-nav-item, .custom-page-sec').forEach(el => el.remove());
+
+        // 默认加入「合作伙伴名录」导航入口
+        if (desktopNav && !desktopNav.querySelector('[data-target="partners"]')) {
+            const pBtn = document.createElement('button');
+            pBtn.setAttribute('onclick', `switchPage('partners')`);
+            pBtn.setAttribute('data-target', 'partners');
+            pBtn.className = 'nav-btn custom-nav-item px-3 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen transition';
+            pBtn.innerHTML = '合作伙伴Logo';
+            desktopNav.appendChild(pBtn);
+        }
+
+        pages.forEach(p => {
+            if (desktopNav) {
+                const btn = document.createElement('button');
+                btn.setAttribute('onclick', `switchPage('${p.id}')`);
+                btn.setAttribute('data-target', p.id);
+                btn.className = 'nav-btn custom-nav-item px-3 py-2 rounded-lg text-gray-700 hover:text-yp-darkGreen transition';
+                btn.innerHTML = p.navTitle;
+                desktopNav.appendChild(btn);
+            }
+            if (mobileNav) {
+                const mBtn = document.createElement('button');
+                mBtn.setAttribute('onclick', `switchPage('${p.id}')`);
+                mBtn.setAttribute('data-target', p.id);
+                mBtn.className = 'nav-btn custom-nav-item px-3 py-1.5 rounded-md text-gray-700';
+                mBtn.innerHTML = p.navTitle;
+                mobileNav.appendChild(mBtn);
+            }
+            if (mainContainer) {
+                const sec = document.createElement('div');
+                sec.id = 'page-' + p.id;
+                sec.className = 'page-section custom-page-sec py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
+                sec.innerHTML = `
+                    <div class="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200 shadow-xs">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="text-yp-darkGreen font-black text-xs uppercase">${p.category || 'OFFICIAL PAGE'}</span>
+                                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mt-1">${p.pageTitle}</h2>
+                            </div>
+                            ${isAdmin ? `<button onclick="deleteCustomPage('${p.id}')" data-no-edit="true" class="px-3.5 py-2 bg-yp-red text-white text-xs font-black rounded-xl shadow">🗑️ 删除此页面</button>` : ''}
+                        </div>
+                        ${p.mediaUrl ? `<div class="mb-6 rounded-2xl overflow-hidden max-h-96 bg-gray-900 flex justify-center"><img src="${p.mediaUrl}" class="object-cover max-h-96 w-full"></div>` : ''}
+                        <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">${p.content}</div>
+                    </div>
+                `;
+                mainContainer.appendChild(sec);
+            }
+        });
+    };
+
+    function injectAdminCreatorStudio() {
+        const floatBar = document.querySelector('#admin-floating-bar .flex.flex-wrap.items-center.gap-2');
+        if (floatBar && !document.getElementById('btn-open-studio')) {
+            const studioBtn = document.createElement('button');
+            studioBtn.id = 'btn-open-studio';
+            studioBtn.setAttribute('onclick', "openAdminStudioModal('rider')");
+            studioBtn.className = 'px-4 py-2 bg-amber-400 text-gray-900 text-xs font-black rounded-lg hover:bg-amber-300 transition flex items-center space-x-1.5 shadow';
+            studioBtn.innerHTML = `<i class="fa-solid fa-folder-plus"></i><span>➕ 增删队员 / 页面 / 商品 / 赞助商 / 合集</span>`;
+            floatBar.insertBefore(studioBtn, floatBar.firstChild);
+        }
+
+        if (document.getElementById('admin-studio-modal')) return;
+        const modal = document.createElement('div');
+        modal.id = 'admin-studio-modal';
+        modal.setAttribute('data-no-edit', 'true');
+        modal.className = 'fixed inset-0 z-50 hidden flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div onclick="closeAdminStudioModal()" class="fixed inset-0 bg-black/75 backdrop-blur-xs"></div>
+            <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl relative z-10">
+                <div class="bg-gray-900 text-white p-5 flex items-center justify-between">
+                    <div>
+                        <span class="px-2 py-0.5 bg-yp-lime text-gray-900 text-[10px] font-black rounded">SUPER ADMIN STUDIO</span>
+                        <h3 class="text-lg font-black mt-1">管理员新增/删除队员、页面、商品、赞助商与视频合集</h3>
+                    </div>
+                    <button onclick="closeAdminStudioModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div class="flex overflow-x-auto bg-gray-100 p-2 gap-1.5 text-xs font-bold border-b border-gray-200">
+                    <button onclick="switchStudioTab('rider')" id="stab-rider" class="studio-tab px-3 py-2 rounded-lg bg-yp-darkGreen text-white shrink-0">🚴 新增/删除队员</button>
+                    <button onclick="switchStudioTab('newpage')" id="stab-newpage" class="studio-tab px-3 py-2 rounded-lg bg-white text-gray-700 shrink-0">📄 新增/删除页面</button>
+                    <button onclick="switchStudioTab('sponsor')" id="stab-sponsor" class="studio-tab px-3 py-2 rounded-lg bg-white text-gray-700 shrink-0">🤝 新增赞助商Logo</button>
+                    <button onclick="switchStudioTab('product')" id="stab-product" class="studio-tab px-3 py-2 rounded-lg bg-white text-gray-700 shrink-0">🛒 上架新商品</button>
+                    <button onclick="switchStudioTab('collection')" id="stab-collection" class="studio-tab px-3 py-2 rounded-lg bg-white text-gray-700 shrink-0">🎬 新增B站/视频合集</button>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-4 text-xs">
+                    <!-- 1. 新增队员 -->
+                    <form id="sform-rider" onsubmit="handleAddRider(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">队员姓名 *</label><input type="text" id="nr-name" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">队内职务/角色 *</label><input type="text" id="nr-role" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">国籍旗帜</label><input type="text" id="nr-flag" value="🇨🇳" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">年龄与技术特点 *</label><input type="text" id="nr-age" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">高光头衔 *</label><input type="text" id="nr-high" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        </div>
+                        <div><label class="block font-bold text-gray-700 mb-1">上传定妆照（可选）</label><input type="file" id="nr-file" accept="image/*" class="w-full text-xs"></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">详细履历介绍 *</label><textarea id="nr-bio" required rows="3" class="w-full rounded-xl border border-gray-300 px-3 py-2"></textarea></div>
+                        <button type="submit" class="w-full py-3 bg-yp-darkGreen text-white font-black rounded-xl">➕ 立即添加该队员并生成独立主页</button>
+                    </form>
+
+                    <!-- 2. 新增/删除独立页面 -->
+                    <form id="sform-newpage" onsubmit="handleAddNewPage(event)" class="hidden space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">顶部导航栏按钮名称 *</label><input type="text" id="npg-nav" required placeholder="如：📰 赛事战报" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">页面主标题 *</label><input type="text" id="npg-title" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        </div>
+                        <div><label class="block font-bold text-gray-700 mb-1">页面配图URL（选填）</label><input type="url" id="npg-img" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">页面正文内容 *</label><textarea id="npg-content" required rows="4" class="w-full rounded-xl border border-gray-300 px-3 py-2"></textarea></div>
+                        <button type="submit" class="w-full py-3 bg-yp-darkGreen text-white font-black rounded-xl">➕ 立即创建新页面并加入顶部导航栏</button>
+                    </form>
+
+                    <!-- 3. 新增赞助商Logo与详情主页 -->
+                    <form id="sform-sponsor" onsubmit="handleAddSponsor(event)" class="hidden space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">赞助商品牌名称 *</label><input type="text" id="nsp-name" required placeholder="如：NZSE 骑行服" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">合作级别头衔 *</label><input type="text" id="nsp-tier" required placeholder="如：官方骑行服合作伙伴" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">上传赞助商 Logo 图片（推荐）</label><input type="file" id="nsp-file" accept="image/*" class="w-full text-xs"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">或填写 Logo 图片外链 URL</label><input type="url" id="nsp-url" placeholder="https://..." class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        </div>
+                        <div><label class="block font-bold text-gray-700 mb-1">一句话核心亮点 *</label><input type="text" id="nsp-high" required placeholder="如：提供全套职业连体骑行服与赛训装备支持" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">品牌与合作详细介绍 *</label><textarea id="nsp-desc" required rows="3" class="w-full rounded-xl border border-gray-300 px-3 py-2"></textarea></div>
+                        <button type="submit" class="w-full py-3 bg-yp-darkGreen text-white font-black rounded-xl">➕ 添加到页面底部赞助商栏并生成品牌详情页</button>
+                    </form>
+
+                    <!-- 4. 上架新商品 -->
+                    <form id="sform-product" onsubmit="handleAddProduct(event)" class="hidden space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">品牌名称 *</label><input type="text" id="np-brand" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">分类 *</label><select id="np-cat" class="w-full rounded-xl border border-gray-300 px-3 py-2"><option value="spect">空力公式 (Spect)</option><option value="elves">精灵 (ELVES)</option><option value="helmet">ESSEN头盔</option><option value="pedal">卓锐锁踏/配件</option></select></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">售价 (元) *</label><input type="number" id="np-price" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        </div>
+                        <div><label class="block font-bold text-gray-700 mb-1">商品名称 *</label><input type="text" id="np-name" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">商品描述 *</label><textarea id="np-desc" required rows="3" class="w-full rounded-xl border border-gray-300 px-3 py-2"></textarea></div>
+                        <button type="submit" class="w-full py-3 bg-yp-darkGreen text-white font-black rounded-xl">➕ 立即上架到官方商城并生成详情页</button>
+                    </form>
+
+                    <!-- 5. 新增合集 -->
+                    <form id="sform-collection" onsubmit="handleAddCollection(event)" class="hidden space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">合集名称 *</label><input type="text" id="col-title" required class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">合集类型 *</label><select id="col-type" class="w-full rounded-xl border border-gray-300 px-3 py-2"><option value="bilibili">📺 哔哩哔哩视频 (填B站URL或BV号)</option><option value="video">🎬 MP4 视频直链/本地视频</option><option value="image">📸 图片合集</option></select></div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><label class="block font-bold text-gray-700 mb-1">分类标签</label><input type="text" id="col-cat" class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                            <div><label class="block font-bold text-gray-700 mb-1">上传本地文件（可选）</label><input type="file" id="col-file" accept="image/*,video/*" class="w-full text-xs"></div>
+                        </div>
+                        <div><label class="block font-bold text-gray-700 mb-1">或填写 B站链接 / BV号 / 视频图片URL</label><input type="text" id="col-url" placeholder="如：https://www.bilibili.com/video/BV... 或 BV1xx..." class="w-full rounded-xl border border-gray-300 px-3 py-2"></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">合集简介说明</label><textarea id="col-desc" rows="2" class="w-full rounded-xl border border-gray-300 px-3 py-2"></textarea></div>
+                        <button type="submit" class="w-full py-3 bg-yp-darkGreen text-white font-black rounded-xl">➕ 发布到「车队风采 Gallery」</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    window.openAdminStudioModal = function (defaultTab = 'rider') {
+        if (!isStrictAdmin()) return;
+        document.getElementById('admin-studio-modal').classList.remove('hidden');
+        window.switchStudioTab(defaultTab);
+    };
+    window.closeAdminStudioModal = function () { document.getElementById('admin-studio-modal').classList.add('hidden'); };
+    window.switchStudioTab = function (tab) {
+        ['rider', 'newpage', 'sponsor', 'product', 'collection'].forEach(t => {
+            const f = document.getElementById('sform-' + t);
+            const b = document.getElementById('stab-' + t);
+            if (f) f.classList.toggle('hidden', t !== tab);
+            if (b) b.className = t === tab ? 'studio-tab px-3 py-2 rounded-lg bg-yp-darkGreen text-white shrink-0' : 'studio-tab px-3 py-2 rounded-lg bg-white text-gray-700 shrink-0';
+        });
+    };
+
+    window.handleAddRider = function (e) {
+        e.preventDefault();
+        if (!isStrictAdmin()) return;
+        const name = document.getElementById('nr-name').value.trim();
+        const role = document.getElementById('nr-role').value.trim();
+        const flag = document.getElementById('nr-flag').value.trim() || '🇨🇳';
+        const ageSpec = document.getElementById('nr-age').value.trim();
+        const highlight = document.getElementById('nr-high').value.trim();
+        const bio = document.getElementById('nr-bio').value.trim();
+        const fileInput = document.getElementById('nr-file');
+        const saveRider = (photoData) => {
+            const list = getSavedRosterData();
+            list.push({ id: 'rider_' + Date.now(), role_zh: role, role_en: role, role_es: role, name, flag, ageSpec, highlight, bio, photo: photoData || '' });
+            localStorage.setItem('yp_roster_custom_data', JSON.stringify(list));
+            window.renderRoster();
+            e.target.reset();
+            window.closeAdminStudioModal();
+            window.switchPage('roster');
+            if (typeof showToast === 'function') showToast(`✅ 已添加新队员：${name}`);
+        };
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = ev => saveRider(ev.target.result);
+            reader.readAsDataURL(fileInput.files[0]);
+        } else saveRider('');
+    };
+
+    window.handleAddNewPage = function (e) {
+        e.preventDefault();
+        if (!isStrictAdmin()) return;
+        const navTitle = document.getElementById('npg-nav').value.trim();
+        const pageTitle = document.getElementById('npg-title').value.trim();
+        const mediaUrl = document.getElementById('npg-img').value.trim();
+        const content = document.getElementById('npg-content').value.trim();
+        const newId = 'custom_' + Date.now();
+        const list = getCustomPages();
+        list.push({ id: newId, navTitle, pageTitle, mediaUrl, content, category: 'YOUTH POWER OFFICIAL' });
+        localStorage.setItem('yp_custom_pages', JSON.stringify(list));
+        window.renderAllCustomPages();
+        e.target.reset();
+        window.closeAdminStudioModal();
+        window.switchPage(newId);
+        if (typeof showToast === 'function') showToast(`✅ 新页面「${navTitle}」已创建！`);
+    };
+
+    window.handleAddSponsor = function (e) {
+        e.preventDefault();
+        if (!isStrictAdmin()) return;
+        const name = document.getElementById('nsp-name').value.trim();
+        const tier = document.getElementById('nsp-tier').value.trim();
+        const urlInput = document.getElementById('nsp-url').value.trim();
+        const highlight = document.getElementById('nsp-high').value.trim();
+        const desc = document.getElementById('nsp-desc').value.trim();
+        const fileInput = document.getElementById('nsp-file');
+
+        const saveSp = (logoSrc) => {
+            const list = getSponsorsList();
+            const newId = 'sp_' + Date.now();
+            list.push({ id: newId, name, tier, logoText: name, logoUrl: logoSrc || '', highlight, desc });
+            saveSponsorsList(list);
+            window.renderSponsorsEverywhere();
+            e.target.reset();
+            window.closeAdminStudioModal();
+            window.switchPage('partners');
+            if (typeof showToast === 'function') showToast(`✅ 赞助商「${name}」已添加到底部Logo栏与名录页！`);
+        };
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = ev => saveSp(ev.target.result);
+            reader.readAsDataURL(fileInput.files[0]);
+        } else saveSp(urlInput);
+    };
+
+    window.handleAddProduct = function (e) {
+        e.preventDefault();
+        if (!isStrictAdmin()) return;
+        const brand = document.getElementById('np-brand').value.trim();
+        const category = document.getElementById('np-cat').value;
+        const price = parseInt(document.getElementById('np-price').value, 10);
+        const name = document.getElementById('np-name').value.trim();
+        const desc = document.getElementById('np-desc').value.trim();
+        const newProd = { id: Date.now(), category, brand, name, desc, price, badge: '官方严选', icon: 'fa-bicycle' };
+        const customList = getCustomProducts();
+        customList.push(newProd);
+        localStorage.setItem('yp_custom_products', JSON.stringify(customList));
+        if (typeof products !== 'undefined') products.push(newProd);
+        window.renderProducts('all');
+        e.target.reset();
+        window.closeAdminStudioModal();
+        window.switchPage('shop');
+        if (typeof showToast === 'function') showToast(`✅ 新商品「${name}」已上架！`);
+    };
+
+    window.handleAddCollection = function (e) {
+        e.preventDefault();
+        if (!isStrictAdmin()) return;
+        const title = document.getElementById('col-title').value.trim();
+        const type = document.getElementById('col-type').value;
+        const category = document.getElementById('col-cat').value.trim() || '车队合集';
+        const urlInput = document.getElementById('col-url').value.trim();
+        const desc = document.getElementById('col-desc').value.trim();
+        const fileInput = document.getElementById('col-file');
+        const saveCol = (mediaSrc) => {
+            const list = getCollections();
+            list.unshift({ id: 'col_' + Date.now(), title, type, category, mediaUrl: mediaSrc, cover: '', desc });
+            saveCollections(list);
+            window.renderCollectionsGrid('all');
+            e.target.reset();
+            window.closeAdminStudioModal();
+            window.switchPage('gallery');
+        };
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = ev => saveCol(ev.target.result);
+            reader.readAsDataURL(fileInput.files[0]);
+        } else if (urlInput) saveCol(urlInput);
+    };
+
+    // =========================================================================
+    // 九、全站多语言字典 + 微软神经网络翻译引擎 (Microsoft Edge/Bing)
     // =========================================================================
     const fullSiteDictionary = {
         en: {
@@ -1219,22 +1765,14 @@
             "青旅与骑游": "Hostel & Rides",
             "教练服务报名": "Coaching Service",
             "商业赞助": "Sponsorship",
+            "合作伙伴Logo": "Partners",
             "报班/教练训练": "Join Coaching",
-            "千岛湖亚运村 · 车队官方青年旅舍": "Qiandao Lake Asian Games Village · Official Team Youth Hostel",
-            "基地与骑游动态说明": "Hostel Base & Club Ride Updates",
-            "La Fuga 青野·驿 住宿/骑游咨询": "La Fuga Youth Hostel Stay & Ride Inquiry",
-            "提交入住 / 骑游咨询": "Submit Hostel / Ride Inquiry",
-            "车队最新骑游招募与赛事动态": "Latest Team Club Rides & Race Announcements",
-            "资金开销类目、招商需求与赞助商权益": "Annual Budget Breakdown, Sponsorship Tiers & Commercial Rights",
-            "2027 招商合作席位需求": "2027 Sponsorship Tiers & Investment",
-            "🏆 车队主冠名": "🏆 First Title Sponsor",
-            "🥈 车队副冠名": "🥈 Second Title Sponsor",
-            "👕 队服胸前 Logo": "👕 Jersey Chest Logo",
-            "💪 队服袖子 Logo": "💪 Jersey Sleeve Logo",
-            "核心亮点 · 品牌出海与海外渠道建立": "Key Highlight · Global Brand Expansion & Overseas Dealer Network",
-            "南美洲（哥伦比亚）与西班牙实体车店销售网络搭建": "Direct B2B Sales Network in South America (Colombia) & Spain",
-            "📺 国内外核心赛事电视直播": "📺 Global & Domestic Live TV Broadcasts",
-            "🛍️ 70个比赛日赛场展销与双基地展示": "🛍️ 70 Race-Day On-Site Expos & Dual Base Showrooms"
+            "官方赞助商与合作伙伴名录": "Official Sponsors & Partners Directory",
+            "点击任意赞助商标志，即可进入该品牌的专属独立详情主页（支持多图展示与产品介绍）。": "Click any sponsor logo to enter its dedicated brand profile page.",
+            "进入品牌独立详情页": "View Brand Profile",
+            "青野·驿主要负责人": "Hostel General Manager",
+            "🏨 La Fuga 青野·驿 · 基地与青旅实景图集": "🏨 La Fuga Youth Hostel · Photo Gallery",
+            "📺 哔哩哔哩 (B站) 与 URL 视频展播中心": "📺 Bilibili & URL Video Broadcast Center"
         },
         es: {
             "UCI Continental Team · 上海市自行车队储备人才基地": "UCI Continental Team · Base Oficial de Reserva del Equipo de Shanghái",
@@ -1252,22 +1790,14 @@
             "青旅与骑游": "Albergue La Fuga y Rutas",
             "教练服务报名": "Entrenamiento UCI",
             "商业赞助": "Patrocinio",
+            "合作伙伴Logo": "Patrocinadores",
             "报班/教练训练": "Inscribirse",
-            "千岛湖亚运村 · 车队官方青年旅舍": "Villa de los Juegos Asiáticos de Qiandao · Albergue Oficial del Equipo",
-            "基地与骑游动态说明": "Información sobre el Albergue Base y Rutas Ciclistas",
-            "La Fuga 青野·驿 住宿/骑游咨询": "Reserva de Alojamiento en La Fuga y Consulta de Rutas",
-            "提交入住 / 骑游咨询": "Enviar Consulta de Alojamiento / Ruta",
-            "车队最新骑游招募与赛事动态": "Últimas Convocatorias de Rutas y Noticias del Equipo",
-            "资金开销类目、招商需求与赞助商权益": "Presupuesto Anual, Niveles de Patrocinio y Derechos Comerciales",
-            "2027 招商合作席位需求": "Niveles de Patrocinio Temporada 2027",
-            "🏆 车队主冠名": "🏆 Patrocinador Principal (Primer Nombre)",
-            "🥈 车队副冠名": "🥈 Copatrocinador Principal (Segundo Nombre)",
-            "👕 队服胸前 Logo": "👕 Logo en el Pecho del Maillot",
-            "💪 队服袖子 Logo": "💪 Logo en la Manga del Maillot",
-            "核心亮点 · 品牌出海与海外渠道建立": "Punto Clave · Expansión Internacional de Marca en Latinoamérica y España",
-            "南美洲（哥伦比亚）与西班牙实体车店销售网络搭建": "Red Comercial Directa con Tiendas de Ciclismo en Colombia y España",
-            "📺 国内外核心赛事电视直播": "📺 Retransmisión Televisiva en Directo en América, Europa y China",
-            "🛍️ 70个比赛日赛场展销与双基地展示": "🛍️ Exposición en 70 Días de Competición y Showrooms Permanentes"
+            "官方赞助商与合作伙伴名录": "Directorio Oficial de Patrocinadores y Socios",
+            "点击任意赞助商标志，即可进入该品牌的专属独立详情主页（支持多图展示与产品介绍）。": "Haga clic en el logotipo de cualquier patrocinador para abrir su página de detalles.",
+            "进入品牌独立详情页": "Ver Página de Marca",
+            "青野·驿主要负责人": "Directora del Albergue",
+            "🏨 La Fuga 青野·驿 · 基地与青旅实景图集": "🏨 Albergue Juvenil La Fuga · Galería de Fotos",
+            "📺 哔哩哔哩 (B站) 与 URL 视频展播中心": "📺 Centro de Vídeos Bilibili y URL"
         }
     };
 
@@ -1384,15 +1914,51 @@
     };
 
     // =========================================================================
-    // 八、初始化与全局挂载
+    // 十、初始化与全局挂载
     // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
         safeRemoveQiuHaolin();
         initDynamicSubpageContainer();
+        injectGalleryCollectionsUI();
+        injectAdminCreatorStudio();
+        initSponsorsBarAndPage();
+        window.renderHostelCustomSection();
+        window.renderAllCustomPages();
+
+        // 恢复商品文本修改与新增商品
+        try {
+            if (typeof products !== 'undefined') {
+                getCustomProducts().forEach(cp => {
+                    if (!products.some(p => String(p.id) === String(cp.id))) products.push(cp);
+                });
+                const overrides = JSON.parse(localStorage.getItem('yp_product_text_overrides') || '{}');
+                const covers = JSON.parse(localStorage.getItem('yp_product_covers') || '{}');
+                products.forEach(p => {
+                    if (overrides[p.id]) Object.assign(p, overrides[p.id]);
+                    if (covers[p.id]) p.imgUrl = covers[p.id];
+                });
+            }
+        } catch (e) {}
+
+        // 队员介绍页顶部注入管理员「➕ 新增队员档案」按钮
+        const origRenderRoster = window.renderRoster;
+        window.renderRoster = function () {
+            origRenderRoster();
+            const layoutBar = document.getElementById('admin-roster-layout-bar');
+            if (layoutBar && !document.getElementById('btn-quick-add-rider')) {
+                const addBtn = document.createElement('button');
+                addBtn.id = 'btn-quick-add-rider';
+                addBtn.setAttribute('onclick', "openAdminStudioModal('rider')");
+                addBtn.className = 'px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-gray-900 font-black transition shadow';
+                addBtn.innerHTML = '➕ 新增队员档案';
+                layoutBar.querySelector('.flex.items-center.space-x-2:last-child')?.appendChild(addBtn);
+            }
+        };
 
         window.renderRoster();
         window.renderProducts('all');
 
+        // 语言切换联动所有自定义模块与微软翻译
         window.setLanguage = function (lang) {
             window.__ypLang = lang;
             ['zh', 'en', 'es'].forEach(l => {
@@ -1411,6 +1977,8 @@
             }
             window.renderRoster();
             window.renderProducts('all');
+            window.renderHostelCustomSection();
+            window.renderSponsorsEverywhere();
             window.translateEntireDOM(lang);
         };
 
@@ -1428,8 +1996,13 @@
         if (origUpdateAuthUI) {
             window.updateAuthUI = function () {
                 origUpdateAuthUI();
+                injectAdminCreatorStudio();
+                injectGalleryCollectionsUI();
                 window.renderRoster();
                 window.renderProducts('all');
+                window.renderHostelCustomSection();
+                window.renderSponsorsEverywhere();
+                window.renderAllCustomPages();
                 if (window.__ypLang !== 'zh') {
                     setTimeout(() => window.translateEntireDOM(window.__ypLang), 50);
                 }
