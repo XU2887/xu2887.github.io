@@ -1074,3 +1074,669 @@
         }
     });
 })();
+/**
+ * 青年力量洲际队官网 (Youth Power Continental Team) - 首页「车队主要荣誉」内容与排版可视化编辑插件
+ * 说明：零断点完整代码！可直接追加到 update-03.js 末尾，或保存为独立文件 update-04.js 引入。
+ * 功能：
+ * 1. 支持管理员在首页直接增、删、改「车队主要荣誉」的任意年份、多条荣誉条目、领奖台配图及主标题
+ * 2. 支持鼠标拖拽排序 (✥ 拖动) 与 ◀ ▶ 按钮移动顺序
+ * 3. 支持 4 种视觉风格切换（①经典时间轴 / ②奖杯卡片网格 / ③黑金冠军殿堂 / ④横向画廊卷轴）
+ * 4. 支持 3 种版面宽度与位置切换（右半屏6:6并排 / 12列全宽置顶 / 12列全宽置底）及卡片列数(1/2/3列)控制
+ */
+
+(function () {
+    'use strict';
+
+    if (window.__YP_HONORS_EDITOR_LOADED__) return;
+    window.__YP_HONORS_EDITOR_LOADED__ = true;
+
+    const ADMIN_EMAIL = 'team_youthpower@outlook.com';
+    let isHonorsInlineEditing = false;
+
+    function isHonorsAdmin() {
+        try {
+            const u = JSON.parse(localStorage.getItem('yp_current_user') || 'null');
+            return Boolean(u && u.email && u.email.toLowerCase() === ADMIN_EMAIL && u.role === 'admin');
+        } catch (e) { return false; }
+    }
+
+    // 复用图片高清压缩器
+    async function compressHonorImg(file, maxW = 1000, q = 0.8) {
+        if (typeof window.compressLocalImage === 'function') {
+            return await window.compressLocalImage(file, maxW, q);
+        }
+        return new Promise(resolve => {
+            if (!file) { resolve(''); return; }
+            const r = new FileReader();
+            r.onload = e => resolve(e.target.result || '');
+            r.onerror = () => resolve('');
+            r.readAsDataURL(file);
+        });
+    }
+
+    // =========================================================================
+    // 一、默认车队主要荣誉数据结构与配置
+    // =========================================================================
+    const defaultHonorsConfig = {
+        sectionTitle: '青年力量发展车队主要荣誉 (2021-2026)',
+        sectionSubtitle: '体教结合 · 从群众体育迈向职业赛场的坚实足迹',
+        styleMode: 'timeline',      // 'timeline' (经典时间轴) | 'cards' (卡片网格) | 'dark_gold' (黑金殿堂) | 'horizontal' (横向画廊)
+        positionMode: 'side_right', // 'side_right' (右半屏6:6) | 'full_top' (12列全宽置顶) | 'full_bottom' (12列全宽置底)
+        gridCols: 2,                // 卡片模式下每行显示列数: 1 | 2 | 3
+        items: [
+            {
+                id: 'hn_2026',
+                year: '2026 赛季',
+                badge: '🏆 国家级公开赛夺冠 & 省队输送',
+                photo: '',
+                records: [
+                    '全国公开赛（湖北枝江）大学生组 冠军 — <span class="text-yp-darkGreen font-black">张浩阳</span>（后入选上海市自行车队）'
+                ]
+            },
+            {
+                id: 'hn_2025',
+                year: '2025 赛季',
+                badge: '🌍 世巡赛集训营输送 & 全国锦标赛夺冠',
+                photo: '',
+                records: [
+                    '<span class="text-yp-darkGreen font-black">苏毅</span> 入选世巡赛阿斯塔纳（Astana）车队集训名单',
+                    '全国U系列锦标赛乙组大组赛 冠军 — <span class="text-yp-darkGreen font-black">李东润</span>',
+                    '<span class="text-yp-darkGreen font-black">徐核</span> 以优异成绩获 UCI Level 2 教练证书，并获 Level 3 全额奖学金资格'
+                ]
+            },
+            {
+                id: 'hn_2024',
+                year: '2024 赛季',
+                badge: '🥇 全国U系列锦标赛双料冠亚军',
+                photo: '',
+                records: [
+                    '全国U系列锦标赛甲组大组赛 冠军 — <span class="text-yp-darkGreen font-black">戴铭亨</span>',
+                    '全国U系列锦标赛甲组 ITT 个人计时赛 冠军、亚军 — <span class="text-yp-darkGreen font-black">戴铭亨、尚睿濛</span>'
+                ]
+            },
+            {
+                id: 'hn_2023',
+                year: '2023 赛季',
+                badge: '🇨🇳 全国锦标赛首金 & 国家队输送',
+                photo: '',
+                records: [
+                    '全国U系列锦标赛甲组 ITT 冠军 — <span class="text-yp-darkGreen font-black">马浩均</span>（后入选大学生国家队、成年国家队）'
+                ]
+            }
+        ]
+    };
+
+    function getHonorsCfg() {
+        try {
+            const saved = localStorage.getItem('yp_home_honors_v1');
+            if (!saved) return JSON.parse(JSON.stringify(defaultHonorsConfig));
+            return { ...defaultHonorsConfig, ...JSON.parse(saved) };
+        } catch (e) {
+            return JSON.parse(JSON.stringify(defaultHonorsConfig));
+        }
+    }
+
+    function saveHonorsCfg(cfg) {
+        const merged = { ...getHonorsCfg(), ...cfg };
+        localStorage.setItem('yp_home_honors_v1', JSON.stringify(merged));
+        // 清理可能冲突的旧版整页静态HTML快照
+        localStorage.removeItem('yp_cms_page-home');
+    }
+
+    // 单项荣誉配图上传器
+    let activeHonorPhotoId = null;
+    const honorPhotoInput = document.createElement('input');
+    honorPhotoInput.type = 'file';
+    honorPhotoInput.accept = 'image/*';
+    honorPhotoInput.className = 'hidden';
+    honorPhotoInput.onchange = async function (ev) {
+        const f = (ev.target.files || [])[0];
+        if (!f || !activeHonorPhotoId) return;
+        const dataUrl = await compressHonorImg(f, 1000, 0.8);
+        if (!dataUrl) return;
+        const cfg = getHonorsCfg();
+        const item = cfg.items.find(x => String(x.id) === String(activeHonorPhotoId));
+        if (item) {
+            item.photo = dataUrl;
+            saveHonorsCfg({ items: cfg.items });
+            window.renderHomeHonorsSection();
+            if (typeof showToast === 'function') showToast('✅ 荣誉配图已上传并保存！');
+        }
+        honorPhotoInput.value = '';
+    };
+    document.body.appendChild(honorPhotoInput);
+
+    window.triggerHonorPhotoUpload = function (itemId) {
+        if (!isHonorsAdmin()) return;
+        activeHonorPhotoId = itemId;
+        honorPhotoInput.click();
+    };
+
+    window.clearHonorPhoto = function (itemId) {
+        if (!isHonorsAdmin()) return;
+        const cfg = getHonorsCfg();
+        const item = cfg.items.find(x => String(x.id) === String(itemId));
+        if (item) {
+            item.photo = '';
+            saveHonorsCfg({ items: cfg.items });
+            window.renderHomeHonorsSection();
+        }
+    };
+
+    // =========================================================================
+    // 二、拖拽排序绑定辅助
+    // =========================================================================
+    function bindHonorsSortable(containerEl) {
+        if (!containerEl || !isHonorsAdmin()) return;
+        let dragEl = null;
+        const cards = Array.from(containerEl.querySelectorAll('[data-honor-id]'));
+        cards.forEach(card => {
+            card.classList.add('yp-sortable');
+            card.setAttribute('draggable', 'true');
+            card.querySelectorAll('img').forEach(img => img.setAttribute('draggable', 'false'));
+
+            card.ondragstart = function (e) {
+                if (isHonorsInlineEditing) { e.preventDefault(); return; }
+                e.stopPropagation();
+                dragEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => this.classList.add('yp-dragging'), 0);
+            };
+            card.ondragend = function (e) {
+                e.stopPropagation();
+                this.classList.remove('yp-dragging');
+                containerEl.querySelectorAll('[data-honor-id]').forEach(el => el.classList.remove('yp-drag-over'));
+                dragEl = null;
+                const newIds = Array.from(containerEl.querySelectorAll('[data-honor-id]')).map(el => el.getAttribute('data-honor-id'));
+                const cfg = getHonorsCfg();
+                const ordered = newIds.map(id => cfg.items.find(x => String(x.id) === String(id))).filter(Boolean);
+                if (ordered.length === cfg.items.length) {
+                    saveHonorsCfg({ items: ordered });
+                    if (typeof showToast === 'function') showToast('✅ 车队主要荣誉顺序已保存！');
+                }
+            };
+            card.ondragover = function (e) {
+                e.preventDefault(); e.stopPropagation();
+                if (!dragEl || dragEl === this || dragEl.parentNode !== this.parentNode) return;
+                this.classList.add('yp-drag-over');
+                const siblings = Array.from(containerEl.querySelectorAll('[data-honor-id]'));
+                if (siblings.indexOf(dragEl) < siblings.indexOf(this)) {
+                    containerEl.insertBefore(dragEl, this.nextSibling);
+                } else {
+                    containerEl.insertBefore(dragEl, this);
+                }
+            };
+            card.ondragleave = function () { this.classList.remove('yp-drag-over'); };
+            card.ondrop = function (e) { e.preventDefault(); e.stopPropagation(); this.classList.remove('yp-drag-over'); };
+        });
+    }
+
+    // =========================================================================
+    // 三、核心渲染：首页「车队主要荣誉」模块（支持4种视觉风格 + 3种版面位置）
+    // =========================================================================
+    window.renderHomeHonorsSection = function () {
+        const homePage = document.getElementById('page-home');
+        if (!homePage) return;
+
+        // 定位包含“车队愿景”与“车队主要荣誉”的 12 列主网格容器
+        const visionTitleEl = homePage.querySelector('[data-i18n="vision_title"]');
+        const visionCard = visionTitleEl ? visionTitleEl.closest('.lg\\:col-span-6, .lg\\:col-span-12') : null;
+        const gridWrapper = visionCard ? visionCard.parentElement : null;
+        if (!gridWrapper) return;
+
+        // 找到或创建荣誉容器
+        let honorsContainer = document.getElementById('yp-home-honors-container');
+        if (!honorsContainer) {
+            // 定位原有的右侧荣誉卡片并接管它
+            const existingCards = Array.from(gridWrapper.children);
+            honorsContainer = existingCards.find(el => el !== visionCard) || document.createElement('div');
+            honorsContainer.id = 'yp-home-honors-container';
+            if (!honorsContainer.parentElement) gridWrapper.appendChild(honorsContainer);
+        }
+
+        const cfg = getHonorsCfg();
+        const isAdm = isHonorsAdmin();
+        const items = cfg.items || [];
+
+        // 1. 应用版面位置与宽度模式 (side_right 6:6 | full_top 12列置顶 | full_bottom 12列置底)
+        if (cfg.positionMode === 'full_top') {
+            visionCard.className = 'lg:col-span-12 bg-gray-900 text-white rounded-3xl p-8 flex flex-col justify-between';
+            honorsContainer.className = 'lg:col-span-12';
+            if (gridWrapper.firstChild !== honorsContainer) {
+                gridWrapper.insertBefore(honorsContainer, visionCard);
+            }
+        } else if (cfg.positionMode === 'full_bottom') {
+            visionCard.className = 'lg:col-span-12 bg-gray-900 text-white rounded-3xl p-8 flex flex-col justify-between';
+            honorsContainer.className = 'lg:col-span-12';
+            if (gridWrapper.lastChild !== honorsContainer) {
+                gridWrapper.appendChild(honorsContainer);
+            }
+        } else {
+            // 默认左右 6:6 并排
+            visionCard.className = 'lg:col-span-6 bg-gray-900 text-white rounded-2xl p-8 flex flex-col justify-between';
+            honorsContainer.className = 'lg:col-span-6';
+            if (gridWrapper.lastChild !== honorsContainer) {
+                gridWrapper.appendChild(honorsContainer);
+            }
+        }
+
+        // 2. 管理员专属控制工作台
+        const adminBarHtml = isAdm ? `
+            <div data-no-edit="true" class="mb-5 p-4 rounded-2xl bg-gray-900 text-white border-2 border-yp-lime shadow-xl space-y-3 text-xs">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-gray-800">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 bg-yp-lime text-gray-900 font-black rounded">🏆 荣誉模块编辑器</span>
+                        <span class="text-gray-300 font-bold">支持增删荣誉、直接改字、上传领奖台配图及切换排版：</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button onclick="openAddHonorModal()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-black rounded-lg shadow">
+                            ➕ 新增赛季/荣誉
+                        </button>
+                        <button id="btn-honor-inline-edit" onclick="toggleHonorsInlineEdit()" class="px-3 py-1.5 bg-yp-green hover:bg-yp-darkGreen text-white font-black rounded-lg shadow">
+                            ${isHonorsInlineEditing ? '✕ 取消改字' : '✏️ 开启文字直接修改'}
+                        </button>
+                        <button id="btn-honor-inline-save" onclick="saveHonorsInlineEdit()" class="${isHonorsInlineEditing ? '' : 'hidden'} px-3.5 py-1.5 bg-yp-lime text-gray-900 font-black rounded-lg shadow animate-pulse">
+                            💾 保存文字修改
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 视觉排版风格与宽度位置切换 -->
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-1">
+                        <span class="text-gray-400 font-bold mr-1">视觉排版：</span>
+                        <button onclick="setHonorsStyle('timeline')" class="px-2.5 py-1 rounded-lg font-bold ${cfg.styleMode === 'timeline' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">① 经典时间轴</button>
+                        <button onclick="setHonorsStyle('cards')" class="px-2.5 py-1 rounded-lg font-bold ${cfg.styleMode === 'cards' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">② 奖杯卡片网格</button>
+                        <button onclick="setHonorsStyle('dark_gold')" class="px-2.5 py-1 rounded-lg font-bold ${cfg.styleMode === 'dark_gold' ? 'bg-amber-500 text-gray-900 font-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">③ 黑金冠军殿堂</button>
+                        <button onclick="setHonorsStyle('horizontal')" class="px-2.5 py-1 rounded-lg font-bold ${cfg.styleMode === 'horizontal' ? 'bg-yp-green text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">④ 横向画廊卷轴</button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-1">
+                        <span class="text-gray-400 font-bold mr-1">版面布局：</span>
+                        <button onclick="setHonorsPosition('side_right')" class="px-2 py-1 rounded-lg ${cfg.positionMode === 'side_right' ? 'bg-purple-600 text-white font-bold' : 'bg-gray-800 text-gray-300'}" title="与左半边车队愿景左右6:6并排">右半屏(6:6)</button>
+                        <button onclick="setHonorsPosition('full_top')" class="px-2 py-1 rounded-lg ${cfg.positionMode === 'full_top' ? 'bg-purple-600 text-white font-bold' : 'bg-gray-800 text-gray-300'}" title="独占12列全宽，置顶于愿景上方">全宽置顶</button>
+                        <button onclick="setHonorsPosition('full_bottom')" class="px-2 py-1 rounded-lg ${cfg.positionMode === 'full_bottom' ? 'bg-purple-600 text-white font-bold' : 'bg-gray-800 text-gray-300'}" title="独占12列全宽，置底于愿景下方">全宽置底</button>
+                        ${(cfg.styleMode === 'cards' || cfg.styleMode === 'dark_gold') ? `
+                            <select onchange="setHonorsGridCols(this.value)" class="rounded-lg bg-gray-800 border border-gray-600 px-2 py-1 text-yp-lime font-bold ml-1">
+                                <option value="1" ${cfg.gridCols == 1 ? 'selected' : ''}>每行1列</option>
+                                <option value="2" ${cfg.gridCols == 2 ? 'selected' : ''}>每行2列</option>
+                                <option value="3" ${cfg.gridCols == 3 ? 'selected' : ''}>每行3列</option>
+                            </select>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        ` : '';
+
+        // 单条荣誉的管理操作按钮组
+        const renderItemAdminBtns = (item, idx, isDarkBg = false) => {
+            if (!isAdm) return '';
+            const btnBg = isDarkBg ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+            return `
+                <div data-no-edit="true" class="flex flex-wrap items-center gap-1 mt-2 pt-2 border-t ${isDarkBg ? 'border-gray-800' : 'border-gray-100'} text-[11px]">
+                    <span class="px-1.5 py-0.5 bg-amber-400 text-gray-900 font-black rounded cursor-grab">✥ 拖动</span>
+                    <button onclick="moveHonorItem(${idx}, -1)" class="px-1.5 py-0.5 rounded ${btnBg} font-bold" title="上移/前移">◀</button>
+                    <button onclick="moveHonorItem(${idx}, 1)" class="px-1.5 py-0.5 rounded ${btnBg} font-bold" title="下移/后移">▶</button>
+                    <button onclick="addRecordToHonorItem('${item.id}')" class="px-2 py-0.5 rounded bg-yp-green/20 text-yp-darkGreen font-bold hover:bg-yp-green hover:text-white">➕ 追加战绩</button>
+                    <button onclick="triggerHonorPhotoUpload('${item.id}')" class="px-2 py-0.5 rounded ${btnBg} font-bold">📷 ${item.photo ? '换配图' : '加配图'}</button>
+                    ${item.photo ? `<button onclick="clearHonorPhoto('${item.id}')" class="px-1.5 py-0.5 text-amber-500 hover:underline">去图</button>` : ''}
+                    <button onclick="deleteHonorItem('${item.id}')" class="px-2 py-0.5 rounded bg-red-500/15 text-red-500 hover:bg-red-600 hover:text-white font-bold ml-auto">🗑️ 删除</button>
+                </div>
+            `;
+        };
+
+        // 3. 根据 4 种视觉风格生成主体 HTML
+        let bodyHtml = '';
+
+        if (cfg.styleMode === 'cards') {
+            // 风格 ②：奖杯卡片网格
+            const cols = cfg.gridCols || 2;
+            bodyHtml = `
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 h-full">
+                    <div class="mb-6">
+                        <h3 id="honor-main-title" class="yp-editable text-xl sm:text-2xl font-black text-gray-900 flex items-center" contenteditable="${isHonorsInlineEditing}">
+                            <i class="fa-solid fa-trophy text-amber-500 mr-2.5"></i><span>${cfg.sectionTitle}</span>
+                        </h3>
+                        <p id="honor-main-sub" class="yp-editable text-xs text-gray-500 mt-1" contenteditable="${isHonorsInlineEditing}">${cfg.sectionSubtitle || ''}</p>
+                    </div>
+                    <div id="honors-sortable-list" class="grid grid-cols-1 md:grid-cols-${cols} gap-5">
+                        ${items.map((item, idx) => `
+                            <div class="rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-yp-green hover:shadow-md transition overflow-hidden flex flex-col justify-between p-5" data-honor-id="${item.id}">
+                                <div>
+                                    ${item.photo ? `<div class="h-44 -mx-5 -mt-5 mb-4 overflow-hidden bg-gray-900"><img src="${item.photo}" class="w-full h-full object-cover"></div>` : ''}
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <span class="yp-editable px-2.5 py-0.5 bg-yp-darkGreen text-white text-xs font-black rounded-lg" data-h-year="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.year}</span>
+                                        <span class="yp-editable text-[11px] font-bold text-amber-600" data-h-badge="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.badge || ''}</span>
+                                    </div>
+                                    <div class="space-y-2 mt-3">
+                                        ${(item.records || []).map((rec, rIdx) => `
+                                            <div class="flex items-start justify-between gap-2 text-sm text-gray-800 font-bold leading-snug">
+                                                <div class="flex items-start space-x-2">
+                                                    <i class="fa-solid fa-medal text-amber-500 mt-1 shrink-0 text-xs"></i>
+                                                    <div class="yp-editable" data-h-rec="${item.id}_${rIdx}" contenteditable="${isHonorsInlineEditing}">${rec}</div>
+                                                </div>
+                                                ${isAdm && item.records.length > 1 ? `<button onclick="deleteSingleHonorRecord('${item.id}', ${rIdx})" data-no-edit="true" class="text-[10px] text-gray-400 hover:text-red-500 shrink-0" title="删除此条">✕</button>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ${renderItemAdminBtns(item, idx, false)}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else if (cfg.styleMode === 'dark_gold') {
+            // 风格 ③：黑金冠军殿堂风
+            const cols = cfg.gridCols || 2;
+            bodyHtml = `
+                <div class="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white rounded-3xl p-8 shadow-2xl border-2 border-amber-500/40 h-full">
+                    <div class="mb-6 pb-4 border-b border-gray-800 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] font-black tracking-widest text-amber-400 uppercase">HALL OF FAME & CHAMPIONSHIPS</span>
+                            <h3 id="honor-main-title" class="yp-editable text-2xl font-black text-white flex items-center mt-0.5" contenteditable="${isHonorsInlineEditing}">
+                                <i class="fa-solid fa-crown text-amber-400 mr-2.5"></i><span>${cfg.sectionTitle}</span>
+                            </h3>
+                        </div>
+                        <p id="honor-main-sub" class="yp-editable text-xs text-gray-400" contenteditable="${isHonorsInlineEditing}">${cfg.sectionSubtitle || ''}</p>
+                    </div>
+                    <div id="honors-sortable-list" class="grid grid-cols-1 md:grid-cols-${cols} gap-5">
+                        ${items.map((item, idx) => `
+                            <div class="rounded-2xl border border-amber-500/30 bg-gray-900/90 hover:border-amber-400 transition overflow-hidden flex flex-col justify-between p-5 shadow-lg" data-honor-id="${item.id}">
+                                <div>
+                                    ${item.photo ? `<div class="h-44 -mx-5 -mt-5 mb-4 overflow-hidden bg-black"><img src="${item.photo}" class="w-full h-full object-cover"></div>` : ''}
+                                    <div class="flex items-center justify-between gap-2 mb-3">
+                                        <span class="yp-editable px-3 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-950 text-xs font-black rounded-lg shadow" data-h-year="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.year}</span>
+                                        <span class="yp-editable text-xs font-bold text-yp-lime" data-h-badge="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.badge || ''}</span>
+                                    </div>
+                                    <div class="space-y-2.5">
+                                        ${(item.records || []).map((rec, rIdx) => `
+                                            <div class="flex items-start justify-between gap-2 text-sm text-gray-100 font-semibold leading-snug">
+                                                <div class="flex items-start space-x-2">
+                                                    <i class="fa-solid fa-trophy text-amber-400 mt-1 shrink-0 text-xs"></i>
+                                                    <div class="yp-editable [&_span]:!text-amber-300" data-h-rec="${item.id}_${rIdx}" contenteditable="${isHonorsInlineEditing}">${rec}</div>
+                                                </div>
+                                                ${isAdm && item.records.length > 1 ? `<button onclick="deleteSingleHonorRecord('${item.id}', ${rIdx})" data-no-edit="true" class="text-[10px] text-gray-500 hover:text-red-400 shrink-0">✕</button>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ${renderItemAdminBtns(item, idx, true)}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else if (cfg.styleMode === 'horizontal') {
+            // 风格 ④：横向画廊卷轴
+            bodyHtml = `
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 h-full overflow-hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 id="honor-main-title" class="yp-editable text-xl sm:text-2xl font-black text-gray-900 flex items-center" contenteditable="${isHonorsInlineEditing}">
+                                <i class="fa-solid fa-trophy text-amber-500 mr-2"></i><span>${cfg.sectionTitle}</span>
+                            </h3>
+                            <p id="honor-main-sub" class="yp-editable text-xs text-gray-500 mt-1" contenteditable="${isHonorsInlineEditing}">${cfg.sectionSubtitle || ''}</p>
+                        </div>
+                        <span class="text-xs text-yp-darkGreen font-bold">↔️ 左右滑动浏览</span>
+                    </div>
+                    <div id="honors-sortable-list" class="flex space-x-5 overflow-x-auto pb-4 scroll-smooth">
+                        ${items.map((item, idx) => `
+                            <div class="shrink-0 w-80 sm:w-96 rounded-2xl border border-gray-200 bg-gray-50 p-5 flex flex-col justify-between shadow-xs" data-honor-id="${item.id}">
+                                <div>
+                                    ${item.photo ? `<div class="h-44 -mx-5 -mt-5 mb-4 overflow-hidden rounded-t-2xl bg-gray-900"><img src="${item.photo}" class="w-full h-full object-cover"></div>` : ''}
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="yp-editable px-2.5 py-0.5 bg-yp-green text-white text-xs font-black rounded" data-h-year="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.year}</span>
+                                        <span class="yp-editable text-[11px] font-bold text-gray-500" data-h-badge="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.badge || ''}</span>
+                                    </div>
+                                    <div class="space-y-2 mt-3">
+                                        ${(item.records || []).map((rec, rIdx) => `
+                                            <div class="flex items-start justify-between gap-2 text-sm text-gray-900 font-bold">
+                                                <div class="yp-editable" data-h-rec="${item.id}_${rIdx}" contenteditable="${isHonorsInlineEditing}">• ${rec}</div>
+                                                ${isAdm && item.records.length > 1 ? `<button onclick="deleteSingleHonorRecord('${item.id}', ${rIdx})" data-no-edit="true" class="text-[10px] text-gray-400 hover:text-red-500">✕</button>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ${renderItemAdminBtns(item, idx, false)}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            // 风格 ①（默认）：经典垂直时间轴
+            bodyHtml = `
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 h-full">
+                    <h3 id="honor-main-title" class="yp-editable text-xl font-black text-gray-900 mb-6 flex items-center" contenteditable="${isHonorsInlineEditing}">
+                        <i class="fa-solid fa-trophy text-amber-500 mr-2"></i><span>${cfg.sectionTitle}</span>
+                    </h3>
+                    <div id="honors-sortable-list" class="relative border-l-2 border-yp-green/30 ml-3 space-y-6">
+                        ${items.map((item, idx) => `
+                            <div class="relative pl-6 group" data-honor-id="${item.id}">
+                                <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-yp-green border-2 border-white shadow"></span>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <div class="yp-editable text-xs font-bold text-yp-darkGreen" data-h-year="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.year}</div>
+                                    ${item.badge ? `<span class="yp-editable px-2 py-0.2 bg-green-50 text-yp-darkGreen text-[11px] font-bold rounded" data-h-badge="${item.id}" contenteditable="${isHonorsInlineEditing}">${item.badge}</span>` : ''}
+                                </div>
+                                ${item.photo ? `<div class="my-2.5 rounded-xl overflow-hidden max-h-48 w-full sm:w-80 border border-gray-200"><img src="${item.photo}" class="w-full h-full object-cover"></div>` : ''}
+                                <div class="space-y-1.5 mt-1">
+                                    ${(item.records || []).map((rec, rIdx) => `
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="yp-editable font-bold text-gray-900 text-sm sm:text-base leading-snug" data-h-rec="${item.id}_${rIdx}" contenteditable="${isHonorsInlineEditing}">${rec}</div>
+                                            ${isAdm && item.records.length > 1 ? `<button onclick="deleteSingleHonorRecord('${item.id}', ${rIdx})" data-no-edit="true" class="text-xs text-gray-400 hover:text-red-500 shrink-0" title="删除此行">✕</button>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${renderItemAdminBtns(item, idx, false)}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        honorsContainer.innerHTML = `${adminBarHtml}${bodyHtml}`;
+        bindHonorsSortable(document.getElementById('honors-sortable-list'));
+    };
+
+    // =========================================================================
+    // 四、荣誉模块交互与增删改操作函数
+    // =========================================================================
+    window.setHonorsStyle = function (styleMode) {
+        if (!isHonorsAdmin()) return;
+        saveHonorsCfg({ styleMode });
+        window.renderHomeHonorsSection();
+        if (typeof showToast === 'function') showToast('✨ 车队主要荣誉视觉排版已切换！');
+    };
+
+    window.setHonorsPosition = function (positionMode) {
+        if (!isHonorsAdmin()) return;
+        saveHonorsCfg({ positionMode });
+        window.renderHomeHonorsSection();
+        if (typeof showToast === 'function') showToast('📐 荣誉模块版面宽度与位置已更新！');
+    };
+
+    window.setHonorsGridCols = function (cols) {
+        if (!isHonorsAdmin()) return;
+        saveHonorsCfg({ gridCols: Number(cols) });
+        window.renderHomeHonorsSection();
+    };
+
+    window.moveHonorItem = function (idx, dir) {
+        if (!isHonorsAdmin()) return;
+        const cfg = getHonorsCfg();
+        const target = idx + dir;
+        if (target < 0 || target >= cfg.items.length) return;
+        const tmp = cfg.items[idx];
+        cfg.items[idx] = cfg.items[target];
+        cfg.items[target] = tmp;
+        saveHonorsCfg({ items: cfg.items });
+        window.renderHomeHonorsSection();
+    };
+
+    window.deleteHonorItem = function (itemId) {
+        if (!isHonorsAdmin() || !confirm('确定删除该赛季的全部荣誉条目吗？')) return;
+        const cfg = getHonorsCfg();
+        saveHonorsCfg({ items: cfg.items.filter(x => String(x.id) !== String(itemId)) });
+        window.renderHomeHonorsSection();
+        if (typeof showToast === 'function') showToast('🗑️ 已删除该赛季荣誉');
+    };
+
+    window.addRecordToHonorItem = function (itemId) {
+        if (!isHonorsAdmin()) return;
+        const txt = prompt('请输入要追加的荣誉内容（例如：全国公路自行车锦标赛U23组 冠军 — 某某某）：');
+        if (!txt || !txt.trim()) return;
+        const cfg = getHonorsCfg();
+        const item = cfg.items.find(x => String(x.id) === String(itemId));
+        if (item) {
+            item.records = item.records || [];
+            item.records.push(txt.trim());
+            saveHonorsCfg({ items: cfg.items });
+            window.renderHomeHonorsSection();
+            if (typeof showToast === 'function') showToast('✅ 已追加新荣誉战绩！');
+        }
+    };
+
+    window.deleteSingleHonorRecord = function (itemId, recIdx) {
+        if (!isHonorsAdmin()) return;
+        const cfg = getHonorsCfg();
+        const item = cfg.items.find(x => String(x.id) === String(itemId));
+        if (item && item.records) {
+            item.records.splice(recIdx, 1);
+            saveHonorsCfg({ items: cfg.items });
+            window.renderHomeHonorsSection();
+        }
+    };
+
+    window.toggleHonorsInlineEdit = function () {
+        if (!isHonorsAdmin()) return;
+        isHonorsInlineEditing = !isHonorsInlineEditing;
+        window.renderHomeHonorsSection();
+        if (isHonorsInlineEditing && typeof showToast === 'function') {
+            showToast('✏️ 已开启荣誉文字直接修改！请直接点击下方带绿框的年份或战绩文字修改，改完点「💾 保存文字修改」。');
+        }
+    };
+
+    window.saveHonorsInlineEdit = function () {
+        if (!isHonorsAdmin()) return;
+        const cfg = getHonorsCfg();
+        const titleSpan = document.querySelector('#honor-main-title span');
+        const subEl = document.getElementById('honor-main-sub');
+        if (titleSpan) cfg.sectionTitle = titleSpan.innerText.trim();
+        if (subEl) cfg.sectionSubtitle = subEl.innerText.trim();
+
+        cfg.items.forEach(item => {
+            const yEl = document.querySelector(`[data-h-year="${item.id}"]`);
+            const bEl = document.querySelector(`[data-h-badge="${item.id}"]`);
+            if (yEl) item.year = yEl.innerHTML.trim();
+            if (bEl) item.badge = bEl.innerHTML.trim();
+            (item.records || []).forEach((_, rIdx) => {
+                const rEl = document.querySelector(`[data-h-rec="${item.id}_${rIdx}"]`);
+                if (rEl) item.records[rIdx] = rEl.innerHTML.replace(/^•\s*/, '').trim();
+            });
+        });
+
+        isHonorsInlineEditing = false;
+        saveHonorsCfg(cfg);
+        window.renderHomeHonorsSection();
+        if (typeof showToast === 'function') showToast('✅ 车队主要荣誉文字修改已永久保存！');
+    };
+
+    // 弹窗新增完整赛季/荣誉卡片
+    window.openAddHonorModal = function () {
+        if (!isHonorsAdmin()) return;
+        let m = document.getElementById('yp-add-honor-modal');
+        if (!m) {
+            m = document.createElement('div');
+            m.id = 'yp-add-honor-modal';
+            m.setAttribute('data-no-edit', 'true');
+            m.className = 'fixed inset-0 z-50 hidden flex items-center justify-center p-4';
+            m.innerHTML = `
+                <div onclick="document.getElementById('yp-add-honor-modal').classList.add('hidden')" class="fixed inset-0 bg-black/75 backdrop-blur-xs"></div>
+                <div class="bg-gray-900 text-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border-2 border-yp-lime relative z-10">
+                    <div class="p-5 bg-gray-950 border-b border-gray-800 flex items-center justify-between">
+                        <h3 class="text-lg font-black text-yp-lime">🏆 新增车队主要荣誉 / 赛季里程碑</h3>
+                        <button onclick="document.getElementById('yp-add-honor-modal').classList.add('hidden')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                    </div>
+                    <form onsubmit="submitAddHonorItem(event)" class="p-6 space-y-3.5 text-xs">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block font-bold mb-1">赛季或年份 *</label><input type="text" id="ahn-year" required placeholder="如：2027 赛季" class="w-full rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white"></div>
+                            <div><label class="block font-bold mb-1">荣誉高光标签</label><input type="text" id="ahn-badge" placeholder="如：🏆 洲际队首冠 & 环赛圆点衫" class="w-full rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white"></div>
+                        </div>
+                        <div>
+                            <label class="block font-bold mb-1">上传领奖台或荣誉配图（可选）</label>
+                            <input type="file" id="ahn-file" accept="image/*" class="w-full text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-bold mb-1">具体荣誉战绩（支持输入多行，每行作为一条独立荣誉展示） *</label>
+                            <textarea id="ahn-records" required rows="4" placeholder="例如：&#10;环鄱阳湖国际自行车赛 最佳青年车手白衫 — 蒋闻迪&#10;环哥伦比亚 UCI 2.2 爬坡王圆点衫 — Gabriel Rodas" class="w-full rounded-xl bg-gray-800 border border-gray-700 px-3 py-2 text-white"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-yp-lime text-gray-900 font-black rounded-xl text-sm">➕ 立即添加到首页荣誉榜</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(m);
+        }
+        m.classList.remove('hidden');
+    };
+
+    window.submitAddHonorItem = async function (e) {
+        e.preventDefault();
+        const year = document.getElementById('ahn-year').value.trim();
+        const badge = document.getElementById('ahn-badge').value.trim();
+        const rawRecs = document.getElementById('ahn-records').value;
+        const records = rawRecs.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        const file = document.getElementById('ahn-file').files[0];
+        const photo = file ? await compressHonorImg(file, 1000, 0.8) : '';
+
+        const cfg = getHonorsCfg();
+        cfg.items.unshift({
+            id: 'hn_' + Date.now(),
+            year,
+            badge,
+            photo,
+            records
+        });
+        saveHonorsCfg({ items: cfg.items });
+        window.renderHomeHonorsSection();
+        e.target.reset();
+        document.getElementById('yp-add-honor-modal').classList.add('hidden');
+        if (typeof showToast === 'function') showToast(`✅ 已添加「${year}」主要荣誉！`);
+    };
+
+    // =========================================================================
+    // 五、初始化挂载与全局联动
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            window.renderHomeHonorsSection();
+        }, 200);
+
+        const prevRenderHome = window.renderHomeAll;
+        if (prevRenderHome) {
+            window.renderHomeAll = function () {
+                prevRenderHome();
+                window.renderHomeHonorsSection();
+            };
+        }
+
+        const prevUpdateAuth = window.updateAuthUI;
+        if (prevUpdateAuth) {
+            window.updateAuthUI = function () {
+                prevUpdateAuth();
+                setTimeout(() => window.renderHomeHonorsSection(), 60);
+            };
+        }
+
+        const prevSwitchPage = window.switchPage;
+        if (prevSwitchPage) {
+            window.switchPage = function (pageId) {
+                prevSwitchPage(pageId);
+                if (pageId === 'home') {
+                    setTimeout(() => window.renderHomeHonorsSection(), 40);
+                }
+            };
+        }
+    });
+})();
